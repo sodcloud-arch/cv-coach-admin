@@ -1,0 +1,62 @@
+name: CV Coach PR16 Final Review Fixes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pr16-final-review-fixes.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-pr16:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch and validate PR16
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='autopilot/2d6fb5f4-program_editor_days_ui'
+          git fetch origin "${BRANCH}"
+          git checkout -B "${BRANCH}" FETCH_HEAD
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          replacements=[
+            (
+              "advanced:'Avanzado'};return",
+              "advanced:'Avanzado',draft:'Borrador',archived:'Archivado'};return"
+            ),
+            (
+              "toast('Borrador creado.');programs()",
+              "toast('Borrador creado.');await programs()"
+            )
+          ]
+          for old,new in replacements:
+              count=s.count(old)
+              if count!=1:
+                  raise SystemExit(f'expected exactly 1 occurrence, found {count}: {old}')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text()
+          scripts=re.findall(r'<script>(.*?)</script>',s,flags=re.S|re.I)
+          if not scripts: raise SystemExit('no inline script')
+          Path('/tmp/pr16-review-fixes.js').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/pr16-review-fixes.js
+          git add index.html
+          git commit -m "autopilot: finish program editor review fixes"
+          git push origin "HEAD:${BRANCH}"
