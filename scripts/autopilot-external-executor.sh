@@ -108,7 +108,17 @@ instructions="$(jq -r '.request.instructions' <<<"${response}")"
 request_payload="$(jq -c '.request.request_payload' <<<"${response}")"
 action_payload="$(jq -c '.request.action_payload' <<<"${response}")"
 
-echo "Autopilot external request claimed: ${mission_key}/${action_key} (${request_id})"
+payload_target="$(jq -r '.file // .target_path // empty' <<<"${action_payload}")"
+if [[ -n "${payload_target}" ]]; then
+  if [[ "${payload_target}" == /* || "${payload_target}" == *".."* || ! "${payload_target}" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+    external_human_blocker "${request_id}" "Action payload contains an unsafe target path." "Use a canonical repository-relative file path without parent traversal."
+    bash scripts/autopilot-worker.sh
+    exit 0
+  fi
+  TARGET_PATH="${payload_target}"
+fi
+
+echo "Autopilot external request claimed: ${mission_key}/${action_key} (${request_id}) target=${TARGET_PATH}"
 
 if [[ -z "${OPENAI_API_KEY:-}" ]]; then
   external_human_blocker \
@@ -171,7 +181,7 @@ schema='{
   }
 }'
 
-system_instructions='You are the constrained technical proposal layer for CV Coach Autopilot. SEARCH BEFORE CREATE. Preserve existing behavior and production data. You do not have GitHub credentials and must never request, reveal, infer, or output secrets. The only code target in this executor version is index.html. If a safe exact-text patch cannot be produced, return HUMAN_BLOCKER or NO_CHANGE. For PATCH, return only the smallest exact old_text→new_text substitutions required. Every old_text must be copied verbatim from the provided source and be specific enough to occur exactly once. Never modify authentication to weaken access control, never insert API secrets, service-role keys, passwords, remote scripts, eval, Function constructors, or credential exfiltration. Do not claim tests ran; the deterministic runner performs validation after your proposal.'
+system_instructions='You are the constrained technical proposal layer for CV Coach Autopilot. SEARCH BEFORE CREATE. Preserve existing behavior and production data. You do not have GitHub credentials and must never request, reveal, infer, or output secrets. The only code target is the canonical repository-relative TARGET_PATH selected from the trusted action payload; do not edit any other file. If a safe exact-text patch cannot be produced, return HUMAN_BLOCKER or NO_CHANGE. For PATCH, return only the smallest exact old_text→new_text substitutions required. Every old_text must be copied verbatim from the provided source and be specific enough to occur exactly once. Never modify authentication to weaken access control, never insert API secrets, service-role keys, passwords, remote scripts, eval, Function constructors, or credential exfiltration. Do not claim tests ran; the deterministic runner performs validation after your proposal.'
 
 input_text="$(jq -nr \
   --arg mission_key "${mission_key}" \
@@ -182,7 +192,7 @@ input_text="$(jq -nr \
   --arg request_payload "${request_payload}" \
   --arg action_payload "${action_payload}" \
   --arg source "${source_text}" \
-  '"MISSION: "+$mission_key+"\nACTION: "+$action_key+" ("+$action_type+")\nTITLE: "+$title+"\nINSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\n\nCURRENT index.html:\n"+$source')"
+  '"MISSION: "+$mission_key+"\nACTION: "+$action_key+" ("+$action_type+")\nTITLE: "+$title+"\nINSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\n\nCURRENT TARGET SOURCE:\n"+$source')"
 
 body_file="$(mktemp)"
 response_file="$(mktemp)"

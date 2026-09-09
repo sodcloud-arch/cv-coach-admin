@@ -110,10 +110,13 @@ review_merge_retry() {
 }
 
 dispatch_production_deploy() {
-  local attempt
+  local attempt workflow="deploy-cv-coach-admin-production.yml"
+  if [[ "${TARGET_PATH}" == client-portal/* ]]; then
+    workflow="deploy-cv-coach-client-production.yml"
+  fi
   for attempt in 1 2 3; do
-    if gh workflow run deploy-cv-coach-admin-production.yml --ref main; then
-      echo "Autopilot self-review: production deploy dispatched."
+    if gh workflow run "${workflow}" --ref main; then
+      echo "Autopilot self-review: production deploy dispatched via ${workflow}."
       return 0
     fi
     sleep "$((attempt * 3))"
@@ -138,11 +141,18 @@ path = pathlib.Path(sys.argv[1])
 current = path.read_text()
 base_sha = subprocess.check_output(["git", "merge-base", "origin/main", "HEAD"], text=True).strip()
 base = subprocess.check_output(["git", "show", f"{base_sha}:{path.as_posix()}"], text=True)
-pat = re.compile(r"const BASE='([^']+)',KEY='([^']+)'")
-a = pat.search(base)
-b = pat.search(current)
-if not a or not b or a.groups() != b.groups():
-    raise SystemExit("Supabase public client identity changed")
+if path.as_posix() == "index.html":
+    pat = re.compile(r"const BASE='([^']+)',KEY='([^']+)'")
+    a = pat.search(base)
+    b = pat.search(current)
+    if not a or not b or a.groups() != b.groups():
+        raise SystemExit("Supabase public Admin identity changed")
+else:
+    for pattern in (r"https://fmhcansyxcsqkrivqchr\.supabase\.co", r"sb_publishable_[A-Za-z0-9_-]+"):
+        a = sorted(set(re.findall(pattern, base)))
+        b = sorted(set(re.findall(pattern, current)))
+        if not a or a != b:
+            raise SystemExit(f"Supabase public client identity changed for {pattern}")
 scripts = re.findall(r'<script>(.*?)</script>', current, flags=re.S|re.I)
 if not scripts:
     raise SystemExit("no inline script found")
@@ -237,6 +247,14 @@ action_title="$(jq -r '.action_title' <<<"${ctx}")"
 action_instructions="$(jq -r '.action_instructions // ""' <<<"${ctx}")"
 request_payload="$(jq -c '.request_payload' <<<"${ctx}")"
 action_payload="$(jq -c '.action_payload' <<<"${ctx}")"
+payload_target="$(jq -r '.file // .target_path // empty' <<<"${action_payload}")"
+if [[ -n "${payload_target}" ]]; then
+  if [[ "${payload_target}" == /* || "${payload_target}" == *".."* || ! "${payload_target}" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+    review_human_blocker "${request_id}" "Action payload contains an unsafe target path." "Use a canonical repository-relative path without parent traversal." "${pr_url}" 0 "HIGH" >/dev/null
+    exit 0
+  fi
+  TARGET_PATH="${payload_target}"
+fi
 review_count="$(jq -r '.review_count // 0' <<<"${ctx}")"
 max_improvements="$(jq -r '.max_self_review_iterations // 2' <<<"${ctx}")"
 auto_merge="$(jq -r '.auto_merge_low_risk' <<<"${ctx}")"
@@ -290,7 +308,7 @@ schema='{
   }
 }'
 
-review_system='You are the independent self-review layer for CV Coach Autopilot. Your job is to critique work produced by another AI and improve it before Camilo is asked to review anything. Do not rubber-stamp. Compare the current branch against the original task. Look for correctness bugs, regressions, incomplete behavior, UX issues, security risks, accidental scope expansion, maintainability problems and simpler solutions. If a meaningful safe improvement is possible within the requested scope, choose IMPROVE and provide the smallest exact old_text→new_text replacements copied verbatim from CURRENT BRANCH index.html. If the proposal is already strong, complete, low-risk and needs no meaningful improvement, choose APPROVE with LOW risk and no replacements. MEDIUM risk should normally be improved until LOW; if it cannot be reduced safely, choose HUMAN_ESCALATION. HIGH risk always requires HUMAN_ESCALATION. HUMAN_ESCALATION is only for genuinely human decisions or sensitive operations such as credentials, payments, legal decisions, destructive data changes, access-control changes, irreversible production actions, or unresolved ambiguity. Never output or request secrets. Never weaken authentication or security controls. Do not broaden product scope during review. Do not claim tests ran; the deterministic runner validates after your response.'
+review_system='You are the independent self-review layer for CV Coach Autopilot. Your job is to critique work produced by another AI and improve it before Camilo is asked to review anything. Do not rubber-stamp. Compare the current branch against the original task. Look for correctness bugs, regressions, incomplete behavior, UX issues, security risks, accidental scope expansion, maintainability problems and simpler solutions. If a meaningful safe improvement is possible within the requested scope, choose IMPROVE and provide the smallest exact old_text→new_text replacements copied verbatim from CURRENT BRANCH target file. If the proposal is already strong, complete, low-risk and needs no meaningful improvement, choose APPROVE with LOW risk and no replacements. MEDIUM risk should normally be improved until LOW; if it cannot be reduced safely, choose HUMAN_ESCALATION. HIGH risk always requires HUMAN_ESCALATION. HUMAN_ESCALATION is only for genuinely human decisions or sensitive operations such as credentials, payments, legal decisions, destructive data changes, access-control changes, irreversible production actions, or unresolved ambiguity. Never output or request secrets. Never weaken authentication or security controls. Do not broaden product scope during review. Do not claim tests ran; the deterministic runner validates after your response.'
 
 body_file="$(mktemp)"
 response_file="$(mktemp)"
@@ -324,7 +342,7 @@ while (( iteration <= max_review_passes )); do
     --arg pr_title "${pr_title}" \
     --rawfile diff "${diff_file}" \
     --rawfile source "${source_file}" \
-    '"MISSION: "+$mission_key+"\nACTION: "+$action_key+"\nTITLE: "+$action_title+"\nORIGINAL INSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\nPR TITLE: "+$pr_title+"\n\nCURRENT DIFF VS MAIN:\n"+$diff+"\n\nCURRENT BRANCH index.html:\n"+$source' \
+    '"MISSION: "+$mission_key+"\nACTION: "+$action_key+"\nTITLE: "+$action_title+"\nORIGINAL INSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\nPR TITLE: "+$pr_title+"\n\nCURRENT DIFF VS MAIN:\n"+$diff+"\n\nCURRENT BRANCH TARGET FILE:\n"+$source' \
     > "${review_input_file}"
 
   jq -n \
