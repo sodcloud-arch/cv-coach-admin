@@ -373,6 +373,23 @@ body.cvFastWorkout .nav button{font-size:9.5px!important}
 </style><style id="cv-client-onboarding-v1">
 .onboardingCard{margin-top:16px;padding:18px}.onboardingGrid{display:grid;gap:2px}.onboardingGrid.two{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}.onboardingCard h1{font-size:38px;line-height:.95;margin:6px 0 9px}.onboardingCard h2{font-size:24px;margin:22px 0 4px}.onboardingCard textarea.input{height:92px;padding:12px;resize:vertical}.onboardingStatus{padding:10px 12px;border:1px solid rgba(255,193,118,.3);border-radius:11px;background:rgba(105,61,16,.18);color:#ffc176;font-size:11px;line-height:1.45}.onboardingStatus.completed{border-color:rgba(84,229,156,.3);background:rgba(20,91,59,.18);color:#82edb5}.onboardingError{min-height:18px;margin-top:10px;color:#ff8d99;font-size:11px;line-height:1.4}@media(max-width:390px){.onboardingGrid.two{grid-template-columns:1fr}.onboardingCard{padding:15px}.onboardingCard h1{font-size:34px}}
 </style>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CV Coach">
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  try {
+    navigator.serviceWorker.register('./sw.js', {scope: './'}).catch(error => {
+      console.warn('Service worker registration failed', error);
+    });
+  } catch (error) {
+    console.warn('Service worker registration failed', error);
+  }
+}
+</script>
 </head>
 <body>
 <div id="toast" class="toast hidden"></div>
