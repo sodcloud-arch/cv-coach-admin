@@ -82,7 +82,7 @@ review_human_blocker() {
     --arg pr_url "${pr_url}" \
     --argjson iteration "${iteration}" \
     --arg risk_level "${risk}" \
-    '{op:"review_human_blocker",request_id:$request_id,reason:$reason,required_action:$required_action,result:{pr_url:$pr_url,review_iteration:$iteration,risk_level:$risk}}')"
+    '{op:"review_human_blocker",request_id:$request_id,reason:$reason,required_action:$required_action,result:{pr_url:$pr_url,review_iteration:$iteration,risk_level:$risk_level}}')"
   call_gateway "${REVIEW_EDGE_URL}" "${payload}"
 }
 
@@ -114,7 +114,8 @@ validate_worktree() {
 import pathlib, re, subprocess, sys
 path = pathlib.Path(sys.argv[1])
 current = path.read_text()
-base = subprocess.check_output(["git", "show", f"origin/main:{path.as_posix()}"], text=True)
+base_sha = subprocess.check_output(["git", "merge-base", "origin/main", "HEAD"], text=True).strip()
+base = subprocess.check_output(["git", "show", f"{base_sha}:{path.as_posix()}"], text=True)
 pat = re.compile(r"const BASE='([^']+)',KEY='([^']+)'")
 a = pat.search(base)
 b = pat.search(current)
@@ -130,14 +131,14 @@ PY
   git diff --check -- "${TARGET_PATH}"
 
   local unexpected
-  unexpected="$(git diff --name-only origin/main -- | grep -v "^${TARGET_PATH//./\.}$" || true)"
+  unexpected="$(git diff --name-only "$(git merge-base origin/main HEAD)" -- | grep -v "^${TARGET_PATH//./\.}$" || true)"
   if [[ -n "${unexpected}" ]]; then
     echo "Self-review validation: unexpected changed files: ${unexpected}" >&2
     return 1
   fi
 
   local full_diff
-  full_diff="$(git diff origin/main -- "${TARGET_PATH}")"
+  full_diff="$(git diff "$(git merge-base origin/main HEAD)" -- "${TARGET_PATH}")"
   if grep -Eiq 'sk-[A-Za-z0-9_-]{20,}|sb_secret_[A-Za-z0-9_-]{20,}|service[_-]?role|SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY[[:space:]]*[=:]|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|eval\(|new Function\(' <<<"${full_diff}"; then
     echo "Self-review validation: forbidden privileged/secret pattern" >&2
     return 1
