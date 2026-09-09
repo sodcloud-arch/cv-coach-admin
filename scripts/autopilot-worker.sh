@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# AUTOPILOT_SHELL_VALIDATION_SMOKE_V2: type-aware shell validation verified.
 
 EDGE_URL="${EDGE_URL:-https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway}"
 OIDC_AUDIENCE="${OIDC_AUDIENCE:-cv-coach-autopilot}"
