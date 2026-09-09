@@ -11,6 +11,8 @@ on:
     - cron: "*/30 * * * *"
   issues:
     types: [closed]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: read
@@ -23,7 +25,10 @@ concurrency:
 
 jobs:
   worker:
-    if: github.event_name != 'issues'
+    if: >-
+      github.event_name != 'issues' &&
+      (github.event_name != 'issue_comment' ||
+       (github.event.issue.number == 2 && startsWith(github.event.comment.body, 'AUTOPILOT_WAKE')))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,6 +40,7 @@ jobs:
           EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
           OIDC_AUDIENCE: cv-coach-autopilot
           MAX_CYCLES: "20"
+          WAKE_SOURCE: ${{ github.event_name }}
         run: bash scripts/autopilot-worker.sh
 
   resume-after-human-blocker:
