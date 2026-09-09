@@ -1,0 +1,42 @@
+name: CV Coach Autopilot PR Permission Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pr-permission-probe.yml"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Actions can create pull requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="autopilot/pr-permission-probe-${GITHUB_RUN_ID}"
+          FILE="docs/autopilot-pr-permission-probe-${GITHUB_RUN_ID}.txt"
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${BRANCH}"
+          mkdir -p docs
+          printf 'CV Coach Autopilot PR permission probe. Run: %s\n' "${GITHUB_RUN_ID}" > "${FILE}"
+          git add "${FILE}"
+          git commit -m "test: Autopilot PR permission probe"
+          git push origin "HEAD:${BRANCH}"
+          PR_URL="$(gh pr create --draft --base main --head "${BRANCH}" --title "[Probe] CV Coach Autopilot PR permission" --body "Temporary automated permission probe. Safe to close. No production change intended.")"
+          PR_NUM="${PR_URL##*/}"
+          echo "Created PR ${PR_NUM}: ${PR_URL}"
+          gh pr close "${PR_NUM}" --delete-branch --comment "Autopilot permission probe passed; closing temporary PR."
+          echo "AUTOPILOT_PR_PERMISSION_PROBE=PASS"
