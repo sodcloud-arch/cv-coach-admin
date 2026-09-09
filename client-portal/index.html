@@ -381,9 +381,13 @@ body.cvFastWorkout .nav button{font-size:9.5px!important}
 <meta name="apple-mobile-web-app-title" content="CV Coach">
 <script>
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-  navigator.serviceWorker.register('./sw.js', {scope: './'}).catch(error => {
+  try {
+    navigator.serviceWorker.register('./sw.js', {scope: './'}).catch(error => {
+      console.warn('Service worker registration failed', error);
+    });
+  } catch (error) {
     console.warn('Service worker registration failed', error);
-  });
+  }
 }
 </script>
 </head>
