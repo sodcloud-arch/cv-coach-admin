@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/patch-autopilot-review-queue.py"
+      - "scripts/patch-autopilot-readonly-sensitive.py"
       - ".github/workflows/autopilot-review-queue-patch-v2.yml"
 
 permissions:
@@ -19,15 +20,22 @@ jobs:
           fetch-depth: 0
       - name: Apply review queue recovery patch
         run: python3 scripts/patch-autopilot-review-queue.py
+      - name: Refine read-only sensitive-context classification
+        run: python3 scripts/patch-autopilot-readonly-sensitive.py
       - name: Validate Autopilot self-review
         run: |
           bash -n scripts/autopilot-self-review.sh
           git diff --check
           grep -q 'skipping stale/non-reviewable PR' scripts/autopilot-self-review.sh
+          grep -q 'sensitive_scan_text=' scripts/autopilot-self-review.sh
       - name: Commit patch
         run: |
           git config user.name 'sodcloud-arch'
           git config user.email 'sodcloud@gmail.com'
           git add scripts/autopilot-self-review.sh
-          git commit -m 'fix: recover Autopilot review queue past stale PRs'
+          if git diff --cached --quiet; then
+            echo 'Autopilot self-review already up to date.'
+            exit 0
+          fi
+          git commit -m 'fix: harden Autopilot review recovery and read-only classification'
           git push origin HEAD:main
