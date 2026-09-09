@@ -1,0 +1,21 @@
+name: CV Coach Autopilot Night Wake
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/autopilot-night-wake.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake permanent Autopilot control issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment 2 --repo sodcloud-arch/cv-coach-admin --body "AUTOPILOT_WAKE source=night_execution resume=PROGRAM_VERSIONING_V1"
