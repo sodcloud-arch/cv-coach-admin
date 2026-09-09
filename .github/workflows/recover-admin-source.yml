@@ -1,0 +1,59 @@
+name: Recover CV Coach Admin Source
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/recover-admin-source.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch current production artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            --retry 3 --retry-delay 2 \
+            https://cv-coach-admin.vercel.app/ \
+            -o index.html
+
+          test -s index.html
+          grep -q '<title>CV Coach · Panel</title>' index.html
+          grep -q "fmhcansyxcsqkrivqchr.supabase.co" index.html
+          grep -q 'COACH ADMIN' index.html
+
+          mkdir -p docs/recovery
+          sha256sum index.html | awk '{print $1}' > docs/recovery/admin-production.sha256
+          cat > docs/recovery/admin-production-recovery.md <<'EOF'
+          # CV Coach Admin — Production Source Recovery
+
+          This snapshot was recovered automatically from the canonical production alias:
+          `https://cv-coach-admin.vercel.app/`
+
+          Purpose: establish GitHub as the canonical source of truth without changing the running production deployment.
+
+          The SHA-256 of the recovered `index.html` is stored in `admin-production.sha256`.
+          EOF
+
+      - name: Commit recovered source if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html docs/recovery/admin-production.sha256 docs/recovery/admin-production-recovery.md
+          if git diff --cached --quiet; then
+            echo "Recovered source already matches GitHub."
+            exit 0
+          fi
+          git commit -m "recovery: snapshot current CV Coach Admin production source"
+          git push origin HEAD:main
