@@ -99,6 +99,16 @@ review_resolved() {
   call_gateway "${EDGE_URL}" "${payload}"
 }
 
+review_merge_retry() {
+  local request_id="$1" error="$2" retry_after_seconds="${3:-5}" payload
+  payload="$(jq -nc \
+    --arg request_id "${request_id}" \
+    --arg error "${error}" \
+    --argjson retry_after_seconds "${retry_after_seconds}" \
+    '{op:"review_merge_retry",request_id:$request_id,error:$error,retry_after_seconds:$retry_after_seconds}')"
+  call_gateway "${EDGE_URL}" "${payload}"
+}
+
 validate_worktree() {
   if [[ ! -f "${TARGET_PATH}" ]]; then
     echo "Self-review validation: missing ${TARGET_PATH}" >&2
@@ -371,9 +381,19 @@ while (( iteration <= max_review_passes )); do
 
     if [[ "${is_draft}" == "true" ]]; then gh pr ready "${pr_number}" >/dev/null; fi
     if ! gh pr merge "${pr_number}" --squash --delete-branch; then
-      review_human_blocker "${request_id}" "AI self-review approved a LOW-risk change, but GitHub blocked the automatic merge." "Inspect required checks or branch protection for PR #${pr_number}, then close the generated blocker." "${pr_url}" "${iteration}" "LOW" >/dev/null
+      retry_ack="$(review_merge_retry "${request_id}" "AI self-review approved LOW risk but GitHub could not merge; regenerate on latest main." 5)"
+      if [[ "$(jq -r '.kind // empty' <<<"${retry_ack}")" != "REVIEW_MERGE_RETRY" ]]; then
+        review_human_blocker "${request_id}" "LOW-risk merge recovery could not be recorded safely." "Inspect Autopilot gateway/retry state for PR #${pr_number}." "${pr_url}" "${iteration}" "MEDIUM" >/dev/null
+        git checkout main >/dev/null 2>&1 || true
+        bash scripts/autopilot-worker.sh
+        exit 0
+      fi
+      gh pr close "${pr_number}" --comment "🤖 Autopilot: PR aprobado LOW pero no mergeable porque main avanzó. Se cierra como superseded y la misma acción se regenerará automáticamente sobre el main actual." >/dev/null 2>&1 || true
       git checkout main >/dev/null 2>&1 || true
+      git pull --ff-only origin main >/dev/null 2>&1 || true
+      sleep 6
       bash scripts/autopilot-worker.sh
+      echo "Autopilot self-review: MERGE_CONFLICT_RETRY PR #${pr_number}"
       exit 0
     fi
 
