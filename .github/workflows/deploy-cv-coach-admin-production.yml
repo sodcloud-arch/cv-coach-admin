@@ -1,5 +1,6 @@
 name: CV Coach Admin Production Deploy
 
+# Explicitly dispatchable after CV Coach Autopilot merges and usable for recovery deploys.
 on:
   push:
     branches: [main]
