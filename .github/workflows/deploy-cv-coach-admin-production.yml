@@ -1,0 +1,62 @@
+name: CV Coach Admin Production Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "vercel.json"
+      - ".github/workflows/deploy-cv-coach-admin-production.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: cv-coach-admin-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_pD5aAwrw2qpbPgoEarWhxcKF
+      VERCEL_PROJECT_ID: prj_fkeoRxjDY3ZDQlIadS1EaIowFi87
+    steps:
+      - name: Checkout canonical main
+        uses: actions/checkout@v4
+      - name: Check Vercel credential
+        id: auth
+        shell: bash
+        run: |
+          if [[ -z "${VERCEL_TOKEN:-}" ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "VERCEL_TOKEN_MISSING"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "VERCEL_TOKEN_AVAILABLE"
+          fi
+      - name: Link canonical Vercel project
+        if: steps.auth.outputs.available == 'true'
+        shell: bash
+        run: |
+          mkdir -p .vercel
+          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
+      - name: Pull production settings
+        if: steps.auth.outputs.available == 'true'
+        shell: bash
+        run: npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Build production bundle
+        if: steps.auth.outputs.available == 'true'
+        shell: bash
+        run: npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
+      - name: Deploy canonical production
+        if: steps.auth.outputs.available == 'true'
+        shell: bash
+        run: npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+      - name: Credential blocker marker
+        if: steps.auth.outputs.available != 'true'
+        shell: bash
+        run: |
+          echo "Production deployment was not attempted because VERCEL_TOKEN is not configured in GitHub Actions Secrets."
