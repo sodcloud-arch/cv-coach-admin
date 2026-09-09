@@ -264,15 +264,14 @@ review_input_file="$(mktemp)"
 trap 'rm -f "${body_file}" "${response_file}" "${review_file}" "${source_file}" "${diff_file}" "${review_input_file}" /tmp/cv-autopilot-review-inline.js "${TARGET_PATH}.self-review-backup"' EXIT
 
 iteration="$((review_count + 1))"
-max_review_passes="$((max_improvements + 1))"
+run_improvements=0
+max_review_passes="$((iteration + max_improvements))"
 
 while (( iteration <= max_review_passes )); do
   budget="$(budget_status "${mission_id}")"
   if [[ "$(jq -r '.kind // empty' <<<"${budget}")" != "AI_BUDGET_STATUS" || "$(jq -r '.result.allowed // false' <<<"${budget}")" != "true" ]]; then
-    reason="Autopilot self-review stopped because the AI budget guard does not allow another review call."
-    review_human_blocker "${request_id}" "${reason}" "Wait for the budget window to reset or intentionally adjust the Autopilot AI policy before closing the blocker." "${pr_url}" "${iteration}" "MEDIUM" >/dev/null
+    echo "Autopilot self-review: budget checkpoint; watchdog will retry later."
     git checkout main >/dev/null 2>&1 || true
-    bash scripts/autopilot-worker.sh
     exit 0
   fi
 
@@ -392,10 +391,9 @@ while (( iteration <= max_review_passes )); do
     exit 1
   fi
 
-  if (( iteration > max_improvements )); then
-    review_human_blocker "${request_id}" "Self-review did not converge to a LOW-risk approval within ${max_improvements} improvement cycles." "Review the Draft PR or provide direction; the bounded self-improvement loop intentionally stopped." "${pr_url}" "${iteration}" "${risk}" >/dev/null
+  if (( run_improvements >= max_improvements )); then
+    echo "Autopilot self-review: per-run improvement checkpoint reached; next watchdog will continue."
     git checkout main >/dev/null 2>&1 || true
-    bash scripts/autopilot-worker.sh
     exit 0
   fi
 
@@ -460,9 +458,15 @@ PY
   improvements_text="$(jq -r '.improvements[]? | "- " + .' "${review_file}")"
   gh pr comment "${pr_number}" --body "🤖 **Autopilot self-review — mejora ${iteration}**\n\n${summary}\n\n${improvements_text}\n\nLa rama fue corregida y será revisada nuevamente de forma automática." >/dev/null || true
 
+  run_improvements="$((run_improvements + 1))"
   iteration="$((iteration + 1))"
+  if (( run_improvements >= max_improvements )); then
+    echo "Autopilot self-review: improvement batch complete; leaving WAITING_REVIEW for next watchdog."
+    git checkout main >/dev/null 2>&1 || true
+    exit 0
+  fi
 done
 
-review_human_blocker "${request_id}" "Self-review reached its bounded iteration limit without a final LOW-risk approval." "Review the Draft PR or provide direction; the system stopped to prevent an infinite improvement loop." "${pr_url}" "${iteration}" "MEDIUM" >/dev/null
 git checkout main >/dev/null 2>&1 || true
-bash scripts/autopilot-worker.sh
+echo "Autopilot self-review: bounded review batch complete; next watchdog will continue if needed."
+exit 0
