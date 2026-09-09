@@ -1,6 +1,7 @@
 name: CV Coach Admin Production Deploy
 
 # Explicitly dispatchable after CV Coach Autopilot merges and usable for recovery deploys.
+# P0 stabilization redeploy trigger: 2026-09-09
 on:
   push:
     branches: [main]
