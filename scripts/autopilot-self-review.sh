@@ -204,7 +204,7 @@ max_improvements="$(jq -r '.max_self_review_iterations // 2' <<<"${ctx}")"
 auto_merge="$(jq -r '.auto_merge_low_risk' <<<"${ctx}")"
 model="$(jq -r '.model // "gpt-5.6-luna"' <<<"${ctx}")"
 policy_max_tokens="$(jq -r '.max_output_tokens // 2500' <<<"${ctx}")"
-review_max_tokens=1800
+review_max_tokens=4000
 if (( policy_max_tokens < review_max_tokens )); then review_max_tokens="${policy_max_tokens}"; fi
 
 context_text="${action_title} ${action_instructions} ${request_payload} ${action_payload}"
