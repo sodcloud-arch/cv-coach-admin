@@ -1,0 +1,64 @@
+name: CV Coach Autopilot Worker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
+  issues:
+    types: [closed]
+
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+
+concurrency:
+  group: cv-coach-autopilot
+  cancel-in-progress: false
+
+jobs:
+  worker:
+    if: github.event_name != 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run deterministic Autopilot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+          MAX_CYCLES: "20"
+        run: bash scripts/autopilot-worker.sh
+
+  resume-after-human-blocker:
+    if: github.event_name == 'issues' && github.event.action == 'closed' && startsWith(github.event.issue.title, '🔴 CV Coach Autopilot —')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract blocker ID
+        id: blocker
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BLOCKER_ID="$(printf '%s\n' "${ISSUE_BODY}" | sed -n 's/^AUTOPILOT_BLOCKER_ID: //p' | head -n 1)"
+          if [[ -z "${BLOCKER_ID}" ]]; then
+            echo "No Autopilot blocker marker found; skipping."
+            exit 1
+          fi
+          echo "blocker_id=${BLOCKER_ID}" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve blocker and continue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+          MAX_CYCLES: "20"
+          RESOLVE_BLOCKER_ID: ${{ steps.blocker.outputs.blocker_id }}
+          RESOLUTION_NOTE: GitHub Issue #${{ github.event.issue.number }} closed by ${{ github.actor }}
+        run: bash scripts/autopilot-worker.sh
