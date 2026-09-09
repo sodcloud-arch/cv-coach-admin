@@ -803,7 +803,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
    if(document.querySelector('#content>.hero'))return 'home';
    if(document.querySelector('#content .dayGrid'))return 'routine';
    const h=(document.querySelector('#content h1')?.textContent||'').toUpperCase();
-   if(h.includes('PROGRESO VISUAL'))return 'progress';
+   if(h.includes('PROGRESO VISUAL'))return 'progress';if(h.includes('NOTIFICACIONES'))return 'notifications';
    if(h.includes('HÁBITOS'))return 'habits';if(h.includes('MISIONES'))return 'missions';return 'home';
  }
  function ensureSidebar(){
