@@ -2,10 +2,13 @@ from pathlib import Path
 
 path = Path('scripts/autopilot-self-review.sh')
 text = path.read_text()
-start = text.index('find_review_pr() {')
-end_marker = '\n}\n\nif [[ -z "${OPENAI_API_KEY:-}" ]]'
-end = text.index(end_marker, start) + len('\n}')
-new_block = r'''find_review_pr() {
+
+# 1) Review queue recovery: skip stale/non-reviewable PRs instead of stopping at the oldest.
+if 'skipping stale/non-reviewable PR' not in text:
+    start = text.index('find_review_pr() {')
+    end_marker = '\n}\n\nif [[ -z "${OPENAI_API_KEY:-}" ]]'
+    end = text.index(end_marker, start) + len('\n}')
+    new_block = r'''find_review_pr() {
   local pr body request_id ctx kind status
   while IFS= read -r pr; do
     [[ -z "${pr}" ]] && continue
@@ -25,4 +28,14 @@ new_block = r'''find_review_pr() {
     | jq -c '[.[] | select(.baseRefName=="main" and (.headRefName|startswith("autopilot/")) and (((.body // "")|contains("AUTOPILOT_EXTERNAL_REQUEST_ID:"))))] | sort_by(.createdAt)[]')
   return 0
 }'''
-path.write_text(text[:start] + new_block + text[end:])
+    text = text[:start] + new_block + text[end:]
+
+# 2) Sensitive-context precision: validation text such as "secret scan" must not force human review.
+old = "if grep -Eiq '(password|contraseñ|credential|credencial|secret|secreto|api[ _-]?key|payment|pago|billing|factur|delete|borrar|eliminar|drop table|rls|permission|permiso|service[_-]?role|security|seguridad|migration|migración|production data|datos de producción)' <<<\"${context_text}\"; then"
+new = "if grep -Eiq '(password|contraseñ|credential|credencial|api[ _-]?key|payment|pago|billing|factur|delete|borrar|eliminar|drop table|rls|permission|permiso|service[_-]?role|security|seguridad|migration|migración|production data|datos de producción|github[ _-]?secret|crear.{0,40}(secret|secreto)|modificar.{0,40}(secret|secreto)|rotar.{0,40}(secret|secreto)|eliminar.{0,40}(secret|secreto))' <<<\"${context_text}\"; then"
+if old in text:
+    text = text.replace(old, new, 1)
+elif new not in text:
+    raise SystemExit('sensitive-context detector pattern not found')
+
+path.write_text(text)
