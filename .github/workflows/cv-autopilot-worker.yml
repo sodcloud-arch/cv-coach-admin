@@ -8,6 +8,7 @@ on:
       - ".github/workflows/cv-autopilot-worker.yml"
       - "scripts/autopilot-worker.sh"
       - "scripts/autopilot-external-executor.sh"
+      - "scripts/autopilot-self-review.sh"
   schedule:
     - cron: "*/5 * * * *"
   issues:
@@ -78,6 +79,15 @@ jobs:
           MAX_CYCLES: "20"
         run: bash scripts/autopilot-external-executor.sh
 
+      - name: Run AI self-review and self-improvement
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          REVIEW_EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-review-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+        run: bash scripts/autopilot-self-review.sh
+
   resume-after-human-blocker:
     if: github.event_name == 'issues' && github.event.action == 'closed' && startsWith(github.event.issue.title, '🔴 CV Coach Autopilot —')
     permissions:
@@ -125,6 +135,15 @@ jobs:
           OIDC_AUDIENCE: cv-coach-autopilot
           MAX_CYCLES: "20"
         run: bash scripts/autopilot-external-executor.sh
+
+      - name: Self-review resumed external work
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          REVIEW_EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-review-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+        run: bash scripts/autopilot-self-review.sh
 
   resume-after-pull-request-review:
     if: >-
@@ -204,3 +223,12 @@ jobs:
           OIDC_AUDIENCE: cv-coach-autopilot
           MAX_CYCLES: "20"
         run: bash scripts/autopilot-external-executor.sh
+
+      - name: Self-review continued external work
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          REVIEW_EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-review-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+        run: bash scripts/autopilot-self-review.sh
