@@ -99,6 +99,10 @@ run_loop() {
         notify_blocker "${response}"
         break
         ;;
+      ACTION_EXTERNAL_WAIT)
+        echo "${response}"
+        break
+        ;;
       ACTION_DEFERRED)
         echo "${response}"
         break
@@ -116,5 +120,3 @@ run_loop() {
 
 resolve_blocker_if_requested
 run_loop
-
-# QA marker: human-blocker E2E validation
