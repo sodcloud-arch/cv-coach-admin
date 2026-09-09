@@ -1,0 +1,46 @@
+name: CV Coach Autopilot V4 E2E Cleanup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/v4-e2e-cleanup.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove V4 E2E HTML markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          markers = [
+              '<!-- CV Coach Autopilot V4 self-review E2E -->',
+              '<!-- CV Coach Autopilot IMPROVE E2E A -->',
+              '<!-- CV Coach Autopilot IMPROVE E2E B -->',
+          ]
+          for marker in markers:
+              s = s.replace(marker, '')
+          p.write_text(s)
+          PY
+          if git diff --quiet -- index.html; then
+            echo "No E2E markers found; nothing to clean."
+            exit 0
+          fi
+          git add index.html
+          git commit -m "test: remove Autopilot V4 E2E markers"
+          git push origin HEAD:main
