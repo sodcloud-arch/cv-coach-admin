@@ -257,6 +257,8 @@ s = re.sub(r"(?i)\bno\s+hacer\s+(?:insert|patch|delete)(?:\s*/\s*(?:insert|patch
 s = re.sub(r"(?i)\b(?:read[- ]?only|solo lectura|sin escrituras?|no mutar|no modificar datos)\b", " ", s)
 s = re.sub(r"(?i)\brls\s+select\s+ya\s+existe\b", " ", s)
 s = re.sub(r"(?i)\bvalidaciones?\b[^.;\n]{0,100}\brls\b", " ", s)
+s = re.sub(r"(?i)\b(?:usar\s+)?solo\s+select\s+bajo\s+rls\b", " ", s)
+s = re.sub(r"(?i)\bselect\s+bajo\s+rls\b", " ", s)
 sys.stdout.write(s)
 ')"
 sensitive=false
