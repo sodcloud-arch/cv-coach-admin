@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Idempotent installer: workflow permissions may already be applied directly.
 worker_path = Path('.github/workflows/cv-autopilot-worker.yml')
 review_path = Path('scripts/autopilot-self-review.sh')
 
