@@ -59,6 +59,7 @@ jobs:
        (github.event.issue.number == 2 && startsWith(github.event.comment.body, 'AUTOPILOT_WAKE')))
     permissions:
       contents: write
+      actions: write
       id-token: write
       issues: write
       pull-requests: write
@@ -92,6 +93,7 @@ jobs:
     if: github.event_name == 'issues' && github.event.action == 'closed' && startsWith(github.event.issue.title, '🔴 CV Coach Autopilot —')
     permissions:
       contents: write
+      actions: write
       id-token: write
       issues: write
       pull-requests: write
@@ -153,6 +155,7 @@ jobs:
       startsWith(github.event.pull_request.head.ref, 'autopilot/')
     permissions:
       contents: write
+      actions: write
       id-token: write
       issues: write
       pull-requests: write
