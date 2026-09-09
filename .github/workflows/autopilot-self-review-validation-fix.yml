@@ -25,23 +25,36 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('scripts/autopilot-self-review.sh')
-          s=p.read_text()
-          old1='git diff --name-only origin/main -- | grep -v'
-          new1='git diff --name-only origin/main...HEAD -- | grep -v'
-          if s.count(old1)!=1:
-              raise SystemExit(f'expected one validation diff expression, found {s.count(old1)}')
-          s=s.replace(old1,new1,1)
-          old2='risk_level:$risk}}')
-          new2='risk_level:$risk_level}}')
-          if s.count(old2)!=1:
-              raise SystemExit(f'expected one blocker risk expression, found {s.count(old2)}')
-          s=s.replace(old2,new2,1)
+          p = Path('scripts/autopilot-self-review.sh')
+          s = p.read_text()
+          replacements = [
+              (
+                  'base = subprocess.check_output(["git", "show", f"origin/main:{path.as_posix()}"], text=True)',
+                  'base_sha = subprocess.check_output(["git", "merge-base", "origin/main", "HEAD"], text=True).strip()\nbase = subprocess.check_output(["git", "show", f"{base_sha}:{path.as_posix()}"], text=True)'
+              ),
+              (
+                  'git diff --name-only origin/main -- | grep -v',
+                  'git diff --name-only "$(git merge-base origin/main HEAD)" -- | grep -v'
+              ),
+              (
+                  'git diff origin/main -- "${TARGET_PATH}"',
+                  'git diff "$(git merge-base origin/main HEAD)" -- "${TARGET_PATH}"'
+              ),
+              (
+                  'risk_level:$risk}}',
+                  'risk_level:$risk_level}}'
+              ),
+          ]
+          for old, new in replacements:
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected exactly one occurrence of {old!r}, found {count}')
+              s = s.replace(old, new, 1)
           p.write_text(s)
           PY
           bash -n scripts/autopilot-self-review.sh
           git diff --check
-          grep -q 'git diff --name-only origin/main...HEAD --' scripts/autopilot-self-review.sh
+          grep -q 'merge-base.*origin/main.*HEAD' scripts/autopilot-self-review.sh
           grep -q 'risk_level:\$risk_level' scripts/autopilot-self-review.sh
           git add scripts/autopilot-self-review.sh
           git commit -m "fix: harden Autopilot self-review validation"
