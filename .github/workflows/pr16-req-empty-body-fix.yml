@@ -1,0 +1,52 @@
+name: CV Coach PR16 Empty Body Fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pr16-req-empty-body-fix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-pr16:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch existing Autopilot branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='autopilot/2d6fb5f4-program_editor_days_ui'
+          git fetch origin "${BRANCH}"
+          git checkout -B "${BRANCH}" FETCH_HEAD
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old="if(r.status===204)return null;return r.json()"
+          new="if(r.status===204)return null;let text=await r.text();if(!text)return null;try{return JSON.parse(text)}catch{throw Error('Respuesta inválida del servidor')}"
+          count=s.count(old)
+          if count != 1:
+              raise SystemExit(f'expected exactly 1 req response parser occurrence, found {count}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text()
+          scripts=re.findall(r'<script>(.*?)</script>',s,flags=re.S|re.I)
+          if not scripts: raise SystemExit('no inline script')
+          Path('/tmp/pr16.js').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/pr16.js
+          git add index.html
+          git commit -m "autopilot: handle empty successful API responses"
+          git push origin "HEAD:${BRANCH}"
