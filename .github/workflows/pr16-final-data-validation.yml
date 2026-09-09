@@ -1,0 +1,106 @@
+name: CV Coach PR16 Final Data Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pr16-final-data-validation.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-pr16:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch and validate existing Autopilot branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='autopilot/2d6fb5f4-program_editor_days_ui'
+          git fetch origin "${BRANCH}"
+          git checkout -B "${BRANCH}" FETCH_HEAD
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          replacements=[
+            (
+              "function cname(p){return p?((p.first_name||'Cliente')+' '+(p.last_name||'')).trim():'—'}",
+              "function cname(p){if(!p)return '—';let n=((p.first_name||'')+' '+(p.last_name||'')).trim();return n||'—'}"
+            ),
+            (
+              "$('#saveProgram').onclick=async()=>{let name=$('#programName').value.trim();if(!name)return toast('El nombre del programa es obligatorio.');try{",
+              "$('#saveProgram').onclick=async()=>{let name=$('#programName').value.trim(),start=$('#programStart').value,end=$('#programEnd').value;if(!name)return toast('El nombre del programa es obligatorio.');if(start&&end&&end<start)return toast('La fecha de fin no puede ser anterior a la fecha de inicio.');try{"
+            ),
+            (
+              "start_date:$('#programStart').value||null,end_date:$('#programEnd').value||null",
+              "start_date:start||null,end_date:end||null"
+            ),
+            (
+              "let row=b.closest('.card'),number=Number(row.querySelector('.dayNumber').value),name=row.querySelector('.dayName').value.trim(),used=days.filter(x=>x.id!==b.dataset.id).some(x=>Number(x.day_number)===number);",
+              "let row=b.closest('.card'),number=Number(row.querySelector('.dayNumber').value),name=row.querySelector('.dayName').value.trim(),minutesRaw=row.querySelector('.dayMinutes').value,minutes=minutesRaw===''?null:Number(minutesRaw),used=days.filter(x=>x.id!==b.dataset.id).some(x=>Number(x.day_number)===number);"
+            ),
+            (
+              "if(!name)return toast('El nombre del día es obligatorio.');try{",
+              "if(!name)return toast('El nombre del día es obligatorio.');if(minutes!==null&&(!Number.isInteger(minutes)||minutes<=0))return toast('Los minutos estimados deben ser un entero mayor que cero.');try{"
+            ),
+            (
+              "estimated_minutes:row.querySelector('.dayMinutes').value===''?null:Number(row.querySelector('.dayMinutes').value)",
+              "estimated_minutes:minutes"
+            ),
+            (
+              "$('#createProgram').onclick=async()=>{let client_id=$('#programClient').value,name=$('#newProgramName').value.trim(),r=$('#newProgramStatus');if(!client_id)return r.textContent='Selecciona un cliente.';if(!name)return r.textContent='El nombre del programa es obligatorio.';try{",
+              "$('#createProgram').onclick=async()=>{let client_id=$('#programClient').value,name=$('#newProgramName').value.trim(),start=$('#newProgramStart').value,end=$('#newProgramEnd').value,r=$('#newProgramStatus');if(!client_id)return r.textContent='Selecciona un cliente.';if(!name)return r.textContent='El nombre del programa es obligatorio.';if(start&&end&&end<start)return r.textContent='La fecha de fin no puede ser anterior a la fecha de inicio.';try{"
+            ),
+            (
+              "start_date:$('#newProgramStart').value||null,end_date:$('#newProgramEnd').value||null",
+              "start_date:start||null,end_date:end||null"
+            ),
+            (
+              "$('#createDay').onclick=async()=>{let number=Number($('#newDayNumber').value),name=$('#newDayName').value.trim(),r=$('#newDayStatus');",
+              "$('#createDay').onclick=async()=>{let number=Number($('#newDayNumber').value),name=$('#newDayName').value.trim(),minutesRaw=$('#newDayMinutes').value,minutes=minutesRaw===''?null:Number(minutesRaw),r=$('#newDayStatus');"
+            ),
+            (
+              "if(!name)return r.textContent='El nombre del día es obligatorio.';try{",
+              "if(!name)return r.textContent='El nombre del día es obligatorio.';if(minutes!==null&&(!Number.isInteger(minutes)||minutes<=0))return r.textContent='Los minutos estimados deben ser un entero mayor que cero.';try{"
+            ),
+            (
+              "estimated_minutes:$('#newDayMinutes').value===''?null:Number($('#newDayMinutes').value)",
+              "estimated_minutes:minutes"
+            ),
+            (
+              "class=\"input dayMinutes\" type=\"number\" min=\"0\"",
+              "class=\"input dayMinutes\" type=\"number\" min=\"1\" step=\"1\""
+            ),
+            (
+              "id=\"newDayMinutes\" class=\"input\" type=\"number\" min=\"0\"",
+              "id=\"newDayMinutes\" class=\"input\" type=\"number\" min=\"1\" step=\"1\""
+            )
+          ]
+          for old,new in replacements:
+              count=s.count(old)
+              if count!=1:
+                  raise SystemExit(f'expected exactly 1 occurrence, found {count}: {old[:100]}')
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text()
+          scripts=re.findall(r'<script>(.*?)</script>',s,flags=re.S|re.I)
+          if not scripts: raise SystemExit('no inline script')
+          Path('/tmp/pr16-final.js').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/pr16-final.js
+          git add index.html
+          git commit -m "autopilot: validate program dates and day duration"
+          git push origin "HEAD:${BRANCH}"
