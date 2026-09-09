@@ -130,12 +130,21 @@ validate_worktree() {
     return 1
   fi
 
-  if ! grep -q '<!doctype html>' "${TARGET_PATH}" || ! grep -q '<title>CV Coach' "${TARGET_PATH}" || ! grep -q '</html>' "${TARGET_PATH}"; then
-    echo "Self-review validation: canonical HTML markers missing" >&2
-    return 1
-  fi
+  local target_kind="text"
+  case "${TARGET_PATH}" in
+    *.html|*.htm) target_kind="html" ;;
+    *.sh) target_kind="shell" ;;
+    *.js|*.mjs|*.cjs) target_kind="javascript" ;;
+    *.json|*.webmanifest) target_kind="json" ;;
+  esac
 
-  python3 - "${TARGET_PATH}" <<'PY'
+  case "${target_kind}" in
+    html)
+      if ! grep -q '<!doctype html>' "${TARGET_PATH}" || ! grep -q '<title>CV Coach' "${TARGET_PATH}" || ! grep -q '</html>' "${TARGET_PATH}"; then
+        echo "Self-review validation: canonical HTML markers missing" >&2
+        return 1
+      fi
+      if ! python3 - "${TARGET_PATH}" <<'PYHTML'
 import pathlib, re, subprocess, sys
 path = pathlib.Path(sys.argv[1])
 current = path.read_text()
@@ -157,10 +166,26 @@ scripts = re.findall(r'<script>(.*?)</script>', current, flags=re.S|re.I)
 if not scripts:
     raise SystemExit("no inline script found")
 pathlib.Path('/tmp/cv-autopilot-review-inline.js').write_text('\n'.join(scripts))
-PY
+PYHTML
+      then
+        return 1
+      fi
+      node --check /tmp/cv-autopilot-review-inline.js || return 1
+      ;;
+    shell)
+      bash -n "${TARGET_PATH}" || return 1
+      ;;
+    javascript)
+      node --check "${TARGET_PATH}" || return 1
+      ;;
+    json)
+      jq -e . "${TARGET_PATH}" >/dev/null || return 1
+      ;;
+    text)
+      ;;
+  esac
 
-  node --check /tmp/cv-autopilot-review-inline.js
-  git diff --check -- "${TARGET_PATH}"
+  git diff --check -- "${TARGET_PATH}" || return 1
 
   local unexpected
   unexpected="$(git diff --name-only "$(git merge-base origin/main HEAD)" -- | grep -v "^${TARGET_PATH//./\.}$" || true)"

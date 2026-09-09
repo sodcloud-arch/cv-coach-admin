@@ -57,7 +57,7 @@ record_ai_usage() {
 }
 
 external_retry() {
-  local request_id="$1" error="$2" retry_after="${3:-300}" token payload
+  local request_id="$1" error="$2" retry_after="${3:-60}" token payload
   token="$(get_oidc_token)"
   payload="$(jq -nc --arg request_id "${request_id}" --arg error "${error}" --argjson retry_after_seconds "${retry_after}" '{op:"external_retry",request_id:$request_id,error:$error,retry_after_seconds:$retry_after_seconds}')"
   call_edge "${token}" "${payload}" >/dev/null
@@ -246,7 +246,7 @@ fi
 jq -r '[.output[]?.content[]? | select(.type=="output_text") | .text][0] // .output_text // empty' "${response_file}" > "${proposal_file}"
 
 if [[ ! -s "${proposal_file}" ]] || ! jq -e . "${proposal_file}" >/dev/null 2>&1; then
-  external_retry "${request_id}" "OpenAI returned no valid structured output" 300
+  external_retry "${request_id}" "OpenAI returned no valid structured output" 30
   echo "Autopilot external executor: RETRY (invalid structured output)"
   exit 0
 fi
@@ -282,7 +282,7 @@ case "${decision}" in
   PATCH)
     replacement_count="$(jq '.replacements | length' "${proposal_file}")"
     if (( replacement_count < 1 || replacement_count > 20 )); then
-      external_retry "${request_id}" "PATCH contained invalid replacement count: ${replacement_count}" 300
+      external_retry "${request_id}" "PATCH contained invalid replacement count: ${replacement_count}" 15
       exit 0
     fi
 
@@ -303,7 +303,7 @@ path.write_text(text)
 PY
     then
       mv "${TARGET_PATH}.autopilot-backup" "${TARGET_PATH}"
-      external_retry "${request_id}" "Deterministic replacement validation failed" 300
+      external_retry "${request_id}" "Deterministic replacement validation failed" 15
       exit 0
     fi
 
@@ -312,26 +312,67 @@ PY
     max_size="$((original_size + original_size/2 + 20000))"
     if (( new_size > max_size )); then
       mv "${TARGET_PATH}.autopilot-backup" "${TARGET_PATH}"
-      external_retry "${request_id}" "Patch rejected: resulting file grew beyond safety threshold" 300
+      external_retry "${request_id}" "Patch rejected: resulting file grew beyond safety threshold" 30
       exit 0
     fi
 
-    if ! grep -q '<!doctype html>' "${TARGET_PATH}" || ! grep -q '<title>CV Coach' "${TARGET_PATH}" || ! grep -q '</html>' "${TARGET_PATH}"; then
-      mv "${TARGET_PATH}.autopilot-backup" "${TARGET_PATH}"
-      external_retry "${request_id}" "Patch rejected: canonical HTML markers missing" 300
-      exit 0
-    fi
+    target_kind="text"
+    case "${TARGET_PATH}" in
+      *.html|*.htm) target_kind="html" ;;
+      *.sh) target_kind="shell" ;;
+      *.js|*.mjs|*.cjs) target_kind="javascript" ;;
+      *.json|*.webmanifest) target_kind="json" ;;
+    esac
 
-    python3 - "${TARGET_PATH}" <<'PY'
+    validation_error=""
+    case "${target_kind}" in
+      html)
+        if ! grep -q '<!doctype html>' "${TARGET_PATH}" || ! grep -q '<title>CV Coach' "${TARGET_PATH}" || ! grep -q '</html>' "${TARGET_PATH}"; then
+          validation_error="Patch rejected: canonical HTML markers missing"
+        elif ! python3 - "${TARGET_PATH}" <<'PYHTML'
 import pathlib, re, sys
 text = pathlib.Path(sys.argv[1]).read_text()
 scripts = re.findall(r'<script>(.*?)</script>', text, flags=re.S|re.I)
 if not scripts:
     raise SystemExit('no inline script found')
 pathlib.Path('/tmp/cv-autopilot-inline.js').write_text('\n'.join(scripts))
-PY
-    node --check /tmp/cv-autopilot-inline.js
-    git diff --check -- "${TARGET_PATH}"
+PYHTML
+        then
+          validation_error="Patch rejected: inline JavaScript extraction failed"
+        elif ! node --check /tmp/cv-autopilot-inline.js; then
+          validation_error="Patch rejected: inline JavaScript syntax invalid"
+        fi
+        ;;
+      shell)
+        if ! bash -n "${TARGET_PATH}"; then
+          validation_error="Patch rejected: shell syntax invalid"
+        fi
+        ;;
+      javascript)
+        if ! node --check "${TARGET_PATH}"; then
+          validation_error="Patch rejected: JavaScript syntax invalid"
+        fi
+        ;;
+      json)
+        if ! jq -e . "${TARGET_PATH}" >/dev/null; then
+          validation_error="Patch rejected: JSON syntax invalid"
+        fi
+        ;;
+      text)
+        ;;
+    esac
+
+    if [[ -n "${validation_error}" ]]; then
+      mv "${TARGET_PATH}.autopilot-backup" "${TARGET_PATH}"
+      external_retry "${request_id}" "${validation_error}" 30
+      exit 0
+    fi
+
+    if ! git diff --check -- "${TARGET_PATH}"; then
+      mv "${TARGET_PATH}.autopilot-backup" "${TARGET_PATH}"
+      external_retry "${request_id}" "Patch rejected: git diff check failed" 30
+      exit 0
+    fi
 
     diff_text="$(git diff -- "${TARGET_PATH}")"
     if grep -Eiq 'sk-[A-Za-z0-9_-]{20,}|service[_-]?role|SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY[[:space:]]*[=:]|eval\(|new Function\(' <<<"${diff_text}"; then
@@ -359,8 +400,8 @@ ${summary}
 
 ### Validation
 - Exact-text replacement uniqueness: passed
-- HTML canonical markers: passed
-- Inline JavaScript syntax (`node --check`): passed
+- Target-type structural validation: passed
+- Target-type syntax validation: passed
 - `git diff --check`: passed
 - Secret / privileged-code pattern scan: passed
 
@@ -384,12 +425,12 @@ EOF
       --arg branch "${branch}" \
       --arg commit_sha "${commit_sha}" \
       --argjson usage "${usage_json}" \
-      '{decision:$decision,summary:$summary,reason:$reason,pr_url:$pr_url,branch:$branch,commit_sha:$commit_sha,usage:$usage,executor:"github-actions-openai",validation:{exact_replacements:true,node_check:true,diff_check:true,secret_scan:true}}')"
+      '{decision:$decision,summary:$summary,reason:$reason,pr_url:$pr_url,branch:$branch,commit_sha:$commit_sha,usage:$usage,executor:"github-actions-openai",validation:{exact_replacements:true,target_syntax_check:true,diff_check:true,secret_scan:true}}')"
     proposal_created "${request_id}" "${result}"
     echo "Autopilot external executor: WAITING_REVIEW ${pr_url}"
     ;;
 
   *)
-    external_retry "${request_id}" "Unknown structured decision: ${decision}" 300
+    external_retry "${request_id}" "Unknown structured decision: ${decision}" 30
     ;;
 esac
