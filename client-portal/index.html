@@ -822,7 +822,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
    const app=document.getElementById('app');if(!app||app.classList.contains('hidden'))return;
    let side=document.getElementById('cvDesktopSide');
    if(!side){side=document.createElement('aside');side.id='cvDesktopSide';side.className='cvDesktopSide';side.innerHTML='<div class="cvSideBrand"><img src="'+LOGO+'" alt="CV Coach"><small>Diseño · Disciplina · Progreso</small></div><div class="cvSideNav"></div>';app.prepend(side)}
-   const nav=side.querySelector('.cvSideNav');if(!nav.children.length){[['home','Inicio'],['routine','Rutina'],['habits','Hábitos'],['missions','Misiones'],['progress','Progreso visual']].forEach(([v,label])=>{const b=document.createElement('button');b.type='button';b.dataset.view=v;b.innerHTML=(ICONS[v]||'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" stroke-width="1.7"/></svg>')+'<span>'+label+'</span>';b.onclick=()=>window.nav(v);nav.appendChild(b)})}
+   const nav=side.querySelector('.cvSideNav');if(!nav.children.length){[['home','Inicio'],['routine','Rutina'],['habits','Hábitos'],['missions','Misiones'],['progress','Progreso visual'],['achievements','Logros']].forEach(([v,label])=>{const b=document.createElement('button');b.type='button';b.dataset.view=v;b.innerHTML=(ICONS[v]||'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" stroke-width="1.7"/></svg>')+'<span>'+label+'</span>';b.onclick=()=>window.nav(v);nav.appendChild(b)})}
  }
  function upgradeBottom(){document.querySelectorAll('.nav button').forEach(b=>{const i=b.querySelector('.ico'),v=b.dataset.view;if(i&&ICONS[v])i.innerHTML=ICONS[v]})}
  function enhanceRoutine(v){
