@@ -1,0 +1,58 @@
+name: Autopilot Large Prompt Fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/autopilot-large-prompt-fix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Stream large prompt into request body
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/autopilot-external-executor.sh')
+          s=p.read_text()
+          anchor='''body_file="$(mktemp)"
+          response_file="$(mktemp)"
+          proposal_file="$(mktemp)"
+          trap 'rm -f "${body_file}" "${response_file}" "${proposal_file}" /tmp/cv-autopilot-inline.js' EXIT'''
+          repl='''input_file="$(mktemp)"
+          printf '%s' "${input_text}" > "${input_file}"
+          body_file="$(mktemp)"
+          response_file="$(mktemp)"
+          proposal_file="$(mktemp)"
+          trap 'rm -f "${input_file}" "${body_file}" "${response_file}" "${proposal_file}" /tmp/cv-autopilot-inline.js' EXIT'''
+          if s.count(anchor)!=1: raise SystemExit(f'input-file anchor count={s.count(anchor)}')
+          s=s.replace(anchor,repl,1)
+          old='  --arg input "${input_text}" \\\n'
+          new='  --rawfile input "${input_file}" \\\n'
+          if s.count(old)!=1: raise SystemExit(f'body input anchor count={s.count(old)}')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+          bash -n scripts/autopilot-external-executor.sh
+          git diff --check
+          grep -q -- '--rawfile input "${input_file}"' scripts/autopilot-external-executor.sh
+      - name: Commit fix and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'cv-coach-autopilot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm .github/workflows/autopilot-large-prompt-fix.yml
+          git add scripts/autopilot-external-executor.sh .github/workflows/autopilot-large-prompt-fix.yml
+          git commit -m 'fix(autopilot): stream large prompt into OpenAI body'
+          git push origin HEAD:main
