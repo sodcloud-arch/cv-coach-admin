@@ -888,12 +888,12 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   const rarityMap={common:'común',rare:'raro',epic:'épico',legendary:'legendario'};
   const categoryMap={training:'entrenamiento',missions:'misiones',progress:'progreso'};
   let achievementState={rows:[],unlocked:[],loading:false,error:''};
-  let achievementRequest=null;
+  let achievementRequest=null,achievementLoaded=false;
   const localDate=v=>{if(!v)return 'Fecha no disponible';try{return new Intl.DateTimeFormat('es-CL',{dateStyle:'medium'}).format(new Date(v))}catch(_){return 'Fecha no disponible'}};
   const label=(map,v)=>map[String(v||'').toLowerCase()]||'No especificada';
   function text(parent,tag,value,className){const el=document.createElement(tag);if(className)el.className=className;el.textContent=String(value??'');parent.append(el);return el}
   async function loadAchievements(){
-    if(mode!=='real'||!user?.id){achievementState={rows:[],unlocked:[],loading:false,error:''};return}
+    if(mode!=='real'||!user?.id){achievementState={rows:[],unlocked:[],loading:false,error:''};achievementLoaded=false;return}
     if(achievementRequest)return achievementRequest;
     const uid=user.id;achievementState.loading=true;achievementState.error='';
     achievementRequest=(async()=>{
@@ -902,9 +902,9 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
         sb.from('client_achievements').select('achievement_id,title,description,rarity,badge_path,xp_reward,credit_reward,unlocked_at').eq('client_id',uid)
       ]);
       const errors=[];if(a.error)errors.push('No se pudieron cargar los logros disponibles.');if(c.error)errors.push('No se pudieron cargar tus desbloqueos.');
-      achievementState.rows=a.error?[]:(a.data||[]);achievementState.unlocked=c.error?[]:(c.data||[]);achievementState.error=errors.join(' ');achievementState.loading=false;
+      achievementState.rows=a.error?[]:(a.data||[]);achievementState.unlocked=c.error?[]:(c.data||[]);achievementState.error=errors.join(' ');achievementState.loading=false;achievementLoaded=true;
       if(view==='achievements')render();
-    })().catch(error=>{achievementState.loading=false;achievementState.error='No se pudo cargar el centro de logros. El resto del portal sigue disponible.';console.warn('Achievements load failed',error);if(view==='achievements')render()}).finally(()=>{achievementRequest=null});
+    })().catch(error=>{achievementState.loading=false;achievementState.error='No se pudo cargar el centro de logros. El resto del portal sigue disponible.';achievementLoaded=true;console.warn('Achievements load failed',error);if(view==='achievements')render()}).finally(()=>{achievementRequest=null});
     return achievementRequest;
   }
   function achievementView(){
@@ -921,11 +921,11 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
       else if(isUnlocked){text(card,'h3',snap.title||'Logro desbloqueado');text(card,'p',snap.description||'Descripción no disponible en el snapshot.');text(card,'div','Categoría: '+label(categoryMap,a.category),'achievementReward');text(card,'div','+'+(snap.xp_reward??0)+' XP · +'+(snap.credit_reward??0)+' créditos CV','achievementReward');text(card,'div','Desbloqueado: '+localDate(snap.unlocked_at),'hint');}
       else{text(card,'h3',a.locked_title||'Logro bloqueado');text(card,'p',a.locked_description||'Continúa con tu proceso para descubrirlo.');text(card,'div','Categoría: '+label(categoryMap,a.category),'achievementReward');text(card,'div','Recompensa potencial: +'+(a.xp_reward??0)+' XP · +'+(a.credit_reward??0)+' créditos CV','achievementReward');}grid.append(card)});return root;
   }
-  const baseRender=window.render;window.render=function(){const result=baseRender.apply(this,arguments);if(view==='achievements'){const c=document.getElementById('content');if(c){c.replaceChildren(achievementView());if(mode==='real'&&!achievementState.rows.length&&!achievementState.loading)loadAchievements()}}return result};
+  const baseRender=window.render;window.render=function(){const result=baseRender.apply(this,arguments);if(view==='achievements'){const c=document.getElementById('content');if(c){c.replaceChildren(achievementView());if(mode==='real'&&!achievementLoaded&&!achievementState.loading)loadAchievements()}}return result};
   const baseSetLogged=window.setLogged;window.setLogged=function(){const result=baseSetLogged.apply(this,arguments);if(mode==='real')loadAchievements();return result};
   const baseNav=window.nav;window.nav=function(v){const result=baseNav.apply(this,arguments);if(v==='achievements')loadAchievements();return result};
   function addDesktopAchievementLink(){const nav=document.querySelector('.cvSideNav');if(!nav)return;let b=nav.querySelector('[data-view="achievements"]');if(!b){b=document.createElement('button');b.type='button';b.dataset.view='achievements';text(b,'span','🏆');text(b,'span','Logros');b.onclick=()=>window.nav('achievements');nav.append(b)}nav.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.view===view))}
   const baseRender2=window.render;window.render=function(){const result=baseRender2.apply(this,arguments);requestAnimationFrame(addDesktopAchievementLink);return result};
-  sb.auth.onAuthStateChange((event,session)=>{if(session?.user?.id&&event==='TOKEN_REFRESHED'){user=session.user;achievementState={rows:[],unlocked:[],loading:false,error:''};if(view==='achievements')loadAchievements()}});
+  sb.auth.onAuthStateChange((event,session)=>{if(session?.user?.id&&event==='TOKEN_REFRESHED'){user=session.user;achievementState={rows:[],unlocked:[],loading:false,error:''};achievementLoaded=false;if(view==='achievements')loadAchievements()}});
 })();
 </script></body></html>
