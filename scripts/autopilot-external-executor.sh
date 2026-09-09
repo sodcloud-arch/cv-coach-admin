@@ -29,6 +29,33 @@ claim_external() {
   call_edge "${token}" '{"op":"claim_external","provider":"OPENAI"}'
 }
 
+ai_budget_status() {
+  local mission_id="$1" token payload
+  token="$(get_oidc_token)"
+  payload="$(jq -nc --arg mission_id "${mission_id}" '{op:"ai_budget_status",mission_id:$mission_id}')"
+  call_edge "${token}" "${payload}"
+}
+
+record_ai_usage() {
+  local request_id="$1" mission_id="$2" mission_key="$3" action_id="$4" action_key="$5" response_id="$6" model="$7" input_tokens="$8" cached_tokens="$9" output_tokens="${10}" total_tokens="${11}" latency_ms="${12}" token payload
+  token="$(get_oidc_token)"
+  payload="$(jq -nc \
+    --arg request_id "${request_id}" \
+    --arg mission_id "${mission_id}" \
+    --arg mission_key "${mission_key}" \
+    --arg action_id "${action_id}" \
+    --arg action_key "${action_key}" \
+    --arg response_id "${response_id}" \
+    --arg model "${model}" \
+    --argjson input_tokens "${input_tokens}" \
+    --argjson cached_input_tokens "${cached_tokens}" \
+    --argjson output_tokens "${output_tokens}" \
+    --argjson total_tokens "${total_tokens}" \
+    --argjson latency_ms "${latency_ms}" \
+    '{op:"record_ai_usage",response_id:$response_id,model:$model,input_tokens:$input_tokens,cached_input_tokens:$cached_input_tokens,output_tokens:$output_tokens,total_tokens:$total_tokens,latency_ms:$latency_ms,metadata:{request_id:$request_id,mission_id:$mission_id,mission_key:$mission_key,action_id:$action_id,action_key:$action_key}}')"
+  call_edge "${token}" "${payload}"
+}
+
 external_retry() {
   local request_id="$1" error="$2" retry_after="${3:-300}" token payload
   token="$(get_oidc_token)"
@@ -71,6 +98,8 @@ if [[ "${kind}" != "EXTERNAL_REQUEST" ]]; then
 fi
 
 request_id="$(jq -r '.request.request_id' <<<"${response}")"
+mission_id="$(jq -r '.request.mission_id' <<<"${response}")"
+action_id="$(jq -r '.request.action_id' <<<"${response}")"
 mission_key="$(jq -r '.request.mission_key' <<<"${response}")"
 action_key="$(jq -r '.request.action_key' <<<"${response}")"
 action_type="$(jq -r '.request.action_type' <<<"${response}")"
@@ -87,7 +116,30 @@ if [[ -z "${OPENAI_API_KEY:-}" ]]; then
     "OPENAI_API_KEY is not configured for the CV Coach Autopilot executor." \
     "In GitHub open Settings → Secrets and variables → Actions → New repository secret. Create OPENAI_API_KEY with the OpenAI API key. Do not paste the key into ChatGPT. Then close this blocker Issue to resume automatically."
   echo "Autopilot external executor: HUMAN_BLOCKER (missing OPENAI_API_KEY)"
-  # Immediately run the normal worker so it publishes the blocker Issue now.
+  bash scripts/autopilot-worker.sh
+  exit 0
+fi
+
+budget="$(ai_budget_status "${mission_id}")"
+if [[ "$(jq -r '.kind // empty' <<<"${budget}")" != "AI_BUDGET_STATUS" ]]; then
+  external_human_blocker "${request_id}" "AI budget guard could not be verified before the OpenAI call." "Review the Autopilot AI budget gateway before resuming."
+  bash scripts/autopilot-worker.sh
+  exit 0
+fi
+
+allowed="$(jq -r '.result.allowed' <<<"${budget}")"
+budget_reason="$(jq -r '.result.reason' <<<"${budget}")"
+OPENAI_MODEL="$(jq -r '.result.model // "gpt-5.6-luna"' <<<"${budget}")"
+MAX_OUTPUT_TOKENS="$(jq -r '.result.max_output_tokens // 2500' <<<"${budget}")"
+
+if [[ "${allowed}" != "true" ]]; then
+  spent="$(jq -r '.result.spent_today_usd' <<<"${budget}")"
+  daily_budget="$(jq -r '.result.daily_budget_usd' <<<"${budget}")"
+  external_human_blocker \
+    "${request_id}" \
+    "Autopilot AI budget guard stopped the request: ${budget_reason}. Spent today: USD ${spent}; daily budget: USD ${daily_budget}." \
+    "Wait for the daily budget window to reset, or intentionally raise the Autopilot AI policy in Supabase before closing this blocker."
+  echo "Autopilot external executor: HUMAN_BLOCKER (${budget_reason})"
   bash scripts/autopilot-worker.sh
   exit 0
 fi
@@ -99,6 +151,11 @@ if [[ ! -f "${TARGET_PATH}" ]]; then
 fi
 
 source_text="$(cat "${TARGET_PATH}")"
+if (( ${#source_text} > 300000 )); then
+  external_human_blocker "${request_id}" "Target source is larger than the safe Autopilot context limit." "Split or modularize the source before automated AI editing."
+  bash scripts/autopilot-worker.sh
+  exit 0
+fi
 
 schema='{
   "type":"object",
@@ -108,17 +165,7 @@ schema='{
     "decision":{"type":"string","enum":["PATCH","NO_CHANGE","HUMAN_BLOCKER"]},
     "summary":{"type":"string","maxLength":1200},
     "reason":{"type":"string","maxLength":2000},
-    "replacements":{
-      "type":"array","maxItems":20,
-      "items":{
-        "type":"object","additionalProperties":false,
-        "required":["old_text","new_text"],
-        "properties":{
-          "old_text":{"type":"string","minLength":1,"maxLength":12000},
-          "new_text":{"type":"string","maxLength":16000}
-        }
-      }
-    },
+    "replacements":{"type":"array","maxItems":20,"items":{"type":"object","additionalProperties":false,"required":["old_text","new_text"],"properties":{"old_text":{"type":"string","minLength":1,"maxLength":12000},"new_text":{"type":"string","maxLength":16000}}}},
     "validation_notes":{"type":"array","maxItems":12,"items":{"type":"string","maxLength":800}},
     "human_action":{"type":"string","maxLength":1600}
   }
@@ -146,8 +193,9 @@ jq -n \
   --arg model "${OPENAI_MODEL}" \
   --arg instructions "${system_instructions}" \
   --arg input "${input_text}" \
+  --argjson max_output_tokens "${MAX_OUTPUT_TOKENS}" \
   --argjson schema "${schema}" \
-  '{model:$model,instructions:$instructions,input:$input,store:false,max_output_tokens:3000,text:{format:{type:"json_schema",name:"cv_autopilot_patch_v1",strict:true,schema:$schema}}}' \
+  '{model:$model,instructions:$instructions,input:$input,store:false,max_output_tokens:$max_output_tokens,text:{format:{type:"json_schema",name:"cv_autopilot_patch_v1",strict:true,schema:$schema}}}' \
   > "${body_file}"
 
 started_ms="$(date +%s%3N)"
@@ -171,6 +219,17 @@ input_tokens="$(jq -r '.usage.input_tokens // 0' "${response_file}")"
 cached_tokens="$(jq -r '.usage.input_tokens_details.cached_tokens // 0' "${response_file}")"
 output_tokens="$(jq -r '.usage.output_tokens // 0' "${response_file}")"
 total_tokens="$(jq -r '.usage.total_tokens // 0' "${response_file}")"
+
+usage_ack="$(record_ai_usage "${request_id}" "${mission_id}" "${mission_key}" "${action_id}" "${action_key}" "${response_id}" "${OPENAI_MODEL}" "${input_tokens}" "${cached_tokens}" "${output_tokens}" "${total_tokens}" "${latency_ms}")" || {
+  external_human_blocker "${request_id}" "OpenAI responded, but AI usage telemetry could not be persisted safely." "Repair the Autopilot AI usage telemetry before resuming to avoid uncontrolled spend."
+  bash scripts/autopilot-worker.sh
+  exit 0
+}
+if [[ "$(jq -r '.kind // empty' <<<"${usage_ack}")" != "AI_USAGE_RECORDED" ]]; then
+  external_human_blocker "${request_id}" "OpenAI responded, but AI usage telemetry was not acknowledged." "Repair the Autopilot AI usage telemetry before resuming to avoid uncontrolled spend."
+  bash scripts/autopilot-worker.sh
+  exit 0
+fi
 
 jq -r '[.output[]?.content[]? | select(.type=="output_text") | .text][0] // .output_text // empty' "${response_file}" > "${proposal_file}"
 
@@ -216,7 +275,6 @@ case "${decision}" in
     fi
 
     cp "${TARGET_PATH}" "${TARGET_PATH}.autopilot-backup"
-
     if ! python3 - "${TARGET_PATH}" "${proposal_file}" <<'PY'
 import json, pathlib, sys
 path = pathlib.Path(sys.argv[1])
