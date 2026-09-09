@@ -8,6 +8,7 @@ on:
       - 'client-portal/stabilize.py'
       - 'client-portal/manifest.webmanifest'
       - 'client-portal/sw.js'
+      - 'client-portal/icon.svg'
       - '.github/workflows/deploy-cv-coach-client-production.yml'
   workflow_dispatch:
 
@@ -39,10 +40,15 @@ jobs:
           test "$(wc -c < client-portal/stable/index.html)" -gt 50000
           grep -qi 'CV Coach' client-portal/stable/index.html
           grep -q "America/Santiago" client-portal/stable/index.html
+          grep -q 'manifest.webmanifest' client-portal/stable/index.html
+          grep -q 'serviceWorker' client-portal/stable/index.html
           if grep -q 'Cliente Premium Preview' client-portal/stable/index.html; then
             echo 'Preview title remained in stable artifact' >&2
             exit 1
           fi
+          test -s client-portal/manifest.webmanifest
+          test -s client-portal/sw.js
+          test -s client-portal/icon.svg
 
       - name: Check Vercel credential
         id: auth
@@ -65,8 +71,9 @@ jobs:
           mkdir -p .vercel/output/static
           printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
           cp index.html .vercel/output/static/index.html
-          if [[ -f ../manifest.webmanifest ]]; then cp ../manifest.webmanifest .vercel/output/static/manifest.webmanifest; fi
-          if [[ -f ../sw.js ]]; then cp ../sw.js .vercel/output/static/sw.js; fi
+          cp ../manifest.webmanifest .vercel/output/static/manifest.webmanifest
+          cp ../sw.js .vercel/output/static/sw.js
+          cp ../icon.svg .vercel/output/static/icon.svg
           cat > .vercel/output/config.json <<'JSON'
           {
             "version": 3,
@@ -82,6 +89,33 @@ jobs:
                   "Referrer-Policy": "strict-origin-when-cross-origin",
                   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
                   "X-Robots-Tag": "noindex, nofollow"
+                }
+              },
+              {
+                "src": "/sw.js",
+                "dest": "/sw.js",
+                "headers": {
+                  "Cache-Control": "no-cache, no-store, must-revalidate",
+                  "Service-Worker-Allowed": "/",
+                  "X-Content-Type-Options": "nosniff"
+                }
+              },
+              {
+                "src": "/manifest.webmanifest",
+                "dest": "/manifest.webmanifest",
+                "headers": {
+                  "Cache-Control": "no-cache",
+                  "Content-Type": "application/manifest+json; charset=utf-8",
+                  "X-Content-Type-Options": "nosniff"
+                }
+              },
+              {
+                "src": "/icon.svg",
+                "dest": "/icon.svg",
+                "headers": {
+                  "Cache-Control": "public, max-age=3600",
+                  "Content-Type": "image/svg+xml; charset=utf-8",
+                  "X-Content-Type-Options": "nosniff"
                 }
               },
               { "handle": "filesystem" },
@@ -102,6 +136,9 @@ jobs:
           }
           JSON
           test -s .vercel/output/static/index.html
+          test -s .vercel/output/static/manifest.webmanifest
+          test -s .vercel/output/static/sw.js
+          test -s .vercel/output/static/icon.svg
           test -s .vercel/output/config.json
 
       - name: Deploy CV Coach client production
@@ -116,20 +153,29 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5 6 7 8; do
-            headers="$(mktemp)"
-            body="$(curl --fail --silent --show-error --location --max-time 20 -D "$headers" https://cv-coach-roan.vercel.app || true)"
-            if [[ "$body" == *"CV Coach"* && "$body" != *"Cliente Premium Preview"* && "$body" == *"America/Santiago"* ]]; then
-              grep -qi '^x-content-type-options: nosniff' "$headers"
-              grep -qi '^x-frame-options: DENY' "$headers"
-              grep -qi '^content-security-policy:' "$headers"
-              echo 'PUBLIC_PORTAL_OK'
-              rm -f "$headers"
+            root_headers="$(mktemp)"
+            sw_headers="$(mktemp)"
+            manifest_headers="$(mktemp)"
+            icon_headers="$(mktemp)"
+            root_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$root_headers" https://cv-coach-roan.vercel.app || true)"
+            manifest_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$manifest_headers" https://cv-coach-roan.vercel.app/manifest.webmanifest || true)"
+            sw_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$sw_headers" https://cv-coach-roan.vercel.app/sw.js || true)"
+            icon_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$icon_headers" https://cv-coach-roan.vercel.app/icon.svg || true)"
+            if [[ "$root_body" == *"CV Coach"* && "$root_body" != *"Cliente Premium Preview"* && "$root_body" == *"America/Santiago"* && "$root_body" == *"manifest.webmanifest"* && "$manifest_body" == *'"name": "CV Coach"'* && "$manifest_body" == *'"src": "./icon.svg"'* && "$sw_body" == *"cv-coach-shell"* && "$icon_body" == *"<svg"* ]]; then
+              grep -qi '^x-content-type-options: nosniff' "$root_headers"
+              grep -qi '^x-frame-options: DENY' "$root_headers"
+              grep -qi '^content-security-policy:' "$root_headers"
+              grep -qi '^cache-control:.*no-store' "$sw_headers"
+              grep -qi '^content-type:.*application/manifest' "$manifest_headers"
+              grep -qi '^content-type:.*image/svg' "$icon_headers"
+              echo 'PUBLIC_PORTAL_PWA_OK'
+              rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers"
               exit 0
             fi
-            rm -f "$headers"
+            rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers"
             sleep 3
           done
-          echo 'Public alias verification failed' >&2
+          echo 'Public PWA alias verification failed' >&2
           exit 1
 
       - name: Credential blocker marker
