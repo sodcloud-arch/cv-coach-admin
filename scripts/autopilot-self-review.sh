@@ -225,7 +225,7 @@ if (( policy_max_tokens < review_max_tokens )); then review_max_tokens="${policy
 
 context_text="${action_title} ${action_instructions} ${request_payload} ${action_payload}"
 sensitive=false
-if grep -Eiq '(password|contraseñ|credential|credencial|secret|secreto|api[ _-]?key|payment|pago|billing|factur|delete|borrar|eliminar|drop table|rls|permission|permiso|service[_-]?role|security|seguridad|migration|migración|production data|datos de producción)' <<<"${context_text}"; then
+if grep -Eiq '(password|contraseñ|credential|credencial|api[ _-]?key|payment|pago|billing|factur|delete|borrar|eliminar|drop table|rls|permission|permiso|service[_-]?role|security|seguridad|migration|migración|production data|datos de producción|github[ _-]?secret|crear.{0,40}(secret|secreto)|modificar.{0,40}(secret|secreto)|rotar.{0,40}(secret|secreto)|eliminar.{0,40}(secret|secreto))' <<<"${context_text}"; then
   sensitive=true
 fi
 
