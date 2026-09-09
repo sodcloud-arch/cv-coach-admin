@@ -116,3 +116,5 @@ run_loop() {
 
 resolve_blocker_if_requested
 run_loop
+
+# QA marker: human-blocker E2E validation
