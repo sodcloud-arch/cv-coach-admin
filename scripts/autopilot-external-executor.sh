@@ -191,7 +191,7 @@ input_text="$(jq -nr \
   --arg instructions "${instructions}" \
   --arg request_payload "${request_payload}" \
   --arg action_payload "${action_payload}" \
-  --arg source "${source_text}" \
+  --rawfile source "${TARGET_PATH}" \
   '"MISSION: "+$mission_key+"\nACTION: "+$action_key+" ("+$action_type+")\nTITLE: "+$title+"\nINSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\n\nCURRENT TARGET SOURCE:\n"+$source')"
 
 body_file="$(mktemp)"
