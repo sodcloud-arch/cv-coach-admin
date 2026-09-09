@@ -1,0 +1,231 @@
+name: Bootstrap Autopilot Validator Repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bootstrap-autopilot-validator.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout canonical main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply constrained bootstrap patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          executor = Path('scripts/autopilot-external-executor.sh')
+          text = executor.read_text()
+
+          replacements = {
+              'local request_id="$1" error="$2" retry_after="${3:-300}" token payload':
+                  'local request_id="$1" error="$2" retry_after="${3:-60}" token payload',
+              'external_retry "${request_id}" "OpenAI returned no valid structured output" 300':
+                  'external_retry "${request_id}" "OpenAI returned no valid structured output" 30',
+              'external_retry "${request_id}" "PATCH contained invalid replacement count: ${replacement_count}" 300':
+                  'external_retry "${request_id}" "PATCH contained invalid replacement count: ${replacement_count}" 15',
+              'external_retry "${request_id}" "Deterministic replacement validation failed" 300':
+                  'external_retry "${request_id}" "Deterministic replacement validation failed" 15',
+              'external_retry "${request_id}" "Patch rejected: resulting file grew beyond safety threshold" 300':
+                  'external_retry "${request_id}" "Patch rejected: resulting file grew beyond safety threshold" 30',
+              'external_retry "${request_id}" "Unknown structured decision: ${decision}" 300':
+                  'external_retry "${request_id}" "Unknown structured decision: ${decision}" 30',
+              '- HTML canonical markers: passed\n- Inline JavaScript syntax (`node --check`): passed':
+                  '- Target-type structural validation: passed\n- Target-type syntax validation: passed',
+              'validation:{exact_replacements:true,node_check:true,diff_check:true,secret_scan:true}':
+                  'validation:{exact_replacements:true,target_syntax_check:true,diff_check:true,secret_scan:true}',
+          }
+          for old, new in replacements.items():
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'executor bootstrap expected 1 occurrence, got {count}: {old[:80]}')
+              text = text.replace(old, new, 1)
+
+          start_marker = "    if ! grep -q '<!doctype html>' \"${TARGET_PATH}\" || ! grep -q '<title>CV Coach' \"${TARGET_PATH}\" || ! grep -q '</html>' \"${TARGET_PATH}\"; then"
+          end_marker = '\n\n    diff_text="$(git diff -- "${TARGET_PATH}")"'
+          start = text.find(start_marker)
+          end = text.find(end_marker, start)
+          if start < 0 or end < 0:
+              raise SystemExit('executor validation block markers not found')
+          new_block = r'''    target_kind="text"
+    case "${TARGET_PATH}" in
+      *.html|*.htm) target_kind="html" ;;
+      *.sh) target_kind="shell" ;;
+      *.js|*.mjs|*.cjs) target_kind="javascript" ;;
+      *.json|*.webmanifest) target_kind="json" ;;
+    esac
+
+    validation_error=""
+    case "${target_kind}" in
+      html)
+        if ! grep -q '<!doctype html>' "${TARGET_PATH}" || ! grep -q '<title>CV Coach' "${TARGET_PATH}" || ! grep -q '</html>' "${TARGET_PATH}"; then
+          validation_error="Patch rejected: canonical HTML markers missing"
+        elif ! python3 - "${TARGET_PATH}" <<'PYHTML'
+import pathlib, re, sys
+text = pathlib.Path(sys.argv[1]).read_text()
+scripts = re.findall(r'<script>(.*?)</script>', text, flags=re.S|re.I)
+if not scripts:
+    raise SystemExit('no inline script found')
+pathlib.Path('/tmp/cv-autopilot-inline.js').write_text('\n'.join(scripts))
+PYHTML
+        then
+          validation_error="Patch rejected: inline JavaScript extraction failed"
+        elif ! node --check /tmp/cv-autopilot-inline.js; then
+          validation_error="Patch rejected: inline JavaScript syntax invalid"
+        fi
+        ;;
+      shell)
+        if ! bash -n "${TARGET_PATH}"; then
+          validation_error="Patch rejected: shell syntax invalid"
+        fi
+        ;;
+      javascript)
+        if ! node --check "${TARGET_PATH}"; then
+          validation_error="Patch rejected: JavaScript syntax invalid"
+        fi
+        ;;
+      json)
+        if ! jq -e . "${TARGET_PATH}" >/dev/null; then
+          validation_error="Patch rejected: JSON syntax invalid"
+        fi
+        ;;
+      text)
+        ;;
+    esac
+
+    if [[ -n "${validation_error}" ]]; then
+      mv "${TARGET_PATH}.autopilot-backup" "${TARGET_PATH}"
+      external_retry "${request_id}" "${validation_error}" 30
+      exit 0
+    fi
+
+    if ! git diff --check -- "${TARGET_PATH}"; then
+      mv "${TARGET_PATH}.autopilot-backup" "${TARGET_PATH}"
+      external_retry "${request_id}" "Patch rejected: git diff check failed" 30
+      exit 0
+    fi'''
+          text = text[:start] + new_block + text[end:]
+          executor.write_text(text)
+
+          review = Path('scripts/autopilot-self-review.sh')
+          rtext = review.read_text()
+          rstart = rtext.find('validate_worktree() {')
+          rend_marker = '\n}\n\nfind_review_pr() {'
+          rend = rtext.find(rend_marker, rstart)
+          if rstart < 0 or rend < 0:
+              raise SystemExit('self-review validate_worktree markers not found')
+          new_review = r'''validate_worktree() {
+  if [[ ! -f "${TARGET_PATH}" ]]; then
+    echo "Self-review validation: missing ${TARGET_PATH}" >&2
+    return 1
+  fi
+
+  local target_kind="text"
+  case "${TARGET_PATH}" in
+    *.html|*.htm) target_kind="html" ;;
+    *.sh) target_kind="shell" ;;
+    *.js|*.mjs|*.cjs) target_kind="javascript" ;;
+    *.json|*.webmanifest) target_kind="json" ;;
+  esac
+
+  case "${target_kind}" in
+    html)
+      if ! grep -q '<!doctype html>' "${TARGET_PATH}" || ! grep -q '<title>CV Coach' "${TARGET_PATH}" || ! grep -q '</html>' "${TARGET_PATH}"; then
+        echo "Self-review validation: canonical HTML markers missing" >&2
+        return 1
+      fi
+      if ! python3 - "${TARGET_PATH}" <<'PYHTML'
+import pathlib, re, subprocess, sys
+path = pathlib.Path(sys.argv[1])
+current = path.read_text()
+base_sha = subprocess.check_output(["git", "merge-base", "origin/main", "HEAD"], text=True).strip()
+base = subprocess.check_output(["git", "show", f"{base_sha}:{path.as_posix()}"], text=True)
+if path.as_posix() == "index.html":
+    pat = re.compile(r"const BASE='([^']+)',KEY='([^']+)'")
+    a = pat.search(base)
+    b = pat.search(current)
+    if not a or not b or a.groups() != b.groups():
+        raise SystemExit("Supabase public Admin identity changed")
+else:
+    for pattern in (r"https://fmhcansyxcsqkrivqchr\.supabase\.co", r"sb_publishable_[A-Za-z0-9_-]+"):
+        a = sorted(set(re.findall(pattern, base)))
+        b = sorted(set(re.findall(pattern, current)))
+        if not a or a != b:
+            raise SystemExit(f"Supabase public client identity changed for {pattern}")
+scripts = re.findall(r'<script>(.*?)</script>', current, flags=re.S|re.I)
+if not scripts:
+    raise SystemExit("no inline script found")
+pathlib.Path('/tmp/cv-autopilot-review-inline.js').write_text('\n'.join(scripts))
+PYHTML
+      then
+        return 1
+      fi
+      node --check /tmp/cv-autopilot-review-inline.js || return 1
+      ;;
+    shell)
+      bash -n "${TARGET_PATH}" || return 1
+      ;;
+    javascript)
+      node --check "${TARGET_PATH}" || return 1
+      ;;
+    json)
+      jq -e . "${TARGET_PATH}" >/dev/null || return 1
+      ;;
+    text)
+      ;;
+  esac
+
+  git diff --check -- "${TARGET_PATH}" || return 1
+
+  local unexpected
+  unexpected="$(git diff --name-only "$(git merge-base origin/main HEAD)" -- | grep -v "^${TARGET_PATH//./\.}$" || true)"
+  if [[ -n "${unexpected}" ]]; then
+    echo "Self-review validation: unexpected changed files: ${unexpected}" >&2
+    return 1
+  fi
+
+  local full_diff
+  full_diff="$(git diff "$(git merge-base origin/main HEAD)" -- "${TARGET_PATH}")"
+  if grep -Eiq 'sk-[A-Za-z0-9_-]{20,}|sb_secret_[A-Za-z0-9_-]{20,}|service[_-]?role|SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY[[:space:]]*[=:]|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|eval\(|new Function\(' <<<"${full_diff}"; then
+    echo "Self-review validation: forbidden privileged/secret pattern" >&2
+    return 1
+  fi
+}'''
+          rtext = rtext[:rstart] + new_review + rtext[rend + 2:]
+          review.write_text(rtext)
+          PY
+
+          bash -n scripts/autopilot-external-executor.sh
+          bash -n scripts/autopilot-self-review.sh
+          grep -q 'retry_after="${3:-60}"' scripts/autopilot-external-executor.sh
+          grep -q 'OpenAI HTTP ${http_code}: ${api_error}" 300' scripts/autopilot-external-executor.sh
+          grep -q 'target_kind="shell"' scripts/autopilot-external-executor.sh
+          grep -q 'bash -n "${TARGET_PATH}"' scripts/autopilot-self-review.sh
+          git diff --check
+
+      - name: Create repair pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="fix/autopilot-type-aware-validator-${GITHUB_RUN_ID}"
+          git config user.name "cv-coach-bootstrap[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add scripts/autopilot-external-executor.sh scripts/autopilot-self-review.sh
+          git commit -m "fix(autopilot): validate targets by file type"
+          git push origin "HEAD:$branch"
+          gh pr create --base main --head "$branch" --title "fix(autopilot): type-aware validation and fast deterministic retries" --body "Bootstrap repair for C3. Makes executor/self-review validation target-type aware, keeps OpenAI HTTP backoff at 300s, and shortens only recoverable deterministic/model-output retries. Both shell scripts pass bash -n and git diff --check."
