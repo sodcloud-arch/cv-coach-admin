@@ -889,7 +889,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   window.openNotifications=function(){view='notifications';document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));render();refreshNotifications()};
   const baseRender=window.render;window.render=function(){const result=baseRender.apply(this,arguments);if(view==='notifications'){const c=document.getElementById('content');if(c){c.innerHTML=notificationShell();document.getElementById('cvMarkAll').onclick=markAllNotifications;renderNotificationList()}}else if(view==='home'&&mode==='real'){refreshNotifications()}return result};
   const baseSetLogged=window.setLogged;window.setLogged=function(){const result=baseSetLogged.apply(this,arguments);refreshNotifications();return result};
-  sb.auth.onAuthStateChange((event,session)=>{if(session?.user?.id){user=session.user;mode='real';if(event==='SIGNED_IN'||event==='INITIAL_SESSION')refreshNotifications();if(event==='TOKEN_REFRESHED'){refreshNotifications();loadReal().then(()=>{if(view==='achievements'||view==='home'||view==='progress')render()}).catch(error=>console.warn('Portal refresh failed',error))}}});
+  sb.auth.onAuthStateChange((event,session)=>{if(session?.user?.id){user=session.user;mode='real';if(event==='SIGNED_IN'||event==='INITIAL_SESSION')refreshNotifications();if(event==='TOKEN_REFRESHED'){refreshNotifications();loadReal().then(()=>{if(view!=='workout')render()}).catch(error=>console.warn('Portal refresh failed',error))}}});
   updateNotificationBadge();
 })();
 </script></body></html>
