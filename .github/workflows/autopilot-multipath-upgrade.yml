@@ -1,0 +1,139 @@
+name: Autopilot Multipath Upgrade
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/autopilot-multipath-upgrade.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Upgrade executor and self-review to canonical target paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          ext = Path('scripts/autopilot-external-executor.sh')
+          s = ext.read_text()
+          old = '''request_payload="$(jq -c '.request.request_payload' <<<"${response}")"
+          action_payload="$(jq -c '.request.action_payload' <<<"${response}")"
+
+          echo "Autopilot external request claimed: ${mission_key}/${action_key} (${request_id})"'''
+          new = '''request_payload="$(jq -c '.request.request_payload' <<<"${response}")"
+          action_payload="$(jq -c '.request.action_payload' <<<"${response}")"
+
+          payload_target="$(jq -r '.file // .target_path // empty' <<<"${action_payload}")"
+          if [[ -n "${payload_target}" ]]; then
+            if [[ "${payload_target}" == /* || "${payload_target}" == *".."* || ! "${payload_target}" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+              external_human_blocker "${request_id}" "Action payload contains an unsafe target path." "Use a canonical repository-relative file path without parent traversal."
+              bash scripts/autopilot-worker.sh
+              exit 0
+            fi
+            TARGET_PATH="${payload_target}"
+          fi
+
+          echo "Autopilot external request claimed: ${mission_key}/${action_key} (${request_id}) target=${TARGET_PATH}"'''
+          if old not in s: raise SystemExit('external target insertion anchor not found')
+          s = s.replace(old, new, 1)
+          old_phrase = 'The only code target in this executor version is index.html.'
+          new_phrase = 'The only code target is the canonical repository-relative TARGET_PATH selected from the trusted action payload; do not edit any other file.'
+          if old_phrase not in s: raise SystemExit('external system instruction anchor not found')
+          s = s.replace(old_phrase, new_phrase, 1)
+          s = s.replace('CURRENT index.html:', 'CURRENT TARGET SOURCE:', 1)
+          ext.write_text(s)
+
+          rev = Path('scripts/autopilot-self-review.sh')
+          s = rev.read_text()
+          old = '''dispatch_production_deploy() {
+            local attempt
+            for attempt in 1 2 3; do
+              if gh workflow run deploy-cv-coach-admin-production.yml --ref main; then
+                echo "Autopilot self-review: production deploy dispatched."
+                return 0
+              fi
+              sleep "$((attempt * 3))"
+            done
+            return 1
+          }'''
+          new = '''dispatch_production_deploy() {
+            local attempt workflow="deploy-cv-coach-admin-production.yml"
+            if [[ "${TARGET_PATH}" == client-portal/* ]]; then
+              workflow="deploy-cv-coach-client-production.yml"
+            fi
+            for attempt in 1 2 3; do
+              if gh workflow run "${workflow}" --ref main; then
+                echo "Autopilot self-review: production deploy dispatched via ${workflow}."
+                return 0
+              fi
+              sleep "$((attempt * 3))"
+            done
+            return 1
+          }'''
+          if old not in s: raise SystemExit('review deploy dispatcher anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = '''pat = re.compile(r"const BASE='([^']+)',KEY='([^']+)'")
+          a = pat.search(base)
+          b = pat.search(current)
+          if not a or not b or a.groups() != b.groups():
+              raise SystemExit("Supabase public client identity changed")'''
+          new = '''if path.as_posix() == "index.html":
+              pat = re.compile(r"const BASE='([^']+)',KEY='([^']+)'")
+              a = pat.search(base)
+              b = pat.search(current)
+              if not a or not b or a.groups() != b.groups():
+                  raise SystemExit("Supabase public Admin identity changed")
+          else:
+              for pattern in (r"https://fmhcansyxcsqkrivqchr\\.supabase\\.co", r"sb_publishable_[A-Za-z0-9_-]+"):
+                  a = sorted(set(re.findall(pattern, base)))
+                  b = sorted(set(re.findall(pattern, current)))
+                  if not a or a != b:
+                      raise SystemExit(f"Supabase public client identity changed for {pattern}")'''
+          if old not in s: raise SystemExit('review identity anchor not found')
+          s = s.replace(old, new, 1)
+
+          old = '''action_payload="$(jq -c '.action_payload' <<<"${ctx}")"
+          review_count="$(jq -r '.review_count // 0' <<<"${ctx}")"'''
+          new = '''action_payload="$(jq -c '.action_payload' <<<"${ctx}")"
+          payload_target="$(jq -r '.file // .target_path // empty' <<<"${action_payload}")"
+          if [[ -n "${payload_target}" ]]; then
+            if [[ "${payload_target}" == /* || "${payload_target}" == *".."* || ! "${payload_target}" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+              review_human_blocker "${request_id}" "Action payload contains an unsafe target path." "Use a canonical repository-relative path without parent traversal." "${pr_url}" 0 "HIGH" >/dev/null
+              exit 0
+            fi
+            TARGET_PATH="${payload_target}"
+          fi
+          review_count="$(jq -r '.review_count // 0' <<<"${ctx}")"'''
+          if old not in s: raise SystemExit('review target insertion anchor not found')
+          s = s.replace(old, new, 1)
+          s = s.replace('CURRENT BRANCH index.html', 'CURRENT BRANCH target file', 1)
+          s = s.replace('CURRENT BRANCH index.html:', 'CURRENT BRANCH TARGET FILE:', 1)
+          rev.write_text(s)
+          PY
+
+          bash -n scripts/autopilot-external-executor.sh
+          bash -n scripts/autopilot-self-review.sh
+          git diff --check
+          grep -q 'payload_target=' scripts/autopilot-external-executor.sh
+          grep -q 'deploy-cv-coach-client-production.yml' scripts/autopilot-self-review.sh
+      - name: Commit upgrade and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'cv-coach-autopilot'
+          git config user.email 'actions@users.noreply.github.com'
+          rm .github/workflows/autopilot-multipath-upgrade.yml
+          git add scripts/autopilot-external-executor.sh scripts/autopilot-self-review.sh .github/workflows/autopilot-multipath-upgrade.yml
+          git commit -m 'feat(autopilot): support canonical multipath code targets'
+          git push origin HEAD:main
