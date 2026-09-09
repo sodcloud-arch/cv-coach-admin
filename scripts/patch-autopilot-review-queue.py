@@ -47,9 +47,6 @@ elif new_iter not in text:
     raise SystemExit('review iteration initializer not found')
 
 # 4) Budget exhaustion is a deferred checkpoint, not a human decision.
-budget_start = '  if [[ "$(jq -r \' .kind // empty\''
-# Locate structurally instead of depending on whitespace/escaping in jq.
-needle = '  if [[ "$(jq -r \' .kind // empty\''
 if 'Autopilot self-review: budget checkpoint; watchdog will retry later.' not in text:
     marker = '  budget="$(budget_status "${mission_id}")"\n'
     pos = text.index(marker) + len(marker)
@@ -96,5 +93,48 @@ if old_tail in text:
     text = text.replace(old_tail, new_tail, 1)
 elif new_tail not in text:
     raise SystemExit('review loop tail pattern not found')
+
+# 7) LOW-risk merge conflicts are machine-recoverable: retry the same action on latest main.
+if 'review_merge_retry()' not in text:
+    insert_at = text.index('\n\nvalidate_worktree()')
+    helper = r'''
+
+review_merge_retry() {
+  local request_id="$1" error="$2" retry_after_seconds="${3:-5}" payload
+  payload="$(jq -nc \
+    --arg request_id "${request_id}" \
+    --arg error "${error}" \
+    --argjson retry_after_seconds "${retry_after_seconds}" \
+    '{op:"review_merge_retry",request_id:$request_id,error:$error,retry_after_seconds:$retry_after_seconds}')"
+  call_gateway "${EDGE_URL}" "${payload}"
+}'''
+    text = text[:insert_at] + helper + text[insert_at:]
+
+old_merge = '''    if ! gh pr merge "${pr_number}" --squash --delete-branch; then
+      review_human_blocker "${request_id}" "AI self-review approved a LOW-risk change, but GitHub blocked the automatic merge." "Inspect required checks or branch protection for PR #${pr_number}, then close the generated blocker." "${pr_url}" "${iteration}" "LOW" >/dev/null
+      git checkout main >/dev/null 2>&1 || true
+      bash scripts/autopilot-worker.sh
+      exit 0
+    fi'''
+new_merge = '''    if ! gh pr merge "${pr_number}" --squash --delete-branch; then
+      retry_ack="$(review_merge_retry "${request_id}" "AI self-review approved LOW risk but GitHub could not merge; regenerate on latest main." 5)"
+      if [[ "$(jq -r '.kind // empty' <<<"${retry_ack}")" != "REVIEW_MERGE_RETRY" ]]; then
+        review_human_blocker "${request_id}" "LOW-risk merge recovery could not be recorded safely." "Inspect Autopilot gateway/retry state for PR #${pr_number}." "${pr_url}" "${iteration}" "MEDIUM" >/dev/null
+        git checkout main >/dev/null 2>&1 || true
+        bash scripts/autopilot-worker.sh
+        exit 0
+      fi
+      gh pr close "${pr_number}" --comment "🤖 Autopilot: PR aprobado LOW pero no mergeable porque main avanzó. Se cierra como superseded y la misma acción se regenerará automáticamente sobre el main actual." >/dev/null 2>&1 || true
+      git checkout main >/dev/null 2>&1 || true
+      git pull --ff-only origin main >/dev/null 2>&1 || true
+      sleep 6
+      bash scripts/autopilot-worker.sh
+      echo "Autopilot self-review: MERGE_CONFLICT_RETRY PR #${pr_number}"
+      exit 0
+    fi'''
+if old_merge in text:
+    text = text.replace(old_merge, new_merge, 1)
+elif new_merge not in text:
+    raise SystemExit('merge recovery block not found')
 
 path.write_text(text)
