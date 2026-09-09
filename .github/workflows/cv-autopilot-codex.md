@@ -1,5 +1,5 @@
 ---
-description: "CV Coach Autopilot intelligent executor for technical tasks"
+description: "CV Coach Autopilot intelligent executor for technical tasks — V1"
 on:
   workflow_dispatch:
     inputs:
