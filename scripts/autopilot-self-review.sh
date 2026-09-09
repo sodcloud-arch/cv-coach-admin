@@ -525,9 +525,13 @@ path.write_text(text)
 PY
   then
     mv "${TARGET_PATH}.self-review-backup" "${TARGET_PATH}"
-    review_human_blocker "${request_id}" "Self-review exact replacement validation failed." "Inspect the Draft PR or let the next task provide more specific context." "${pr_url}" "${iteration}" "MEDIUM" >/dev/null
+    echo "Autopilot self-review: TECHNICAL_PATCH_RETRY; exact replacement validation failed, source restored, no commit created."
+    gh pr comment "${pr_number}" --body "🤖 **TECHNICAL_PATCH_RETRY** — la validación de replacements exactos falló; se restauró la rama sin crear commit. Se reintentará dentro del límite de self-review si queda una pasada disponible." >/dev/null 2>&1 || true
+    iteration="$((iteration + 1))"
+    if (( iteration <= max_review_passes )); then
+      continue
+    fi
     git checkout main >/dev/null 2>&1 || true
-    bash scripts/autopilot-worker.sh
     exit 0
   fi
 
@@ -556,11 +560,6 @@ PY
 
   run_improvements="$((run_improvements + 1))"
   iteration="$((iteration + 1))"
-  if (( run_improvements >= max_improvements )); then
-    echo "Autopilot self-review: improvement batch complete; leaving WAITING_REVIEW for next watchdog."
-    git checkout main >/dev/null 2>&1 || true
-    exit 0
-  fi
 done
 
 git checkout main >/dev/null 2>&1 || true
