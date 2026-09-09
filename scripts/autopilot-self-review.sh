@@ -243,7 +243,10 @@ review_system='You are the independent self-review layer for CV Coach Autopilot.
 body_file="$(mktemp)"
 response_file="$(mktemp)"
 review_file="$(mktemp)"
-trap 'rm -f "${body_file}" "${response_file}" "${review_file}" /tmp/cv-autopilot-review-inline.js "${TARGET_PATH}.self-review-backup"' EXIT
+source_file="$(mktemp)"
+diff_file="$(mktemp)"
+review_input_file="$(mktemp)"
+trap 'rm -f "${body_file}" "${response_file}" "${review_file}" "${source_file}" "${diff_file}" "${review_input_file}" /tmp/cv-autopilot-review-inline.js "${TARGET_PATH}.self-review-backup"' EXIT
 
 iteration="$((review_count + 1))"
 max_review_passes="$((max_improvements + 1))"
@@ -258,9 +261,9 @@ while (( iteration <= max_review_passes )); do
     exit 0
   fi
 
-  current_source="$(cat "${TARGET_PATH}")"
-  current_diff="$(git diff --no-ext-diff --unified=0 origin/main...HEAD -- "${TARGET_PATH}")"
-  review_input="$(jq -nr \
+  cat "${TARGET_PATH}" > "${source_file}"
+  git diff --no-ext-diff --unified=0 origin/main...HEAD -- "${TARGET_PATH}" > "${diff_file}"
+  jq -nr \
     --arg mission_key "${mission_key}" \
     --arg action_key "${action_key}" \
     --arg action_title "${action_title}" \
@@ -268,14 +271,15 @@ while (( iteration <= max_review_passes )); do
     --arg request_payload "${request_payload}" \
     --arg action_payload "${action_payload}" \
     --arg pr_title "${pr_title}" \
-    --arg diff "${current_diff}" \
-    --arg source "${current_source}" \
-    '"MISSION: "+$mission_key+"\nACTION: "+$action_key+"\nTITLE: "+$action_title+"\nORIGINAL INSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\nPR TITLE: "+$pr_title+"\n\nCURRENT DIFF VS MAIN:\n"+$diff+"\n\nCURRENT BRANCH index.html:\n"+$source')"
+    --rawfile diff "${diff_file}" \
+    --rawfile source "${source_file}" \
+    '"MISSION: "+$mission_key+"\nACTION: "+$action_key+"\nTITLE: "+$action_title+"\nORIGINAL INSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\nPR TITLE: "+$pr_title+"\n\nCURRENT DIFF VS MAIN:\n"+$diff+"\n\nCURRENT BRANCH index.html:\n"+$source' \
+    > "${review_input_file}"
 
   jq -n \
     --arg model "${model}" \
     --arg instructions "${review_system}" \
-    --arg input "${review_input}" \
+    --rawfile input "${review_input_file}" \
     --argjson max_output_tokens "${review_max_tokens}" \
     --argjson schema "${schema}" \
     '{model:$model,instructions:$instructions,input:$input,store:false,max_output_tokens:$max_output_tokens,text:{format:{type:"json_schema",name:"cv_autopilot_self_review_v1",strict:true,schema:$schema}}}' \
