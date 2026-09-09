@@ -1,0 +1,68 @@
+name: Snapshot CV Coach Client Portal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/snapshot-client-portal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: snapshot-client-portal
+  cancel-in-progress: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch public production portal
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p client-portal
+          curl --fail --silent --show-error --location --retry 3 \
+            --max-time 30 \
+            'https://cv-coach-roan.vercel.app' \
+            --output client-portal/index.html
+
+          bytes="$(wc -c < client-portal/index.html)"
+          if [ "$bytes" -lt 50000 ]; then
+            echo "Portal snapshot is unexpectedly small: ${bytes} bytes" >&2
+            exit 1
+          fi
+          if ! grep -qi 'CV Coach' client-portal/index.html; then
+            echo 'Portal identity marker not found' >&2
+            exit 1
+          fi
+          if grep -qi 'Redirecting...' client-portal/index.html; then
+            echo 'Received an authentication redirect instead of the portal' >&2
+            exit 1
+          fi
+
+          sha256sum client-portal/index.html | awk '{print $1}' > client-portal/SHA256
+          printf '{\n  "source": "https://cv-coach-roan.vercel.app",\n  "captured_at_utc": "%s",\n  "bytes": %s,\n  "sha256": "%s"\n}\n' \
+            "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            "$bytes" \
+            "$(cat client-portal/SHA256)" \
+            > client-portal/snapshot.json
+
+      - name: Commit snapshot when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add client-portal/index.html client-portal/SHA256 client-portal/snapshot.json
+          if git diff --cached --quiet; then
+            echo 'Production snapshot unchanged.'
+            exit 0
+          fi
+          git config user.name 'cv-coach-autopilot'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'chore(client): snapshot production portal'
+          git push origin HEAD:main
