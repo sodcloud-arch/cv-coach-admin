@@ -1,7 +1,5 @@
 name: CV Coach Admin Production Deploy
 
-# Explicitly dispatchable after CV Coach Autopilot merges and usable for recovery deploys.
-# P0 stabilization redeploy trigger: 2026-09-09
 on:
   push:
     branches: [main]
@@ -21,13 +19,16 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: team_pD5aAwrw2qpbPgoEarWhxcKF
       VERCEL_PROJECT_ID: prj_fkeoRxjDY3ZDQlIadS1EaIowFi87
+      VERCEL_CLI_VERSION: 59.13.1
     steps:
       - name: Checkout canonical main
         uses: actions/checkout@v4
+
       - name: Check Vercel credential
         id: auth
         shell: bash
@@ -39,26 +40,54 @@ jobs:
             echo "available=true" >> "$GITHUB_OUTPUT"
             echo "VERCEL_TOKEN_AVAILABLE"
           fi
+
       - name: Link canonical Vercel project
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
           mkdir -p .vercel
           printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
+
       - name: Pull production settings
         if: steps.auth.outputs.available == 'true'
         shell: bash
-        run: npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+        run: npx --yes vercel@${VERCEL_CLI_VERSION} pull --yes --environment=production --token="$VERCEL_TOKEN"
+
       - name: Build production bundle
         if: steps.auth.outputs.available == 'true'
         shell: bash
-        run: npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
+        run: npx --yes vercel@${VERCEL_CLI_VERSION} build --prod --token="$VERCEL_TOKEN"
+
       - name: Deploy canonical production
         if: steps.auth.outputs.available == 'true'
         shell: bash
-        run: npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+      - name: Verify public Admin alias
+        if: steps.auth.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6 7 8; do
+            headers="$(mktemp)"
+            body="$(curl --fail --silent --show-error --location --max-time 20 -D "$headers" https://cv-coach-admin.vercel.app || true)"
+            if [[ "$body" == *"CV Coach"* && "$body" == *"COACH ADMIN"* ]]; then
+              grep -qi '^content-security-policy:' "$headers"
+              grep -qi '^x-content-type-options: nosniff' "$headers"
+              grep -qi '^x-frame-options: DENY' "$headers"
+              echo 'PUBLIC_ADMIN_OK'
+              rm -f "$headers"
+              exit 0
+            fi
+            rm -f "$headers"
+            sleep 3
+          done
+          echo 'Public Admin alias verification failed' >&2
+          exit 1
+
       - name: Credential blocker marker
         if: steps.auth.outputs.available != 'true'
         shell: bash
         run: |
           echo "Production deployment was not attempted because VERCEL_TOKEN is not configured in GitHub Actions Secrets."
+          exit 1
