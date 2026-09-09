@@ -6,7 +6,6 @@ on:
     paths:
       - 'client-portal/index.html'
       - 'client-portal/stabilize.py'
-      - 'client-portal/vercel.json'
       - '.github/workflows/deploy-cv-coach-client-production.yml'
   workflow_dispatch:
 
@@ -34,7 +33,6 @@ jobs:
         run: |
           set -euo pipefail
           python client-portal/stabilize.py
-          cp client-portal/vercel.json client-portal/stable/vercel.json
           test "$(wc -c < client-portal/stable/index.html)" -gt 50000
           grep -qi 'CV Coach' client-portal/stable/index.html
           grep -q "America/Santiago" client-portal/stable/index.html
@@ -55,25 +53,47 @@ jobs:
             echo "VERCEL_TOKEN_AVAILABLE"
           fi
 
-      - name: Link CV Coach client project
+      - name: Create explicit Vercel static Build Output
         if: steps.auth.outputs.available == 'true'
         working-directory: client-portal/stable
         shell: bash
         run: |
-          mkdir -p .vercel
+          set -euo pipefail
+          mkdir -p .vercel/output/static
           printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
-
-      - name: Pull production settings
-        if: steps.auth.outputs.available == 'true'
-        working-directory: client-portal/stable
-        shell: bash
-        run: npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
-
-      - name: Build Vercel production bundle
-        if: steps.auth.outputs.available == 'true'
-        working-directory: client-portal/stable
-        shell: bash
-        run: npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
+          cp index.html .vercel/output/static/index.html
+          cat > .vercel/output/config.json <<'JSON'
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/",
+                "dest": "/index.html",
+                "headers": {
+                  "X-Content-Type-Options": "nosniff",
+                  "X-Frame-Options": "DENY",
+                  "Referrer-Policy": "strict-origin-when-cross-origin",
+                  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+                  "X-Robots-Tag": "noindex, nofollow"
+                }
+              },
+              { "handle": "filesystem" },
+              {
+                "src": "/(.*)",
+                "dest": "/index.html",
+                "headers": {
+                  "X-Content-Type-Options": "nosniff",
+                  "X-Frame-Options": "DENY",
+                  "Referrer-Policy": "strict-origin-when-cross-origin",
+                  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+                  "X-Robots-Tag": "noindex, nofollow"
+                }
+              }
+            ]
+          }
+          JSON
+          test -s .vercel/output/static/index.html
+          test -s .vercel/output/config.json
 
       - name: Deploy CV Coach client production
         if: steps.auth.outputs.available == 'true'
@@ -86,12 +106,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in 1 2 3 4 5; do
-            body="$(curl --fail --silent --show-error --location --max-time 20 https://cv-coach-roan.vercel.app || true)"
-            if [[ "$body" == *"CV Coach"* && "$body" != *"Cliente Premium Preview"* ]]; then
+          for attempt in 1 2 3 4 5 6 7 8; do
+            headers="$(mktemp)"
+            body="$(curl --fail --silent --show-error --location --max-time 20 -D "$headers" https://cv-coach-roan.vercel.app || true)"
+            if [[ "$body" == *"CV Coach"* && "$body" != *"Cliente Premium Preview"* && "$body" == *"America/Santiago"* ]]; then
+              grep -qi '^x-content-type-options: nosniff' "$headers"
+              grep -qi '^x-frame-options: DENY' "$headers"
               echo 'PUBLIC_PORTAL_OK'
+              rm -f "$headers"
               exit 0
             fi
+            rm -f "$headers"
             sleep 3
           done
           echo 'Public alias verification failed' >&2
