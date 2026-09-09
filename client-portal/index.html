@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050708">
+<meta name="robots" content="noindex,nofollow">
+<title>CV Coach · Cliente Premium Preview</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
+:root{--bg:#030506;--p:#080d10;--p2:#0d1317;--line:#27333a;--text:#f5f7f8;--muted:#929da4;--red:#ff2037;--green:#54e59c}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}body{min-height:100vh;background:radial-gradient(circle at 100% 0,rgba(255,32,55,.10),transparent 28%),#030506}button,input{font:inherit}.hidden{display:none!important}
+.login{min-height:100vh;display:grid;place-items:center;padding:22px;background:linear-gradient(180deg,rgba(3,5,6,.28),rgba(3,5,6,.96)),url('https://images.pexels.com/photos/17898139/pexels-photo-17898139/free-photo-of-back-view-of-a-muscular-woman-at-the-gym.jpeg?auto=compress&cs=tinysrgb&w=1600') center 38%/cover no-repeat}.loginbox{width:100%;max-width:420px}.logo{display:flex;align-items:center;gap:12px}.cv{font:900 italic 46px 'Barlow Condensed';letter-spacing:-.08em;color:var(--red);line-height:.8}.brand{font:800 23px 'Barlow Condensed';letter-spacing:.08em}.brand small{display:block;font:800 7px Inter;letter-spacing:.2em;color:#8b979e;margin-top:4px}.ey{font-size:9px;font-weight:900;letter-spacing:.24em;color:var(--red);text-transform:uppercase}h1,h2,h3{font-family:'Barlow Condensed';margin:0;letter-spacing:-.02em}.login h1{font-size:48px;line-height:.88;margin:24px 0 12px;text-transform:uppercase}.sub{color:#b0bac0;font-size:13px;line-height:1.55}.glass,.card{border:1px solid var(--line);background:linear-gradient(180deg,#0b1114,#080d10);border-radius:16px}.glass{margin-top:20px;padding:18px;background:rgba(6,10,12,.86);backdrop-filter:blur(18px);box-shadow:0 20px 55px rgba(0,0,0,.38)}label{display:block;font-size:10px;font-weight:800;color:#aeb8be;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.08em}.input{width:100%;min-height:46px;background:#070c0f;border:1px solid #2c383f;border-radius:11px;color:#fff;padding:0 13px;outline:none}.btn{min-height:46px;border-radius:11px;border:1px solid #334048;background:#0a0f12;color:#fff;font-weight:900;padding:0 16px;cursor:pointer}.btn.primary{background:linear-gradient(180deg,#ff2b42,#ed172f);border-color:#ff4356;box-shadow:0 10px 28px rgba(255,32,55,.28)}.btn.full{width:100%}.btn:disabled{opacity:.55}.sep{height:1px;background:#263139;margin:16px 0}.hint{color:#8f9ba2;font-size:10px;line-height:1.5}
+.shell{max-width:520px;margin:auto;min-height:100vh;position:relative;padding-bottom:92px}.top{position:sticky;top:0;z-index:30;height:72px;display:flex;align-items:center;padding:0 16px;background:rgba(3,6,8,.92);backdrop-filter:blur(18px);border-bottom:1px solid #1f292f}.miniCV{font:900 italic 30px 'Barlow Condensed';color:var(--red);letter-spacing:-.08em}.topTitle{margin-left:10px;font:800 20px 'Barlow Condensed';letter-spacing:.05em}.topRight{margin-left:auto;font-size:10px;color:#8f9ba2}.logout{background:none;border:0;color:#9ca7ad;cursor:pointer}.content{padding:15px 14px 24px}
+.hero{position:relative;overflow:hidden;min-height:230px;border:1px solid rgba(255,32,55,.45);border-radius:18px;padding:24px 20px;background:#05080a;box-shadow:0 20px 55px rgba(0,0,0,.38)}.hero:before{content:'';position:absolute;right:-35px;top:0;bottom:0;width:70%;background:url('https://images.pexels.com/photos/17898139/pexels-photo-17898139/free-photo-of-back-view-of-a-muscular-woman-at-the-gym.jpeg?auto=compress&cs=tinysrgb&w=1200') 57% 42%/cover no-repeat;filter:contrast(1.12) saturate(.7) brightness(.72);-webkit-mask-image:linear-gradient(90deg,transparent,rgba(0,0,0,.4) 28%,#000 65%);mask-image:linear-gradient(90deg,transparent,rgba(0,0,0,.4) 28%,#000 65%)}.hero>*{position:relative;z-index:2}.hero h1{font-size:45px;line-height:.86;text-transform:uppercase;max-width:72%;margin:9px 0 10px}.hero h1 b{color:var(--red)}.hero .sub{max-width:66%;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.stat{min-height:92px;padding:13px;border:1px solid #28343b;border-radius:14px;background:radial-gradient(circle at 14% 10%,rgba(255,32,55,.08),transparent 38%),linear-gradient(155deg,#0d1418,#070b0d)}.stat .l{font-size:7.5px;color:#a3adb3;text-transform:uppercase;letter-spacing:.11em}.stat .v{font:800 30px 'Barlow Condensed';margin-top:8px}
+.section{margin-top:16px}.sectionHead{display:flex;align-items:end;margin-bottom:9px}.section h2{font-size:25px}.sectionHead .link{margin-left:auto;color:#aab3b8;font-size:10px;cursor:pointer}.card{padding:14px;box-shadow:0 12px 35px rgba(0,0,0,.18)}.next{position:relative;overflow:hidden;border-color:rgba(255,32,55,.55);min-height:145px;padding-right:130px}.next:after{content:'CV';position:absolute;right:18px;top:50%;transform:translateY(-50%) rotate(-8deg);width:90px;height:90px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#3a4247,#111619 62%,#070a0c);border:1px solid #4b555c;color:#242b30;font:900 italic 41px 'Barlow Condensed';letter-spacing:-.1em}.next h3{font-size:24px;margin:6px 0 3px}.progress{height:7px;border-radius:99px;background:#182126;overflow:hidden;margin-top:9px}.progress i{display:block;height:100%;background:linear-gradient(90deg,#ff2037,#ff5264)}.mission,.habit{padding:12px 0;border-bottom:1px solid #202a30}.mission:last-child,.habit:last-child{border-bottom:0}.row{display:flex;align-items:center;gap:10px}.grow{flex:1;min-width:0}.pill{display:inline-flex;align-items:center;border:1px solid #31503e;background:#10271c;color:#70eaaa;border-radius:999px;padding:4px 7px;font-size:8px;font-weight:900}
+.day{padding:0;overflow:hidden;margin-bottom:10px}.dayHead{padding:15px;display:flex;gap:12px;align-items:center}.num{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(255,32,55,.13);border:1px solid rgba(255,32,55,.3);color:var(--red);font:800 20px 'Barlow Condensed'}.day h3{font-size:22px}.dayActions{padding:0 15px 15px}
+.workoutTop{position:sticky;top:72px;z-index:25;margin:-15px -14px 12px;padding:12px 14px;background:rgba(5,8,10,.96);backdrop-filter:blur(14px);border-bottom:1px solid #202a30}.timer{font:800 31px 'Barlow Condensed'}.workoutExercise{margin-bottom:12px;padding:13px}.workoutExercise h3{font-size:25px;margin:0}.exerciseTop{display:flex;align-items:flex-start;gap:11px}.exerciseMain{display:grid;grid-template-columns:minmax(0,1fr);gap:11px;margin-top:11px}.exerciseMedia{position:relative;overflow:hidden;border:1px solid #29353c;border-radius:13px;background:radial-gradient(circle at 50% 40%,#172026,#080c0f 68%);min-height:180px;display:grid;place-items:center}.exerciseMedia:after{content:'CV COACH · TÉCNICA';position:absolute;left:10px;bottom:9px;padding:4px 7px;border-radius:999px;background:rgba(3,6,8,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.10);color:#b7c0c5;font-size:7px;font-weight:900;letter-spacing:.11em}.workoutExercise .photo{display:block;width:100%;max-height:340px;aspect-ratio:16/10;object-fit:contain;object-position:center;background:#05080a;image-rendering:auto}.exerciseInfo{display:flex;flex-direction:column;min-width:0}.exerciseNote{font-size:10px;line-height:1.45;color:#9da8ae;margin-top:4px}.setGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.setBox{border:1px solid #263139;background:linear-gradient(180deg,#091014,#070c0f);border-radius:10px;padding:10px 7px;text-align:center}.setBox span{display:block;font-size:8px;color:#8f9ba2;text-transform:uppercase;letter-spacing:.06em}.setBox b{display:block;margin-top:4px;font-size:14px}.restLine{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;padding:9px 10px;border:1px solid #202a30;border-radius:10px;background:#070c0f}.restLine span{font-size:9px;color:#87939a;text-transform:uppercase;letter-spacing:.08em}.restLine b{font:800 17px 'Barlow Condensed';color:#fff}.check{flex:0 0 auto;width:32px;height:32px;border:1px solid #3a474e;border-radius:9px;display:grid;place-items:center;background:#090e11;color:transparent;cursor:pointer}.check.done{border-color:#2e6b4b;background:#123523;color:#62e6a0;box-shadow:0 0 18px rgba(84,229,156,.12)}
+.habit{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.habitControl{display:flex;gap:6px}.habitControl input{width:78px;min-height:36px}.habitControl .btn{min-height:36px;padding:0 10px;font-size:9px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:76px;z-index:40;display:grid;grid-template-columns:repeat(4,1fr);padding:7px 8px calc(7px + env(safe-area-inset-bottom));background:rgba(3,6,8,.97);backdrop-filter:blur(18px);border-top:1px solid #263139}.nav button{border:0;background:transparent;color:#79868e;font-size:9px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}.nav .ico{font-size:20px}.nav button.active{color:#fff}.nav button.active .ico{color:var(--red)}.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:100;width:min(440px,90%);padding:12px 14px;border:1px solid #39454c;border-radius:12px;background:#0d1317;box-shadow:0 20px 55px rgba(0,0,0,.38);font-size:11px}.empty{text-align:center;padding:28px;color:#8e9aa1}.demoBadge{display:inline-block;padding:4px 7px;border-radius:999px;background:#34200b;border:1px solid #694317;color:#ffc176;font-size:8px;font-weight:900;margin-right:4px}
+@media(min-width:700px){.shell{max-width:960px;padding-bottom:28px}.nav{position:sticky;top:72px;bottom:auto;left:auto;transform:none;width:100%;height:58px;border:1px solid #263139;border-radius:14px;margin:12px 0 0}.nav button{flex-direction:row;font-size:10px}.nav .ico{font-size:17px}.content{padding:18px}.hero{min-height:260px;padding:30px}.hero h1{font-size:60px;max-width:60%}.hero .sub{max-width:50%}.stats{grid-template-columns:repeat(3,180px)}.dayGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.day{margin:0}.workoutExercise{padding:14px}.exerciseMain{grid-template-columns:minmax(290px,38%) minmax(0,1fr);gap:14px;align-items:stretch}.exerciseMedia{min-height:210px}.workoutExercise .photo{height:100%;max-height:270px;aspect-ratio:auto;object-fit:contain}.exerciseInfo{justify-content:center}.setGrid{margin-top:0}.exerciseNote{font-size:11px}.restLine{margin-top:10px}}
+</style>
+<style id="cv-exercise-library-v1-fit">.workoutExercise .exerciseMedia{min-height:0!important;background:#05080a!important}.workoutExercise .exerciseMedia:after{display:none!important;content:none!important}.workoutExercise .photo{display:block!important;width:100%!important;height:auto!important;max-width:none!important;max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important;object-position:center!important;background:#05080a!important}</style><style id='cv-hevy-v1'>/* CV Coach · registro de entrenamiento inspirado en flujo de logging por series */
+.cvBrandOfficial{gap:10px!important}.cvLogoMark{flex:0 0 auto;background-image:url('https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/01_sentadilla-goblet.webp');background-repeat:no-repeat}.cvLogoLarge{width:75px;height:55px;background-size:710px 473px;background-position:-275px -375px}.cvLogoSmall{width:49px;height:36px;background-size:462px 308px;background-position:-179px -244px}.cvBrandOfficial .brand{font-size:22px;line-height:.9}.cvBrandOfficial .brand small{font-size:6.7px;line-height:1.4;margin-top:5px}.top .cvLogoSmall{margin-left:-3px}.topTitle{margin-left:7px!important}
+.cvHevyExercise{padding:13px!important}.cvHevyExercise .exerciseTop{align-items:center}.cvPrescription{font-size:10px;color:#98a4aa;margin-top:3px;line-height:1.35}.cvRestPill{flex:0 0 auto;min-height:34px;border-radius:9px;border:1px solid rgba(255,32,55,.32);background:rgba(255,32,55,.08);color:#ff6d7c;font-size:9px;font-weight:900;padding:0 9px}.cvHevyExercise .exerciseMedia{margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid #29353c;background:#05080a}.cvHevyExercise .photo{width:100%!important;height:auto!important;display:block!important;aspect-ratio:auto!important;object-fit:contain!important;border:0!important;margin:0!important;border-radius:0!important}
+.cvTechnique{margin-top:10px;padding:11px 12px;border:1px solid #263139;border-radius:11px;background:linear-gradient(180deg,#0b1114,#070c0f)}.cvTechniqueTitle{font-size:8px;font-weight:900;letter-spacing:.14em;color:var(--red);margin-bottom:5px}.cvTechnique p{margin:0;color:#d1d7da;font-size:11px;line-height:1.48}.cvTempo{margin-top:7px;padding-top:7px;border-top:1px solid #20292f;color:#99a6ac;font-size:9px;font-weight:700}
+.cvSetsHead,.cvSetRow{display:grid;grid-template-columns:34px minmax(72px,1fr) 72px 66px 42px;gap:6px;align-items:center}.cvSetsHead{margin-top:13px;padding:0 3px 5px;color:#78858d;font-size:7px;font-weight:900;letter-spacing:.08em;text-align:center}.cvSetRow{min-height:51px;padding:5px 3px;border-top:1px solid #1d262c}.cvSetRow.done{background:linear-gradient(90deg,rgba(84,229,156,.055),transparent)}.cvSetNo{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:#0c1216;border:1px solid #2a353c;font:800 15px 'Barlow Condensed';color:#c3ccd1}.cvPrevious{font-size:8px;color:#88959c;text-align:center;line-height:1.25}.cvSetRow input{width:100%;height:39px;border-radius:8px;border:1px solid #313d44;background:#080d10;color:#fff;text-align:center;font-size:16px;font-weight:800;outline:none;padding:0 4px}.cvSetRow input:focus{border-color:#ff3b50;box-shadow:0 0 0 2px rgba(255,32,55,.09)}.cvSetRow input:disabled{opacity:.42}.cvSetCheck{width:39px;height:39px;border-radius:9px;border:1px solid #3a474e;background:#090e11;color:#59656b;font-size:16px;font-weight:900}.cvSetCheck.done{border-color:#2e6b4b;background:#123523;color:#62e6a0;box-shadow:0 0 16px rgba(84,229,156,.12)}.cvSetCheck:disabled{opacity:.35}.cvExerciseProgress{margin-top:8px;color:#738087;font-size:8px;text-align:right}.cvRestDock{position:fixed;z-index:90;left:50%;transform:translateX(-50%);bottom:84px;width:min(492px,calc(100% - 18px));min-height:68px;border:1px solid rgba(255,32,55,.5);border-radius:14px;background:rgba(7,11,14,.97);backdrop-filter:blur(18px);box-shadow:0 18px 48px rgba(0,0,0,.5),0 0 28px rgba(255,32,55,.09);display:flex;align-items:center;padding:9px 10px 9px 13px;gap:10px}.cvRestDock.hidden{display:none}.cvRestDock.done{border-color:#2e6b4b}.cvRestText{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:center;flex:1}.cvRestText small{grid-column:1/3;color:#ff4e61;font-size:7px;font-weight:900;letter-spacing:.15em}.cvRestText b{font:900 29px 'Barlow Condensed';line-height:1}.cvRestText span{font-size:8px;color:#8d999f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cvRestActions{display:flex;gap:5px}.cvRestActions button{height:35px;border-radius:8px;border:1px solid #354149;background:#0d1317;color:#d5dbde;font-size:8px;font-weight:900;padding:0 9px}.cvRestActions button:last-child{border-color:rgba(255,32,55,.3);color:#ff7180}
+@media(max-width:370px){.cvSetsHead,.cvSetRow{grid-template-columns:30px minmax(60px,1fr) 64px 58px 38px;gap:4px}.cvPrevious{font-size:7px}.cvRestPill{padding:0 6px}.cvTechnique p{font-size:10.5px}}
+</style><style id="cv-night-v12">
+:root{--cv-green:#52e3a1;--cv-green-dim:rgba(82,227,161,.12);--cv-panel:#081014;--cv-line:#26343b}
+
+/* Premium depth without changing CV brand language */
+body{background:#030506!important}
+.card{background:linear-gradient(155deg,#0a1115 0%,#060a0d 58%,#070b0e 100%)!important;border-color:#27353c!important;box-shadow:0 16px 40px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.025)!important}
+.cvHevyExercise{position:relative;overflow:hidden}
+.cvHevyExercise:before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,45,66,.55),rgba(82,227,161,.22),transparent);pointer-events:none}
+.cvTechnique{background:linear-gradient(145deg,#091014,#070b0e)!important;border-color:#29363d!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+
+/* Login logo visibility */
+#login .logo.cvOfficialLoginBrand{display:block!important;text-align:center!important;margin:0 auto!important}
+.cvLoginLogoPlate{width:min(330px,84vw);min-height:135px;margin:0 auto 18px;display:grid;place-items:center;padding:12px 18px;border-radius:28px;background:radial-gradient(circle at 50% 45%,rgba(19,27,31,.88),rgba(2,5,7,.76) 63%,rgba(2,5,7,.32));border:1px solid rgba(255,255,255,.07);box-shadow:0 24px 60px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(9px)}
+.cvOfficialLoginLogo{display:block;width:min(290px,75vw);height:auto;object-fit:contain;filter:drop-shadow(0 8px 18px #000) drop-shadow(0 0 16px rgba(255,35,55,.22))}
+#login .glass{background:rgba(4,9,12,.94)!important;border-color:#2a373e!important;box-shadow:0 28px 65px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.025)!important}
+
+/* Balanced header: equal left/right zones keep center truly centered */
+.top{height:70px!important;padding:7px 12px!important;display:grid!important;grid-template-columns:94px minmax(0,1fr) 94px!important;gap:8px!important;align-items:center!important;background:rgba(3,7,9,.96)!important;border-bottom:1px solid #202d33!important;box-shadow:0 8px 30px rgba(0,0,0,.24)!important}
+.cvOfficialHeaderImg{width:90px;height:48px;object-fit:contain;object-position:left center;filter:drop-shadow(0 0 10px rgba(255,34,54,.14))}
+.top .cvLogoMark{display:none!important}
+.top .topTitle{margin:0!important}
+.cvHeaderIdentity{min-width:0;text-align:center;line-height:1.04;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cvHeaderIdentity b{display:block;max-width:100%;font:900 14px 'Barlow Condensed';letter-spacing:.025em;color:#f7f9fa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cvHeaderIdentity small{display:block;max-width:100%;margin-top:4px;font:800 6.8px Inter;letter-spacing:.09em;text-transform:uppercase;color:#89969c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topRight{width:94px!important;margin:0!important;justify-self:end!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:5px!important}
+.logout{padding:0 4px!important;font-size:9px!important}
+.cvSoundToggle{width:31px;height:31px;min-height:31px;padding:0;border:1px solid #29363d;border-radius:9px;background:#081014;color:#dbe1e4;display:grid;place-items:center;font-size:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.cvSoundToggle:not(.off){border-color:rgba(82,227,161,.36);box-shadow:0 0 14px rgba(82,227,161,.09),inset 0 1px 0 rgba(255,255,255,.03)}
+.cvSoundToggle.off{color:#66737a}
+
+/* Workout top is compact */
+.workoutTop{position:static!important;margin:0 0 10px!important;padding:0!important;background:transparent!important;border:0!important;backdrop-filter:none!important}
+.workoutTop .ey{display:none!important}
+.workoutTop .row{min-height:38px!important;align-items:center!important;gap:10px!important}
+.workoutTop .grow{flex:0 0 auto!important}
+.workoutTop .timer{font:900 20px 'Barlow Condensed'!important;line-height:1!important;padding:8px 10px!important;border:1px solid #27343b!important;border-radius:9px!important;background:#071014!important;min-width:76px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}
+.workoutTop .timer:before{content:"◷ ";color:#ff4358;font-size:11px;vertical-align:1px}
+.workoutTop .btn{min-height:38px!important;height:38px!important;padding:0 15px!important;border-radius:10px!important;font-size:10px!important}
+
+/* Exercise data */
+.cvPrescription{color:#aab4b9!important}
+.cvRestPill{pointer-events:none!important;min-width:auto!important;height:34px!important;padding:0 9px!important;border-radius:10px!important;border:1px solid #2c3940!important;background:#081014!important;color:#aab5ba!important;font-size:7.5px!important;letter-spacing:.035em!important;box-shadow:none!important}
+.cvRestPill.cvRestMeta:before{content:"DESCANSO · ";color:#77858b;font-weight:900}
+
+/* Human tempo */
+.cvTechnique{padding:13px!important}
+.cvTechniqueTitle{margin-bottom:7px!important}
+.cvTempo{margin-top:11px!important;padding-top:10px!important;border-top:1px solid #222e34!important;color:#c6ced2!important}
+.cvTempoHumanTitle{color:#ff5365;font-size:8px;font-weight:900;letter-spacing:.15em;margin-bottom:7px}
+.cvTempoStep{display:grid;grid-template-columns:27px minmax(0,1fr) 46px;gap:8px;align-items:center;min-height:39px;padding:5px 0;border-top:1px solid rgba(255,255,255,.055)}
+.cvTempoStep:first-of-type{border-top:0}
+.cvTempoStep .n{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:rgba(255,32,55,.10);border:1px solid rgba(255,32,55,.28);color:#ff5365;font:900 12px 'Barlow Condensed'}
+.cvTempoStep .copy strong{display:block;color:#eef2f4;font-size:9.2px;line-height:1.2}
+.cvTempoStep .copy small{display:block;margin-top:2px;color:#7f8c92;font-size:7.5px;line-height:1.3}
+.cvTempoStep .secs{text-align:right;color:#fff;font:900 16px 'Barlow Condensed'}
+.cvTempoHelp{margin-top:8px;padding:7px 8px;border-radius:8px;background:rgba(82,227,161,.045);border:1px solid rgba(82,227,161,.12);color:#9ba7ac;font-size:7.6px;line-height:1.4}
+.cvTempoSingle{display:flex;gap:9px;align-items:flex-start;padding:4px 0 1px}
+.cvTempoSingle .ico{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;border:1px solid rgba(255,32,55,.25);background:rgba(255,32,55,.08);flex:0 0 auto}
+.cvTempoSingle strong{display:block;color:#eef2f3;font-size:10px}.cvTempoSingle small{display:block;margin-top:3px;color:#849198;font-size:8px;line-height:1.4}
+
+/* Hevy-style set table */
+.cvSetsHead{color:#829097!important}
+.cvSetsHead span:nth-child(2){color:#aeb9be!important}
+.cvSetRow{border-radius:10px;transition:.18s ease}
+.cvSetRow input{background:#070d10!important;border-color:#2b383f!important;color:#fff!important;opacity:1!important;-webkit-text-fill-color:#fff!important;touch-action:manipulation!important;pointer-events:auto!important}
+.cvSetRow input:focus{border-color:#ff3d53!important;box-shadow:0 0 0 2px rgba(255,32,55,.09),0 0 18px rgba(255,32,55,.07)!important}
+.cvSetRow input:disabled{opacity:1!important;pointer-events:auto!important}
+.cvSetCheck{pointer-events:auto!important;opacity:1!important;touch-action:manipulation!important}
+.cvSetCheck.done{border-color:rgba(82,227,161,.55)!important;background:linear-gradient(145deg,#123824,#0d281a)!important;color:#67ecaa!important;box-shadow:0 0 18px rgba(82,227,161,.13)!important}
+.cvSetRow.done{background:linear-gradient(90deg,rgba(82,227,161,.055),transparent 75%)}
+.cvSetRow.cvSaving{opacity:.72}.cvSetRow.cvSaved{box-shadow:inset 2px 0 0 rgba(82,227,161,.66)}.cvSetRow.cvSaveError{box-shadow:inset 2px 0 0 #ff3650}
+.cvExerciseProgress{font-size:8px!important}.cvExerciseProgress.hasProgress{color:#5fe5a4!important;font-weight:900!important}
+.cvPrevMain{display:block;color:#eff3f4;font:900 11.5px 'Barlow Condensed';white-space:nowrap}
+.cvPrevMeta{display:block;margin-top:3px;color:#728087;font-size:6.2px;font-weight:900;letter-spacing:.065em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cvPrevMeta.coach{color:#ff6071}.cvPrevMeta.previous{color:#63dca0}.cvPrevMeta.program{color:#87949a}
+.cvResumeBadge{display:inline-flex;align-items:center;gap:5px;margin:0 0 10px;padding:6px 9px;border:1px solid rgba(82,227,161,.25);border-radius:999px;background:rgba(82,227,161,.07);color:#6fe9aa;font-size:7px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.cvResumeBadge:before{content:"●";font-size:7px}
+
+/* Rest countdown exists ONLY during active rest and stays above bottom nav */
+.cvRestDock{position:fixed!important;z-index:120!important;left:50%!important;transform:translateX(-50%)!important;bottom:calc(78px + env(safe-area-inset-bottom))!important;width:min(500px,calc(100% - 16px))!important;min-height:70px!important;border:1px solid rgba(255,43,66,.5)!important;border-radius:16px!important;background:rgba(5,10,13,.985)!important;backdrop-filter:blur(22px)!important;box-shadow:0 20px 55px rgba(0,0,0,.58),0 0 30px rgba(255,32,55,.10)!important;padding:9px 10px 9px 13px!important}
+.cvRestDock.hidden,.cvRestDock.done{display:none!important}
+.cvRestText small{color:#ff5266!important}.cvRestText b{font-size:31px!important}.cvRestActions button:first-child{border-color:rgba(82,227,161,.23)!important;color:#b9f3d4!important}
+
+/* Bottom navigation: more contrast, green only for positive states */
+.nav{background:rgba(3,6,8,.985)!important;border-top:1px solid #253139!important;box-shadow:0 -16px 42px rgba(0,0,0,.52)!important}
+.nav button{color:#718087!important;transition:.16s ease!important}
+.nav button .ico{filter:drop-shadow(0 0 0 transparent);transition:.16s ease}
+.nav button.active{color:#f4f6f7!important}
+.nav button.active .ico{color:#ff3047!important;filter:drop-shadow(0 0 8px rgba(255,32,55,.35))}
+.nav button.active:after{content:"";display:block;width:22px;height:2px;margin:5px auto 0;border-radius:2px;background:linear-gradient(90deg,#ff2740,#ff5a6d);box-shadow:0 0 10px rgba(255,32,55,.35)}
+
+@media(max-width:390px){
+ .top{grid-template-columns:82px minmax(0,1fr) 82px!important;padding-left:9px!important;padding-right:9px!important}
+ .cvOfficialHeaderImg{width:79px;height:44px}
+ .topRight{width:82px!important;gap:3px!important}.logout{font-size:8px!important}
+ .cvHeaderIdentity b{font-size:12px}.cvHeaderIdentity small{font-size:6.1px;letter-spacing:.07em}
+ .cvTempoStep{grid-template-columns:25px minmax(0,1fr) 42px;gap:6px}
+}
+</style><style id="cv-v20-clean-hevy">
+/* CV Coach v20 — clean fast workout mode */
+body.cvFastWorkout .content{padding:0 12px 28px!important}
+body.cvFastWorkout .workoutTop{margin:0!important;padding:8px 0!important;background:transparent!important;border:0!important}
+body.cvFastWorkout .workoutTop .ey{display:none!important}
+.cvSessionStats{display:grid;grid-template-columns:repeat(3,1fr);margin:0 -12px 14px;border-top:1px solid #263239;border-bottom:1px solid #263239;background:#263239;gap:1px}
+.cvSessionStat{background:#05080a;padding:10px 14px 12px;min-height:64px}.cvSessionStat small{display:block;color:#7e8990;font-size:9px;font-weight:800;margin-bottom:7px}.cvSessionStat b{display:block;font:900 25px 'Barlow Condensed';color:#fff}.cvSessionStat.duration b{color:#ff4057}.cvSessionStat.volume b{color:#5ce2a3}
+body.cvFastWorkout .section{margin-top:0!important}
+body.cvFastWorkout .cvHevyExercise{position:relative;margin:0 0 10px!important;padding:14px 11px 13px!important;border-radius:14px!important;overflow:hidden!important;background:linear-gradient(155deg,#091014,#060a0d)!important;border:1px solid #29363d!important}
+body.cvFastWorkout .exerciseTop{align-items:flex-start!important;gap:10px!important;margin-bottom:4px!important}
+body.cvFastWorkout .exerciseTop .num{width:42px!important;height:42px!important;min-width:42px!important;border-radius:11px!important;font-size:21px!important}
+body.cvFastWorkout .exerciseTop h3{font:900 27px/1.02 'Barlow Condensed'!important;margin:1px 0 5px!important;color:#f6f8f9!important;cursor:pointer!important;touch-action:manipulation!important;display:inline-flex!important;align-items:center!important;gap:7px!important}
+body.cvFastWorkout .exerciseTop h3:after{content:'›';font-size:26px;color:#ff4057;font-weight:900}
+body.cvFastWorkout .cvPrescription{font-size:10.5px!important;color:#99a5ab!important;line-height:1.3!important}
+body.cvFastWorkout .cvRestText{margin:9px 0 11px 53px;color:#ff5367;font-size:10px;font-weight:900;letter-spacing:.01em}
+body.cvFastWorkout .cvSetsHead{display:grid!important;grid-template-columns:44px minmax(84px,1fr) 80px 70px 48px!important;gap:6px!important;padding:0 2px 7px!important;align-items:end!important;color:#7f8b91!important}
+body.cvFastWorkout .cvSetsHead span{font-size:9px!important;font-weight:900!important;text-align:center!important;letter-spacing:.035em!important}body.cvFastWorkout .cvSetsHead span:nth-child(2){text-align:left!important;padding-left:4px!important}
+body.cvFastWorkout .cvSetRows{display:grid!important;gap:7px!important}
+body.cvFastWorkout .cvSetRow{display:grid!important;grid-template-columns:44px minmax(84px,1fr) 80px 70px 48px!important;gap:6px!important;align-items:center!important;min-height:54px!important;border:0!important;padding:0!important;background:transparent!important}
+body.cvFastWorkout .cvSetNo{width:44px!important;height:50px!important;border-radius:10px!important;font-size:22px!important;background:#11171b!important;border:1px solid #2a353b!important;color:#f4f6f7!important}
+body.cvFastWorkout .cvPrevious{text-align:left!important;padding-left:4px!important;min-width:0!important}
+body.cvFastWorkout .cvPrevMain{font:800 16px/1.05 'Barlow Condensed'!important;color:#b9c2c6!important;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
+body.cvFastWorkout .cvPrevMeta{font-size:6.4px!important;margin-top:3px!important}
+body.cvFastWorkout .cvSetRow input{height:50px!important;border-radius:10px!important;font-size:22px!important;font-weight:850!important;padding:0 6px!important;background:#060a0c!important;border:1px solid #2b363c!important;color:#fff!important;opacity:1!important;-webkit-text-fill-color:#fff!important;pointer-events:auto!important;touch-action:manipulation!important}
+body.cvFastWorkout .cvSetRow input:focus{border-color:#ff4057!important;box-shadow:0 0 0 2px rgba(255,64,87,.10)!important}
+body.cvFastWorkout .cvSetCheck{width:48px!important;height:50px!important;border-radius:10px!important;font-size:22px!important;background:#11171b!important;border-color:#2b363c!important;opacity:1!important;pointer-events:auto!important}
+body.cvFastWorkout .cvSetCheck.done{background:#123a24!important;border-color:#438e65!important;color:#73eead!important}
+.cvAddSet{width:100%;height:49px;margin-top:11px;border:1px solid #2b373d;border-radius:11px;background:#11171b;color:#f0f2f3;font-size:14px;font-weight:850;touch-action:manipulation}
+body.cvFastWorkout .cvExerciseProgress{display:none!important}
+body.cvFastWorkout .exerciseMedia,body.cvFastWorkout .cvTechnique{display:none!important}
+/* Technique sheet */
+.cvTechBackdrop{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:none}.cvTechBackdrop.show{display:block}
+.cvTechSheet{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(540px,100%);max-height:88vh;overflow:auto;background:#080d10;border:1px solid #2b373d;border-bottom:0;border-radius:22px 22px 0 0;padding:10px 14px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -24px 75px rgba(0,0,0,.68)}
+.cvTechHandle{width:42px;height:4px;border-radius:4px;background:#4a555b;margin:0 auto 12px}.cvTechHead{display:flex;align-items:center;gap:10px;margin-bottom:11px}.cvTechHead h2{font:900 28px/1 'Barlow Condensed';margin:0;flex:1;color:#fff}.cvTechClose{width:38px;height:38px;border-radius:50%;border:1px solid #303b41;background:#11171b;color:#fff;font-size:21px}
+.cvTechMedia{min-height:150px;border-radius:13px;overflow:hidden;background:#030506;border:1px solid #222d32;display:grid;place-items:center;margin-bottom:12px}.cvTechMedia img{display:block;width:100%;height:auto}.cvTechLoading{color:#7d898f;font-size:10px;padding:38px 0}.cvTechBlock{border:1px solid #263239;border-radius:12px;background:#070c0f;padding:12px;margin-top:10px}.cvTechBlock h4{margin:0 0 7px;color:#ff5064;font-size:9px;letter-spacing:.12em}.cvTechBlock p{margin:0;color:#d1d7da;font-size:12px;line-height:1.55}.cvTechTempo{margin-top:10px;padding-top:10px;border-top:1px solid #202a2f;color:#eef1f2;font-size:11px;line-height:1.55}
+@media(max-width:390px){body.cvFastWorkout .exerciseTop h3{font-size:24px!important}body.cvFastWorkout .cvSetsHead,body.cvFastWorkout .cvSetRow{grid-template-columns:42px minmax(72px,1fr) 74px 64px 44px!important;gap:5px!important}body.cvFastWorkout .cvSetNo{width:42px!important}body.cvFastWorkout .cvSetCheck{width:44px!important}.cvSessionStat{padding-left:10px;padding-right:7px}.cvSessionStat b{font-size:23px}}
+</style><style id="cv-v21-functional">
+/* v21 — functional interaction layer only */
+body.cvFastWorkout .cvSetRow input.cvInputActive{border-color:#ff465b!important;box-shadow:0 0 0 2px rgba(255,70,91,.11)!important}
+body.cvFastWorkout .cvSetRow.cvJustCompleted{animation:cvRowDone .34s ease}
+@keyframes cvRowDone{0%{background:rgba(88,232,165,.16)}100%{background:transparent}}
+</style><style id="cv-v22-ux">
+/* v22 — UX density. Large type is preserved. */
+body.cvFastWorkout #content>.ey,body.cvFastWorkout #content>h1,body.cvFastWorkout #content>.sub{display:none!important}
+body.cvFastWorkout .workoutTop{padding:7px 0 6px!important}
+body.cvFastWorkout .workoutTop .row{min-height:42px!important}
+body.cvFastWorkout .workoutTop .btn{height:40px!important;min-height:40px!important;border-radius:11px!important;padding:0 16px!important;font-size:11px!important}
+body.cvFastWorkout .cvSessionStats{margin-bottom:8px!important}
+body.cvFastWorkout .cvSessionStat{min-height:56px!important;padding:8px 11px 9px!important}
+body.cvFastWorkout .cvSessionStat small{font-size:8px!important;margin-bottom:4px!important}
+body.cvFastWorkout .cvSessionStat b{font-size:24px!important;line-height:1!important}
+body.cvFastWorkout .section{padding-top:4px!important}
+body.cvFastWorkout .cvHevyExercise{margin-bottom:7px!important;padding:12px 10px 11px!important;border-radius:12px!important}
+body.cvFastWorkout .exerciseTop{gap:9px!important}
+body.cvFastWorkout .exerciseTop .num{width:40px!important;height:40px!important;min-width:40px!important;font-size:21px!important}
+body.cvFastWorkout .exerciseTop h3{font-size:26px!important;margin-bottom:4px!important}
+body.cvFastWorkout .cvPrescription{font-size:10px!important}
+body.cvFastWorkout .cvRestText{margin:7px 0 8px 49px!important;font-size:9.5px!important}
+body.cvFastWorkout .cvSetsHead{grid-template-columns:42px minmax(80px,1fr) 78px 68px 46px!important;gap:5px!important;padding-bottom:5px!important}
+body.cvFastWorkout .cvSetRows{gap:5px!important}
+body.cvFastWorkout .cvSetRow{grid-template-columns:42px minmax(80px,1fr) 78px 68px 46px!important;gap:5px!important;min-height:51px!important}
+body.cvFastWorkout .cvSetNo{width:42px!important;height:47px!important;font-size:21px!important}
+body.cvFastWorkout .cvSetRow input{height:47px!important;font-size:21px!important}
+body.cvFastWorkout .cvSetCheck{width:46px!important;height:47px!important;font-size:21px!important}
+body.cvFastWorkout .cvPrevMain{font-size:15px!important}
+body.cvFastWorkout .cvAddSet{height:45px!important;margin-top:8px!important;font-size:13px!important}
+body.cvFastWorkout .cvResumeBadge{margin:3px 0 7px!important;padding:5px 8px!important;font-size:6.6px!important;transition:.3s ease!important}
+body.cvFastWorkout .cvResumeBadge.cvResumeCompact{opacity:.78;transform:scale(.94);transform-origin:left center}
+body.cvFastWorkout .nav{min-height:64px!important;height:64px!important;padding-top:5px!important;padding-bottom:calc(4px + env(safe-area-inset-bottom))!important}
+body.cvFastWorkout .nav button{font-size:8px!important}
+body.cvFastWorkout .nav .ico{font-size:20px!important}
+/* Keep the rest dock dominant only while it exists. */
+body.cvFastWorkout .cvRestDock{bottom:calc(68px + env(safe-area-inset-bottom))!important}
+@media(max-width:390px){
+ body.cvFastWorkout .exerciseTop h3{font-size:24px!important}
+ body.cvFastWorkout .cvSetsHead,body.cvFastWorkout .cvSetRow{grid-template-columns:40px minmax(66px,1fr) 70px 61px 43px!important;gap:4px!important}
+ body.cvFastWorkout .cvSetNo{width:40px!important}.cvSetCheck{width:43px!important}
+ body.cvFastWorkout .cvPrevious{padding-left:2px!important}.cvPrevMain{font-size:14px!important}
+}
+</style><style id="cv-v23-premium">
+/* v23 — premium visual layer + micro-feedback */
+body.cvFastWorkout{background:
+ radial-gradient(circle at 100% 0%,rgba(255,35,58,.055),transparent 24%),
+ radial-gradient(circle at 0% 55%,rgba(82,227,161,.035),transparent 27%),#030506!important}
+body.cvFastWorkout .top{background:linear-gradient(180deg,rgba(5,9,11,.985),rgba(3,6,8,.965))!important;border-bottom:1px solid #253138!important;box-shadow:0 10px 28px rgba(0,0,0,.32)!important}
+body.cvFastWorkout .cvSessionStats{background:#27343a!important;box-shadow:0 8px 24px rgba(0,0,0,.18)!important}
+body.cvFastWorkout .cvSessionStat{background:linear-gradient(180deg,#070b0d,#040709)!important}
+body.cvFastWorkout .cvSessionStat.duration b{text-shadow:0 0 18px rgba(255,64,87,.18)}
+body.cvFastWorkout .cvSessionStat.volume b{text-shadow:0 0 18px rgba(82,227,161,.14)}
+body.cvFastWorkout .cvHevyExercise{box-shadow:0 13px 30px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.025)!important;background:linear-gradient(150deg,#091115 0%,#060a0d 58%,#080d10 100%)!important;transition:border-color .2s ease,box-shadow .2s ease,transform .15s ease!important}
+body.cvFastWorkout .cvHevyExercise:before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,49,70,.50),rgba(82,227,161,.18),transparent);pointer-events:none}
+body.cvFastWorkout .cvHevyExercise.cvExerciseHasProgress{border-color:#304139!important}
+body.cvFastWorkout .cvHevyExercise.cvExerciseComplete{border-color:rgba(82,227,161,.40)!important;box-shadow:0 13px 32px rgba(0,0,0,.26),0 0 24px rgba(82,227,161,.045),inset 0 1px 0 rgba(255,255,255,.03)!important}
+body.cvFastWorkout .cvHevyExercise.cvExerciseComplete:before{background:linear-gradient(90deg,transparent,rgba(82,227,161,.65),transparent)}
+body.cvFastWorkout .exerciseTop .num{background:linear-gradient(150deg,rgba(255,31,54,.16),rgba(55,9,17,.42))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important}
+body.cvFastWorkout .exerciseTop h3{filter:drop-shadow(0 3px 6px rgba(0,0,0,.18))}
+body.cvFastWorkout .cvRestText{color:#ff6275!important;text-shadow:0 0 12px rgba(255,56,78,.10)}
+body.cvFastWorkout .cvSetNo{background:linear-gradient(145deg,#131a1e,#0d1317)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)!important}
+body.cvFastWorkout .cvSetRow input{background:linear-gradient(180deg,#080d10,#05090b)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.018)!important}
+body.cvFastWorkout .cvSetCheck{background:linear-gradient(145deg,#141b1f,#0d1316)!important;transition:.16s ease!important}
+body.cvFastWorkout .cvSetCheck:active{transform:scale(.92)}
+body.cvFastWorkout .cvSetCheck.done{background:linear-gradient(145deg,#17492d,#10331f)!important;border-color:#4ba873!important;color:#7bf0b3!important;box-shadow:0 0 18px rgba(82,227,161,.12),inset 0 1px 0 rgba(255,255,255,.04)!important}
+body.cvFastWorkout .cvAddSet{background:linear-gradient(180deg,#141b1f,#10161a)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)!important}
+body.cvFastWorkout .cvAddSet:active{transform:scale(.992);background:#171f23!important}
+body.cvFastWorkout .cvResumeBadge{background:rgba(82,227,161,.06)!important;border-color:rgba(82,227,161,.26)!important;color:#76eeb1!important;box-shadow:0 0 16px rgba(82,227,161,.035)!important}
+body.cvFastWorkout .cvRestDock{animation:cvRestRise .22s ease both;background:linear-gradient(145deg,rgba(7,12,15,.995),rgba(4,8,10,.995))!important;border-color:rgba(255,55,78,.48)!important;box-shadow:0 20px 58px rgba(0,0,0,.62),0 0 30px rgba(255,40,65,.08)!important}
+body.cvFastWorkout .cvRestDock.cvLastTen{border-color:rgba(255,90,105,.72)!important;box-shadow:0 20px 58px rgba(0,0,0,.65),0 0 28px rgba(255,45,67,.14)!important}
+body.cvFastWorkout .cvRestDock.cvLastTen #cvRestTime{color:#ff6679!important;text-shadow:0 0 18px rgba(255,70,92,.22)}
+@keyframes cvRestRise{from{transform:translate(-50%,12px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+body.cvFastWorkout .nav button.active .ico{filter:drop-shadow(0 0 9px rgba(255,43,64,.32))!important}
+body.cvFastWorkout .nav button.active:after{box-shadow:0 0 12px rgba(255,43,64,.34)!important}
+.cvTechSheet{background:linear-gradient(180deg,#0a1013,#060a0c)!important;box-shadow:0 -28px 80px rgba(0,0,0,.72)!important}
+.cvTechMedia{box-shadow:0 12px 30px rgba(0,0,0,.30)!important}
+</style><style id="cv-v24-performance">
+/* v24 — performance and interaction safeguards */
+body.cvFastWorkout .cvHevyExercise{content-visibility:auto;contain-intrinsic-size:390px;contain:layout style paint}
+body.cvFastWorkout button,body.cvFastWorkout input,body.cvFastWorkout .exerciseTop h3{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.cvTechSheet{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+body.cvFastWorkout .content{overscroll-behavior-y:contain}
+@media(prefers-reduced-motion:reduce){
+ body.cvFastWorkout *,body.cvFastWorkout *:before,body.cvFastWorkout *:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+</style><style id="cv-v29-consolidated">
+/* =========================================================
+   CV COACH V29 — CONSOLIDATED RESPONSIVE DESIGN SYSTEM
+   Single visual layer over stable v24 functional base.
+   ========================================================= */
+:root{
+ --cv-bg:#000000;--cv-surface:#0B0F14;--cv-card:#121820;--cv-grad:#0A1018;
+ --cv-red:#E11D2E;--cv-red-glow:#FF2D3F;--cv-white:#FFFFFF;--cv-muted:#9CA3AF;
+ --cv-line:#252D35;--cv-line-soft:#182129;--cv-success:#58E2A3;
+ --cv-r12:12px;--cv-r16:16px;--cv-r18:18px;--cv-shadow:0 20px 56px rgba(0,0,0,.34);
+ --cv-hero:url('https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-brand/theme/v1/hero.webp');
+ --cv-side:url('https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-brand/theme/v1/sidebar.webp');
+}
+*{box-sizing:border-box}
+html,body{background:#000!important;color:#fff!important}
+body{font-family:Inter,Geist,Manrope,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;background:radial-gradient(circle at 78% 2%,rgba(225,29,46,.075),transparent 26%),#000!important}
+h1,h2,h3,.brand,.v,.timer{font-family:Inter,Geist,Manrope,system-ui,sans-serif!important;letter-spacing:-.035em}
+.ey{color:var(--cv-red-glow)!important;font-size:10px!important;font-weight:800!important;letter-spacing:.22em!important;text-transform:uppercase}
+.sub,.hint{color:var(--cv-muted)!important}
+.card,.glass,.stat,.setBox,.cvTechBlock{background:linear-gradient(155deg,#121820,#0B0F14 62%,#080C10)!important;border:1px solid var(--cv-line)!important;border-radius:var(--cv-r16)!important;box-shadow:var(--cv-shadow)!important}
+.btn{min-height:44px!important;border-radius:12px!important;border:1px solid #313A43!important;background:#0C1218!important;color:#fff!important;font-weight:800!important;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .18s ease!important}
+.btn.primary{background:linear-gradient(180deg,#F1283C,var(--cv-red))!important;border-color:#F13B4D!important;box-shadow:0 10px 26px rgba(225,29,46,.22)!important}
+.btn:active,.nav button:active,.cvSetCheck:active,.cvAddSet:active{transform:scale(.975)!important}
+@media(hover:hover){.btn:hover{border-color:#46525C!important}.btn.primary:hover{transform:translateY(-1px);box-shadow:0 14px 34px rgba(225,29,46,.31)!important}.card:hover{border-color:#35414B!important}}
+.input,input[type="number"],input[type="email"],input[type="password"]{background:#05090D!important;border:1px solid #303942!important;color:#fff!important;border-radius:12px!important;min-height:46px!important;outline:none!important}
+.input:focus,input:focus{border-color:rgba(255,45,63,.86)!important;box-shadow:0 0 0 3px rgba(255,45,63,.09)!important}
+
+/* Login */
+.login{min-height:100dvh!important;background:linear-gradient(90deg,rgba(0,0,0,.98),rgba(0,0,0,.88) 42%,rgba(0,0,0,.34)),var(--cv-hero) 72% center/cover no-repeat!important}
+.login .glass{background:rgba(7,11,15,.90)!important;backdrop-filter:blur(18px);box-shadow:0 30px 90px rgba(0,0,0,.56)!important}
+.login h1{font-size:clamp(40px,4.5vw,62px)!important;line-height:.94!important}
+
+/* App chrome shared */
+.top{background:rgba(3,6,8,.93)!important;border-bottom:1px solid var(--cv-line-soft)!important;backdrop-filter:blur(18px)!important;box-shadow:0 10px 30px rgba(0,0,0,.22)!important}
+.cvOfficialHeaderImg{filter:drop-shadow(0 8px 16px rgba(0,0,0,.52)) drop-shadow(0 0 10px rgba(225,29,46,.10))!important}
+.cvHeaderIdentity b{color:#fff!important}.cvHeaderIdentity small{color:#7F8990!important}
+.logout{color:#C4CBD0!important}
+
+/* Home hero */
+.hero{position:relative;overflow:hidden;isolation:isolate;border:1px solid #29333C!important;border-radius:18px!important;box-shadow:0 28px 90px rgba(0,0,0,.48)!important;background:#070B0F!important}
+.hero:before{content:""!important;position:absolute!important;inset:0 0 0 auto!important;width:62%!important;background-image:linear-gradient(90deg,#070B0F 0%,rgba(7,11,15,.78) 15%,rgba(7,11,15,.08) 60%,rgba(0,0,0,.03)),var(--cv-hero)!important;background-size:cover!important;background-position:center!important;z-index:0!important;pointer-events:none!important}
+.hero:after{content:"DISCIPLINA · ESTRUCTURA · PROGRESO · RESULTADOS"!important;position:absolute!important;left:34px!important;bottom:20px!important;color:rgba(255,255,255,.47)!important;font-size:8px!important;font-weight:800!important;letter-spacing:.2em!important}
+.hero>*{position:relative!important;z-index:2!important}.hero h1 b{color:var(--cv-red-glow)!important}
+.stats{gap:12px!important}.stat{min-width:0!important}.stat .l{color:#8C969D!important;font-size:9px!important;font-weight:750!important}.stat .v{color:#fff!important;font-weight:900!important}.stat:after{content:"";display:block;width:28px;height:2px;margin-top:8px;border-radius:99px;background:var(--cv-red);box-shadow:0 0 12px rgba(255,45,63,.35)}
+.progress{background:#1A222A!important}.progress i{background:linear-gradient(90deg,var(--cv-red),var(--cv-red-glow))!important;box-shadow:0 0 14px rgba(255,45,63,.34)!important}.pill{background:rgba(88,226,163,.08)!important;border-color:rgba(88,226,163,.22)!important;color:#79ECB7!important}
+
+/* Routine shared */
+.cvRoutineHero{display:contents}
+.day .num,.workoutExercise .num{background:linear-gradient(145deg,rgba(225,29,46,.19),rgba(225,29,46,.07))!important;border-color:rgba(255,45,63,.42)!important;color:#FF4C60!important}
+
+/* Workout visual alignment, logic remains v24 */
+body.cvFastWorkout{background:#000!important}
+body.cvFastWorkout .cvHevyExercise{background:linear-gradient(150deg,#0D1319,#080D12 70%,#090D11)!important;border-color:#2A343C!important;border-radius:16px!important;box-shadow:0 18px 44px rgba(0,0,0,.24)!important}
+body.cvFastWorkout .cvSetRow input{background:#04080B!important;border-color:#2D3740!important}
+body.cvFastWorkout .cvSetCheck{border-color:#303A42!important;background:#0E151B!important}
+body.cvFastWorkout .cvSetCheck.done{background:linear-gradient(145deg,#123D27,#0D2B1C)!important;border-color:#3E9165!important;color:#7AF1B4!important}
+body.cvFastWorkout .cvRestText{color:#FF596B!important}.cvSessionStat.duration b{color:#FF5164!important}.cvSessionStat.volume b{color:#61E6A9!important}
+.cvRestDock{background:rgba(5,9,12,.985)!important;border-color:rgba(255,45,63,.46)!important;border-radius:16px!important;box-shadow:0 20px 65px rgba(0,0,0,.62),0 0 28px rgba(225,29,46,.08)!important}
+.cvTechBackdrop{background:rgba(0,0,0,.78)!important;backdrop-filter:blur(7px)!important}.cvTechSheet{background:linear-gradient(155deg,#0C1218,#070B0F)!important;border-color:#303A42!important}.cvTechMedia{background:#020405!important;border-color:#272F36!important}
+
+/* MOBILE 0–767 */
+@media(max-width:767px){
+ .shell{max-width:520px!important;width:100%!important;margin:0 auto!important;min-height:100dvh!important}
+ .top{height:64px!important;padding:6px 12px!important;grid-template-columns:82px minmax(0,1fr) 82px!important}.cvOfficialHeaderImg{width:78px!important;height:42px!important}.cvHeaderIdentity b{font-size:12px!important}.cvHeaderIdentity small{font-size:6px!important}.topRight{width:82px!important}
+ .content{padding:14px 16px calc(92px + env(safe-area-inset-bottom))!important;max-width:none!important}
+ .hero{min-height:190px!important;padding:16px 16px 18px!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;background:#05080B!important}.hero:before{inset:0!important;width:100%!important;background-image:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.50) 48%,rgba(0,0,0,.95)),var(--cv-hero)!important;background-position:28% center!important}.hero:after{display:none!important}.hero>*{max-width:88%!important}.hero h1{font-size:31px!important;line-height:.95!important;margin:0 0 6px!important}.hero .sub{font-size:11.5px!important;line-height:1.4!important;margin:0!important}.hero .ey{margin-bottom:5px!important}
+ .stats{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:7px!important;margin-top:8px!important}.stat{padding:10px 8px!important;min-height:69px!important}.stat .v{font-size:24px!important}.stat .l{font-size:7px!important}
+ .section{margin-top:14px!important}.dayGrid{display:grid!important;grid-template-columns:1fr!important;gap:12px!important}.day{padding:14px!important;margin:0!important}.day h3{font-size:22px!important}.day .hint{font-size:9px!important}.dayActions .btn{width:100%!important;min-height:48px!important}
+ .nav{height:70px!important;padding:4px 7px calc(4px + env(safe-area-inset-bottom))!important;background:rgba(2,5,7,.985)!important;border-top:1px solid #242D35!important;box-shadow:0 -18px 44px rgba(0,0,0,.58)!important}.nav button{min-height:52px!important;font-size:9px!important;color:#768088!important}.nav button .ico svg{width:20px;height:20px;stroke:currentColor;fill:none}.nav button.active{color:#fff!important}.nav button.active .ico{color:var(--cv-red-glow)!important}
+ body.cvFastWorkout .content{padding-left:10px!important;padding-right:10px!important}.cvRestDock{left:8px!important;right:8px!important;width:auto!important;transform:none!important;bottom:calc(76px + env(safe-area-inset-bottom))!important}.cvTechSheet{width:100%!important;max-height:89dvh!important;border-radius:22px 22px 0 0!important}
+ .login{align-items:flex-end!important;padding:18px 16px calc(24px + env(safe-area-inset-bottom))!important;background:linear-gradient(180deg,rgba(0,0,0,.20),rgba(0,0,0,.72) 46%,rgba(0,0,0,.98) 80%),var(--cv-hero) 28% 12%/auto 58% no-repeat,#000!important}.loginbox{width:100%!important}.login h1{font-size:40px!important}
+}
+
+/* TABLET 768–1023 */
+@media(min-width:768px) and (max-width:1023px){
+ .shell{max-width:none!important;width:100%!important;margin:0!important;padding-bottom:30px!important}.content{max-width:900px!important;margin:0 auto!important;padding:24px 24px 96px!important}.hero{min-height:300px!important;padding:30px!important}.hero>*{max-width:58%!important}.hero h1{font-size:48px!important;line-height:.94!important}.stats{display:grid!important;grid-template-columns:repeat(3,1fr)!important}.dayGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}.day{margin:0!important;padding:16px!important}.nav{max-width:680px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;border-radius:18px 18px 0 0!important}
+ .cvTechBackdrop.show{display:flex!important;align-items:center!important;justify-content:center!important;padding:28px!important}.cvTechSheet{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;width:min(820px,100%)!important;border-radius:18px!important;max-height:86vh!important}
+}
+
+/* DESKTOP 1024+ — critical: remove legacy 960px shell cap */
+@media(min-width:1024px){
+ body{overflow-x:hidden!important}.shell{max-width:none!important;width:100%!important;margin:0!important;min-height:100dvh!important;padding:0 0 0 248px!important}.nav{display:none!important}
+ .top{position:fixed!important;z-index:130!important;left:248px!important;right:0!important;top:0!important;height:72px!important;padding:8px 24px!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:18px!important;align-items:center!important}.top .cvOfficialHeaderImg{display:none!important}.topTitle,.cvHeaderIdentity{margin:0!important;justify-self:start!important;text-align:left!important}.cvHeaderIdentity b{font-size:14px!important}.cvHeaderIdentity small{font-size:7px!important;letter-spacing:.1em!important;margin-top:3px!important}.topRight{width:auto!important;margin:0!important;justify-self:end!important}
+ .content{width:100%!important;max-width:1480px!important;margin:0 auto!important;padding:100px 34px 54px!important}
+ .cvDesktopSide{display:flex!important;position:fixed!important;z-index:140!important;inset:0 auto 0 0!important;width:248px!important;padding:22px 14px 18px!important;flex-direction:column!important;background:linear-gradient(180deg,#06090C,#05080A 72%,#070A0D)!important;border-right:1px solid #202830!important;box-shadow:18px 0 60px rgba(0,0,0,.18)!important;overflow:hidden!important}
+ .cvDesktopSide:after{content:"";position:absolute;left:0;right:0;bottom:0;height:330px;background-image:linear-gradient(180deg,#05080A 0%,rgba(5,8,10,.15) 28%,rgba(5,8,10,.68) 100%),var(--cv-side);background-size:cover;background-position:center 24%;opacity:.56;pointer-events:none}
+ .cvDesktopSide:before{content:"DISCIPLINA · PROGRESO · RESULTADOS";position:absolute;z-index:3;left:22px;bottom:24px;color:rgba(255,255,255,.46);font-size:7px;font-weight:800;letter-spacing:.19em;max-width:190px;line-height:1.6}
+ .cvSideBrand{position:relative;z-index:2;padding:0 8px 20px;border-bottom:1px solid #202830;margin-bottom:18px}.cvSideBrand img{width:166px;max-height:68px;object-fit:contain;object-position:left center}.cvSideBrand small{display:block;margin-top:9px;color:#777F86;font-size:7px;letter-spacing:.19em;text-transform:uppercase}
+ .cvSideNav{position:relative;z-index:2;display:grid;gap:7px}.cvSideNav button{height:46px;border:1px solid transparent;border-radius:12px;background:transparent;color:#A8B0B6;display:flex;align-items:center;gap:12px;padding:0 14px;font-size:12px;font-weight:700}.cvSideNav button svg{width:19px;height:19px;stroke:currentColor;fill:none}.cvSideNav button.active{color:#fff;background:linear-gradient(90deg,rgba(225,29,46,.20),rgba(225,29,46,.05));border-color:rgba(255,45,63,.18);box-shadow:inset 3px 0 0 var(--cv-red-glow),0 0 18px rgba(225,29,46,.04)}
+ .cvSideMotto{display:none!important}
+ /* HOME */
+ body[data-cv-view="home"] #content{display:grid!important;grid-template-columns:minmax(0,1.3fr) minmax(320px,.7fr)!important;gap:18px!important;align-items:start!important}body[data-cv-view="home"] #content>.hero,body[data-cv-view="home"] #content>.stats{grid-column:1/-1!important}.hero{min-height:330px!important;padding:38px 40px!important;display:flex!important;flex-direction:column!important;justify-content:center!important}.hero>*{max-width:44%!important}.hero h1{font-size:58px!important;line-height:.91!important}.hero .sub{font-size:15px!important;line-height:1.55!important}.stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important}.stat{min-height:104px!important;padding:16px 18px!important}.stat .v{font-size:38px!important}body[data-cv-view="home"] #content>.section{margin-top:0!important}
+ /* ROUTINE */
+ body[data-cv-view="routine"] #content{max-width:1360px!important}.cvRoutineHero{display:flex!important;position:relative!important;min-height:218px!important;margin:0 0 22px!important;padding:30px 34px!important;flex-direction:column!important;justify-content:center!important;overflow:hidden!important;border:1px solid #28323B!important;border-radius:18px!important;background:#090E13!important;box-shadow:0 26px 74px rgba(0,0,0,.40)!important;isolation:isolate!important}.cvRoutineHero:before{content:"";position:absolute;inset:0 0 0 auto;width:58%;background-image:linear-gradient(90deg,#090E13 0%,rgba(9,14,19,.70) 18%,rgba(9,14,19,.08) 62%),var(--cv-hero);background-size:cover;background-position:center 34%;z-index:-1;opacity:.90}.cvRoutineHero:after{content:"DISCIPLINA · ESTRUCTURA · PROGRESO · RESULTADOS";position:absolute;left:34px;bottom:20px;color:rgba(255,255,255,.46);font-size:8px;font-weight:800;letter-spacing:.20em}.cvRoutineHero>.ey,.cvRoutineHero>h1,.cvRoutineHero>.sub{max-width:54%!important;position:relative;z-index:2}.cvRoutineHero>h1{margin:0!important;font-size:clamp(38px,3.2vw,54px)!important;line-height:.98!important}.cvRoutineHero>.sub{margin-top:10px!important;font-size:14px!important;line-height:1.55!important}
+ body[data-cv-view="routine"] .dayGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px!important;margin:0!important;width:100%!important}.day{margin:0!important;min-width:0!important;min-height:238px!important;padding:24px!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;overflow:hidden!important;background:radial-gradient(circle at 100% 0,rgba(225,29,46,.10),transparent 34%),linear-gradient(150deg,#10171E,#0B1117 62%,#080C10)!important;border:1px solid #29343D!important;border-radius:18px!important;box-shadow:0 20px 52px rgba(0,0,0,.30)!important}.dayHead{display:grid!important;grid-template-columns:58px minmax(0,1fr)!important;gap:16px!important;align-items:start!important;padding:0!important}.day .num{width:58px!important;height:58px!important;min-width:58px!important;border-radius:14px!important;font-size:24px!important;display:grid!important;place-items:center!important}.day h3{margin:0 0 8px!important;font-size:27px!important;line-height:1.08!important}.day .hint{font-size:12px!important;line-height:1.55!important;color:#99A4AC!important}.dayActions{margin-top:24px!important;padding:0!important;width:100%!important}.dayActions .btn{width:100%!important;min-width:0!important;min-height:52px!important;padding:0 18px!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:13px!important;line-height:1.15!important}
+ /* HABITS / MISSIONS */
+ body[data-cv-view="habits"] #content,body[data-cv-view="missions"] #content{max-width:1120px!important}.habit{min-height:72px!important}.mission{padding:14px 0!important}
+ /* WORKOUT */
+ body.cvFastWorkout #content{max-width:1080px!important;padding-top:92px!important}.cvRestDock{left:calc(50% + 124px)!important}.cvTechBackdrop.show{display:flex!important;align-items:center!important;justify-content:center!important;padding:34px 34px 34px 282px!important}.cvTechSheet{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;width:min(900px,100%)!important;max-height:88vh!important;border-radius:18px!important}.cvTechHead h2{font-size:32px!important}
+}
+@media(min-width:1280px){body[data-cv-view="routine"] .dayGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(min-width:1440px){.shell{padding-left:268px!important}.top{left:268px!important}.cvDesktopSide{width:268px!important}.content{padding-left:38px!important;padding-right:38px!important}.cvRestDock{left:calc(50% + 134px)!important}.cvTechBackdrop.show{padding-left:302px!important}.hero{min-height:350px!important}.hero h1{font-size:64px!important}}
+@media(min-width:1920px){.content{max-width:1580px!important}.hero{min-height:370px!important}.hero h1{font-size:68px!important}body[data-cv-view="routine"] #content{max-width:1480px!important}}
+</style><style id="cv-v30-responsive-qa">
+.cvDesktopSide{display:none!important}
+.nav button .ico{display:grid;place-items:center}.nav button .ico svg{width:20px;height:20px;stroke:currentColor!important;fill:none!important}
+@media(min-width:1024px){.cvDesktopSide{display:flex!important}}
+</style><style id="cv-v25-ux">
+/* v25 — history semantics, readable mobile type, stable technique media */
+body.cvFastWorkout .cvPrescription{font-size:12.5px!important;line-height:1.35!important}
+body.cvFastWorkout .cvHevyExercise>.cvRestText{font-size:12px!important;margin-top:8px!important;margin-bottom:10px!important}
+body.cvFastWorkout .cvSetsHead span{font-size:11px!important;letter-spacing:.02em!important}
+body.cvFastWorkout .cvPrevMain{font-size:15px!important;line-height:1.08!important}
+body.cvFastWorkout .cvPrevMeta{font-size:8px!important;line-height:1.15!important;margin-top:4px!important}
+body.cvFastWorkout .cvSessionStat small{font-size:10.5px!important}
+body.cvFastWorkout .nav button{font-size:9.5px!important}
+.cvTechMedia{min-height:170px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#030506!important}
+.cvTechMedia img{display:block!important;width:100%!important;height:auto!important;max-height:46vh!important;object-fit:contain!important;object-position:center center!important;margin:0 auto!important;transform:none!important}
+.cvTechBlock h4{font-size:11px!important}.cvTechBlock p{font-size:15px!important;line-height:1.55!important}.cvTechTempo{font-size:12.5px!important}
+.top{grid-template-columns:76px minmax(0,1fr) 76px!important}.cvOfficialHeaderImg{width:72px!important;height:45px!important}.topRight{width:76px!important}
+.cvRestDock.cvMinimized{width:min(245px,calc(100% - 26px))!important;min-height:52px!important;padding:7px 9px!important;border-radius:15px!important}
+.cvRestDock.cvMinimized .cvRestText small,.cvRestDock.cvMinimized .cvRestText span{display:none!important}.cvRestDock.cvMinimized .cvRestText b{font-size:28px!important}.cvRestDock.cvMinimized .cvRestActions button:not(.cvRestMin){display:none!important}.cvRestMin{min-width:36px!important;padding:0 9px!important;font-size:15px!important}
+@media(max-width:390px){body.cvFastWorkout .cvPrescription{font-size:11.5px!important}body.cvFastWorkout .cvHevyExercise>.cvRestText{font-size:11.5px!important}body.cvFastWorkout .cvSetsHead span{font-size:10.5px!important}body.cvFastWorkout .cvPrevMain{font-size:14px!important}.top{grid-template-columns:66px minmax(0,1fr) 66px!important}.cvOfficialHeaderImg{width:62px!important}.topRight{width:66px!important}}
+</style></head>
+<body>
+<div id="toast" class="toast hidden"></div>
+<section id="login" class="login">
+<div class="loginbox">
+<div class="logo cvBrandOfficial"><div class="cvLogoMark cvLogoLarge" aria-label="Logo CV Coach"></div><div class="brand">CV COACH<small>CAMILO VÁSQUEZ · FITNESS COACH</small></div></div>
+<div class="ey" style="margin-top:30px">TU PROCESO · TU PROGRESO</div>
+<h1>ENTRENA CON UN <span style="color:var(--red)">PLAN.</span></h1>
+<p class="sub">Tu rutina, hábitos, misiones y seguimiento CV12 en un solo lugar.</p>
+<div class="glass">
+<label>Correo</label><input id="email" class="input" type="email" autocomplete="email">
+<label>Contraseña</label><input id="password" class="input" type="password" autocomplete="current-password">
+<button id="loginBtn" class="btn primary full" style="margin-top:14px">INGRESAR</button>
+<div id="loginStatus" class="hint" style="margin-top:9px;min-height:16px"></div>
+<div class="sep"></div>
+<button id="demoBtn" class="btn full">VER DEMO DEL CLIENTE</button>
+<div class="hint" style="text-align:center;margin-top:8px">La demo no escribe datos reales.</div>
+</div></div></section>
+
+<section id="app" class="shell hidden">
+<header class="top"><div class="cvLogoMark cvLogoSmall" aria-label="Logo CV Coach"></div><div class="topTitle">COACH</div><div class="topRight"><span id="modeBadge"></span><button id="logout" class="logout">Salir</button></div></header>
+<nav class="nav">
+<button data-view="home" class="active"><span class="ico">⌂</span>Inicio</button>
+<button data-view="routine"><span class="ico">🏋</span>Rutina</button>
+<button data-view="habits"><span class="ico">◎</span>Hábitos</button>
+<button data-view="missions"><span class="ico">◆</span>Misiones</button>
+</nav>
+<main id="content" class="content"></main>
+</section>
+
+<script>
+const {createClient}=window.supabase;
+const SB_URL='https://fmhcansyxcsqkrivqchr.supabase.co';
+const SB_KEY='sb_publishable_NidM5l0ax1pBeiVhdcFYcA_vW8Lf_rp';
+const sb=createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+let mode='demo',user=null,view='home',data=null,workout=null,timerHandle=null;
+const demo={
+profile:{first_name:'Cliente',last_name:'Prueba'},
+cp:{primary_goal:'Crear adherencia y fuerza general',onboarding_status:'approved'},
+cv:{current_level:1,total_xp:0,credit_balance:0,current_cv_score:0,dynamic_state:'INICIO'},
+program:{id:'demo',name:'DEMO — Fuerza Base 3 días',goal:'Fuerza general'},
+days:[
+{id:'d1',day_number:1,name:'Día 1 — Tren inferior',focus:'Glúteos + piernas',estimated_minutes:55},
+{id:'d2',day_number:2,name:'Día 2 — Tren superior',focus:'Espalda + pecho + hombros',estimated_minutes:55},
+{id:'d3',day_number:3,name:'Día 3 — Full body',focus:'Fuerza general',estimated_minutes:55}],
+exercises:{
+d1:[['Hip Thrust',3,'8–12','RIR 2'],['Peso muerto rumano',3,'8–10','RIR 2'],['Sentadilla Goblet',3,'10–12','RIR 2'],['Curl femoral',3,'10–15','RIR 2'],['Abducción de cadera',3,'12–15','RIR 2']],
+d2:[['Remo sentado',3,'8–12','RIR 2'],['Press pecho',3,'8–12','RIR 2'],['Jalón al pecho',3,'8–12','RIR 2'],['Elevación lateral',3,'12–15','RIR 2'],['Curl bíceps',3,'10–12','RIR 2']],
+d3:[['Prensa',3,'10–12','RIR 2'],['Remo mancuerna',3,'8–12','RIR 2'],['Press hombro',3,'8–12','RIR 2'],['Puente glúteos',3,'12–15','RIR 2'],['Plancha',3,'30–45 s','Control']]},
+habits:[
+{id:'h1',name:'Sueño',target:7,unit:'horas',input_type:'duration'},
+{id:'h2',name:'Pasos',target:8000,unit:'pasos',input_type:'number'},
+{id:'h3',name:'Cardio / Caminata',target:30,unit:'min',input_type:'duration'},
+{id:'h4',name:'Hidratación',target:2.5,unit:'L',input_type:'number'}],
+missions:[
+{mission_name:'3 entrenamientos / 7 días',progress:0,target:3,xp_reward_snapshot:35},
+{mission_name:'3 días de nutrición',progress:0,target:3,xp_reward_snapshot:30},
+{mission_name:'Pasos 5 de 7',progress:0,target:5,xp_reward_snapshot:30},
+{mission_name:'Cardio semanal',progress:0,target:2,xp_reward_snapshot:30}],
+nutrition:{meal_target:3,calories:null,protein_g:null,carbs_g:null,fat_g:null},
+sessions:[]
+};
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.add('hidden'),2600)}
+function setLogged(){ $('#login').classList.add('hidden');$('#app').classList.remove('hidden');$('#modeBadge').innerHTML=mode==='demo'?'<span class="demoBadge">DEMO</span>':'';render() }
+
+async function loadReal(){
+ const id=user.id;
+ const [p,cp,cv,pr,hab,mis,nt,sessions]=await Promise.all([
+  sb.from('profiles').select('*').eq('id',id).maybeSingle(),
+  sb.from('client_profiles').select('*').eq('client_id',id).maybeSingle(),
+  sb.from('client_cv_state').select('*').eq('client_id',id).maybeSingle(),
+  sb.from('programs').select('*').eq('client_id',id).eq('status','active').order('published_at',{ascending:false}).limit(1).maybeSingle(),
+  sb.from('client_habits').select('*,habit_definitions(*)').eq('client_id',id).eq('active',true),
+  sb.from('client_missions').select('*').eq('client_id',id).eq('status','active').order('created_at'),
+  sb.from('nutrition_targets').select('*').eq('client_id',id).eq('active',true).order('created_at',{ascending:false}).limit(1).maybeSingle(),
+  sb.from('workout_sessions').select('*').eq('client_id',id).order('started_at',{ascending:false}).limit(10)
+ ]);
+ const err=[p,cp,cv,pr,hab,mis,nt,sessions].find(x=>x.error);if(err)throw err.error;
+ const program=pr.data||null;let days=[],exercises={};
+ if(program){
+  const dr=await sb.from('program_days').select('*').eq('program_id',program.id).order('day_number');if(dr.error)throw dr.error;days=dr.data||[];
+  for(const d of days){const er=await sb.from('program_exercises').select('*,exercises(*)').eq('program_day_id',d.id).eq('active',true).order('exercise_order');if(er.error)throw er.error;exercises[d.id]=er.data||[]}
+ }
+ data={profile:p.data,cp:cp.data,cv:cv.data,program,days,exercises,habits:(hab.data||[]).map(h=>({...h,name:h.habit_definitions?.name,unit:h.habit_definitions?.unit,input_type:h.habit_definitions?.input_type,target:h.target_value??h.frequency_target})),missions:mis.data||[],nutrition:nt.data,sessions:sessions.data||[]};
+}
+
+function nav(v){view=v;$$('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));render()}
+$$('.nav button').forEach(b=>b.onclick=()=>nav(b.dataset.view));
+function hero(){const cv=data.cv||{};return `<section class="hero"><div class="ey">HOLA, ${esc((data.profile?.first_name||'CLIENTE').toUpperCase())}</div><h1>TU PLAN. <b>TU PROGRESO.</b></h1><p class="sub">${esc(data.cp?.primary_goal||'Avanza con estructura y constancia.')}</p></section><div class="stats"><div class="stat"><div class="l">Nivel CV12</div><div class="v">${cv.current_level||1}</div></div><div class="stat"><div class="l">CV Score</div><div class="v">${Math.round(Number(cv.current_cv_score||0))}</div></div><div class="stat"><div class="l">XP Total</div><div class="v">${cv.total_xp||0}</div></div></div>`}
+function nextDay(){if(!data.days?.length)return null;const completed=new Set((data.sessions||[]).filter(s=>['completed','partial'].includes(s.status)).map(s=>s.program_day_id));return data.days.find(d=>!completed.has(d.id))||data.days[0]}
+function missionHTML(m){const pct=Math.min(100,Number(m.progress||0)/Math.max(1,Number(m.target||1))*100);return `<div class="mission"><div class="row"><div class="grow"><b>${esc(m.mission_name)}</b><div class="hint">${m.progress||0} / ${m.target||0} · +${m.xp_reward_snapshot||0} XP</div></div><b>${Math.round(pct)}%</b></div><div class="progress"><i style="width:${pct}%"></i></div></div>`}
+function home(){const d=nextDay();return `${hero()}<section class="section"><div class="sectionHead"><h2>PRÓXIMO ENTRENAMIENTO</h2></div>${d?`<div class="card next"><div class="ey">DÍA ${d.day_number}</div><h3>${esc(d.name)}</h3><div class="hint">${esc(d.focus||'')} · ${d.estimated_minutes||'—'} min</div><button class="btn primary" style="margin-top:14px" onclick="openDay('${d.id}')">VER RUTINA</button></div>`:'<div class="card empty">Tu coach todavía no ha publicado una rutina activa.</div>'}</section><section class="section"><div class="sectionHead"><h2>MISIONES CV12</h2><span class="link" onclick="nav('missions')">Ver todas</span></div><div class="card">${(data.missions||[]).slice(0,3).map(missionHTML).join('')||'<div class="empty">Sin misiones activas.</div>'}</div></section><section class="section"><div class="sectionHead"><h2>HÁBITOS DE HOY</h2><span class="link" onclick="nav('habits')">Registrar</span></div><div class="card">${(data.habits||[]).slice(0,4).map(h=>`<div class="habit"><div><b>${esc(h.name)}</b><div class="hint">Objetivo: ${esc(h.target)} ${esc(h.unit||'')}</div></div><span class="pill">ACTIVO</span></div>`).join('')||'<div class="empty">Sin hábitos asignados.</div>'}</div></section>`}
+
+function routine(){if(!data.program)return `${hero()}<section class="section"><div class="card empty">Tu coach todavía no ha publicado un programa activo.</div></section>`;return `<div class="ey">PROGRAMA ACTIVO</div><h1 style="font-size:38px;margin:5px 0 4px">${esc(data.program.name)}</h1><div class="sub">${esc(data.program.goal||'Tu programación actual')}</div><section class="section dayGrid">${data.days.map(dayHTML).join('')}</section>`}
+function dayHTML(d){const ex=data.exercises[d.id]||[];return `<article class="card day"><div class="dayHead"><div class="num">${d.day_number}</div><div class="grow"><h3>${esc(d.name)}</h3><div class="hint">${esc(d.focus||'')} · ${d.estimated_minutes||'—'} min · ${ex.length} ejercicios</div></div></div><div class="dayActions"><button class="btn primary full" onclick="openDay('${d.id}')">ABRIR ENTRENAMIENTO</button></div></article>`}
+window.openDay=id=>{view='workout';workout={dayId:id,sessionId:null,started:null,checks:new Set()};render()};
+
+const previewHDImages={
+  'sentadilla-goblet':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/01_sentadilla-goblet.webp',
+  'hip-thrust':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/02_hip-thrust-con-barra.webp',
+  'peso-muerto-rumano-mancuernas':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/03_peso-muerto-rumano.webp',
+  'patada-gluteo-polea':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/04_patada-gluteo-polea.webp',
+  'plancha-frontal':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/05_plancha-frontal.webp',
+  'remo-sentado-polea':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/06_remo-sentado-polea.webp',
+  'press-pecho-mancuernas':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/07_press-inclinado-mancuernas.webp',
+  'jalon-al-pecho':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/08_jalon-al-pecho.webp',
+  'press-hombros-mancuernas':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/09_press-militar-sentado.webp',
+  'face-pull':'https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/10_face-pull.webp'
+};
+const previewHDByName={
+  'Sentadilla Goblet':previewHDImages['sentadilla-goblet'],
+  'Hip Thrust':previewHDImages['hip-thrust'],
+  'Hip Thrust con barra':previewHDImages['hip-thrust'],
+  'Peso muerto rumano':previewHDImages['peso-muerto-rumano-mancuernas'],
+  'Patada de glúteo en polea':previewHDImages['patada-gluteo-polea'],
+  'Plancha':previewHDImages['plancha-frontal'],
+  'Plancha frontal':previewHDImages['plancha-frontal'],
+  'Remo sentado':previewHDImages['remo-sentado-polea'],
+  'Remo sentado en polea':previewHDImages['remo-sentado-polea'],
+  'Press pecho':previewHDImages['press-pecho-mancuernas'],
+  'Press inclinado con mancuernas':previewHDImages['press-pecho-mancuernas'],
+  'Jalón al pecho':previewHDImages['jalon-al-pecho'],
+  'Press hombro':previewHDImages['press-hombros-mancuernas'],
+  'Press militar sentado':previewHDImages['press-hombros-mancuernas'],
+  'Face pull':previewHDImages['face-pull']
+};
+function exerciseData(x){if(mode==='demo')return {name:x[0],sets:x[1],reps:x[2],rir:x[3],rest:90,image:previewHDByName[x[0]]||null,notes:null};const slug=x.exercises?.slug||'';return {name:x.exercises?.name||'Ejercicio',sets:x.target_sets,reps:`${x.rep_min??'—'}–${x.rep_max??'—'}`,rir:`RIR ${x.rir_target??'—'}`,rest:x.rest_seconds,image:previewHDImages[slug]||x.exercises?.image_path,notes:x.coach_notes||x.exercises?.instructions}}
+function workoutView(){const d=data.days.find(x=>x.id===workout.dayId);const raw=data.exercises[d.id]||[];return `<div class="workoutTop"><div class="row"><div class="grow"><div class="ey">ENTRENAMIENTO EN CURSO</div><div class="timer" id="timer">00:00</div></div>${workout.sessionId||mode==='demo'?`<button class="btn primary" onclick="finishWorkout()">FINALIZAR</button>`:`<button class="btn primary" onclick="startWorkout()">INICIAR</button>`}</div></div><div class="ey">DÍA ${d.day_number}</div><h1 style="font-size:37px;margin:5px 0">${esc(d.name)}</h1><div class="sub">${esc(d.focus||'')}</div><section class="section">${raw.map((x,i)=>{const e=exerciseData(x);return `<article class="card workoutExercise"><div class="exerciseTop"><div class="num">${i+1}</div><div class="grow"><h3>${esc(e.name)}</h3><div class="exerciseNote">${esc(e.notes||'Sigue la técnica indicada por tu coach.')}</div></div><button class="check ${workout.checks.has(i)?'done':''}" onclick="toggleExercise(${i})">✓</button></div><div class="exerciseMain">${e.image?`<div class="exerciseMedia"><img class="photo" loading="lazy" decoding="async" src="${esc(e.image)}" alt="${esc(e.name)}"></div>`:`<div class="exerciseMedia"><div class="hint">Imagen técnica en preparación</div></div>`}<div class="exerciseInfo"><div class="setGrid"><div class="setBox"><span>Series</span><b>${esc(e.sets)}</b></div><div class="setBox"><span>Repeticiones</span><b>${esc(e.reps)}</b></div><div class="setBox"><span>Esfuerzo</span><b>${esc(e.rir)}</b></div></div><div class="restLine"><span>Descanso recomendado</span><b>${e.rest||90} s</b></div><div class="hint" style="margin-top:10px">Marca el ejercicio cuando lo completes.</div></div></div></article>`}).join('')}</section>`}
+window.toggleExercise=i=>{workout.checks.has(i)?workout.checks.delete(i):workout.checks.add(i);render();if(workout.started)startTimer()};
+function startTimer(){clearInterval(timerHandle);timerHandle=setInterval(()=>{const el=$('#timer');if(!el||!workout?.started)return;const sec=Math.floor((Date.now()-workout.started)/1000);el.textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')},1000)}
+window.startWorkout=async()=>{if(mode==='demo'){workout.sessionId='demo';workout.started=Date.now();render();startTimer();return}try{const {data:r,error}=await sb.functions.invoke('start-workout',{body:{program_day_id:workout.dayId}});if(error||r?.error)throw new Error(r?.detail||r?.error||error.message);workout.sessionId=r?.session_id||r?.id||r?.[0]?.id||null;if(!workout.sessionId){const q=await sb.from('workout_sessions').select('*').eq('client_id',user.id).eq('program_day_id',workout.dayId).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();workout.sessionId=q.data?.id||null}workout.started=Date.now();toast('Entrenamiento iniciado');render();startTimer()}catch(e){toast(e.message)}}
+window.finishWorkout=async()=>{if(mode==='demo'){toast('Demo finalizada. No se escribieron datos.');workout=null;view='home';render();return}if(!workout.sessionId)return toast('Primero inicia el entrenamiento.');try{const {data:r,error}=await sb.functions.invoke('complete-workout',{body:{session_id:workout.sessionId}});if(error||r?.error)throw new Error(r?.detail||r?.error||error.message);toast('Entrenamiento completado');clearInterval(timerHandle);workout=null;await loadReal();view='home';render()}catch(e){toast(e.message)}}
+
+function habits(){return `<div class="ey">ADHERENCIA</div><h1 style="font-size:39px;margin:5px 0">HÁBITOS</h1><div class="sub">Registra lo que realmente hiciste hoy.</div><section class="section"><div class="card">${(data.habits||[]).map(habitHTML).join('')||'<div class="empty">Sin hábitos asignados.</div>'}</div></section>${data.nutrition?`<section class="section"><div class="sectionHead"><h2>NUTRICIÓN</h2></div><div class="card"><b>${data.nutrition.calories??'Objetivo nutricional activo'}${data.nutrition.calories?' kcal':''}</b><div class="hint" style="margin-top:4px">${data.nutrition.protein_g!=null?`P ${data.nutrition.protein_g} · C ${data.nutrition.carbs_g??'—'} · G ${data.nutrition.fat_g??'—'}`:`${data.nutrition.meal_target||3} comidas objetivo`}</div>${mode==='real'?`<div class="row" style="margin-top:12px"><button class="btn grow" onclick="logNutrition(75)">75%</button><button class="btn primary grow" onclick="logNutrition(100)">100%</button></div>`:'<div class="hint" style="margin-top:12px">En demo el registro está desactivado.</div>'}</div></section>`:''}`}
+function habitHTML(h){const id=esc(h.id);if(h.input_type==='boolean')return `<div class="habit"><div><b>${esc(h.name)}</b><div class="hint">Cumplimiento diario</div></div><button class="btn primary" onclick="logHabit('${id}',null,true)">CUMPLIDO</button></div>`;return `<div class="habit"><div><b>${esc(h.name)}</b><div class="hint">Objetivo ${esc(h.target)} ${esc(h.unit||'')}</div></div><div class="habitControl"><input id="hv_${id}" class="input" type="number" step="0.1" placeholder="0"><button class="btn" onclick="logHabitInput('${id}')">OK</button></div></div>`}
+window.logHabitInput=id=>{const el=document.getElementById('hv_'+id);const v=Number(el?.value);if(!Number.isFinite(v))return toast('Ingresa un valor.');logHabit(id,v,null)}
+window.logHabit=async(id,value,completed)=>{if(mode==='demo')return toast('Demo: no se escribieron datos.');try{const {data:r,error}=await sb.functions.invoke('log-habit',{body:{client_habit_id:id,log_date:today(),value,completed}});if(error||r?.error)throw new Error(r?.detail||r?.error||error.message);toast('Hábito registrado')}catch(e){toast(e.message)}}
+window.logNutrition=async pct=>{if(mode==='demo')return;try{const meals=data.nutrition?.meal_target||3;const {data:r,error}=await sb.functions.invoke('log-nutrition-day',{body:{log_date:today(),adherence_pct:pct,meals_completed:Math.round(meals*pct/100),compliant:pct>=80}});if(error||r?.error)throw new Error(r?.detail||r?.error||error.message);toast('Nutrición registrada')}catch(e){toast(e.message)}}
+function missions(){return `<div class="ey">CV12 LEVELING</div><h1 style="font-size:39px;margin:5px 0">MISIONES</h1><div class="sub">Cumple objetivos, suma XP y construye adherencia.</div><section class="section"><div class="card">${(data.missions||[]).map(missionHTML).join('')||'<div class="empty">Sin misiones activas.</div>'}</div></section>`}
+
+function render(){const c=$('#content');if(view==='home')c.innerHTML=home();else if(view==='routine')c.innerHTML=routine();else if(view==='habits')c.innerHTML=habits();else if(view==='missions')c.innerHTML=missions();else if(view==='workout')c.innerHTML=workoutView();if(workout?.started&&view==='workout')startTimer()}
+$('#demoBtn').onclick=()=>{mode='demo';data=demo;setLogged()};
+$('#loginBtn').onclick=async()=>{const b=$('#loginBtn');b.disabled=true;b.textContent='INGRESANDO…';$('#loginStatus').textContent='';try{const {data:r,error}=await sb.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});if(error)throw error;user=r.user;mode='real';await loadReal();setLogged()}catch(e){$('#loginStatus').textContent=e.message||'No se pudo ingresar.'}finally{b.disabled=false;b.textContent='INGRESAR'}};
+$('#password').addEventListener('keydown',e=>{if(e.key==='Enter')$('#loginBtn').click()});
+$('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await sb.auth.signOut();location.reload()};
+(async()=>{const s=await sb.auth.getSession();if(s.data.session){try{user=s.data.session.user;mode='real';await loadReal();setLogged()}catch(e){await sb.auth.signOut()}}})();
+</script>
+<script id='cv-hevy-v1-js'>(function(){
+  const CV_BASE='https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/';
+  const CV_FILES={
+    'sentadilla goblet':'01_sentadilla-goblet.webp','hip thrust con barra':'02_hip-thrust-con-barra.webp','hip thrust':'02_hip-thrust-con-barra.webp','puente gluteos':'02_hip-thrust-con-barra.webp','puente de gluteos':'02_hip-thrust-con-barra.webp',
+    'peso muerto rumano':'03_peso-muerto-rumano.webp','patada de gluteo en polea':'04_patada-gluteo-polea.webp','plancha frontal':'05_plancha-frontal.webp','plancha':'05_plancha-frontal.webp','remo sentado en polea':'06_remo-sentado-polea.webp','remo sentado':'06_remo-sentado-polea.webp',
+    'press inclinado con mancuernas':'07_press-inclinado-mancuernas.webp','press pecho':'07_press-inclinado-mancuernas.webp','jalon al pecho':'08_jalon-al-pecho.webp','press militar sentado':'09_press-militar-sentado.webp','press hombro':'09_press-militar-sentado.webp','face pull':'10_face-pull.webp',
+    'abduccion en maquina':'11_abduccion-en-maquina.webp','abduccion de cadera':'11_abduccion-en-maquina.webp','sentadilla bulgara':'12_sentadilla-bulgara.webp','step-up al banco':'13_step-up-al-banco.webp','zancadas caminando':'14_zancadas-caminando.webp','extension de cuadriceps':'15_extension-cuadriceps.webp','prensa 45':'16_prensa-45.webp','prensa':'16_prensa-45.webp','press de piernas unilateral':'17_press-piernas-unilateral.webp','curl femoral tumbado':'18_curl-femoral-tumbado.webp','curl femoral':'18_curl-femoral-tumbado.webp','elevacion de gemelos de pie':'19_elevacion-gemelos-pie.webp','press de pecho en maquina':'20_press-pecho-maquina.webp','aperturas en peck deck':'21_aperturas-peck-deck.webp','flexiones':'22_flexiones.webp','remo en maquina':'23_remo-en-maquina.webp','remo con mancuerna a una mano':'24_remo-mancuerna-una-mano.webp','remo mancuerna':'24_remo-mancuerna-una-mano.webp','remo invertido':'25_remo-invertido.webp','pullover en polea':'26_pullover-en-polea.webp','elevaciones laterales':'27_elevaciones-laterales.webp','elevacion lateral':'27_elevaciones-laterales.webp','elevaciones frontales':'28_elevaciones-frontales.webp','press arnold':'29_press-arnold.webp','pajaros para deltoide posterior':'30_pajaros-deltoide-posterior.webp','curl biceps con barra':'31_curl-biceps-barra.webp','curl biceps':'31_curl-biceps-barra.webp','curl martillo':'32_curl-martillo.webp','curl predicador':'33_curl-predicador.webp','extension de triceps en cuerda':'34_extension-triceps-cuerda.webp','fondos asistidos':'35_fondos-asistidos.webp','press frances':'36_press-frances.webp','crunch en polea':'37_crunch-en-polea.webp','elevacion de piernas':'38_elevacion-piernas.webp','russian twist':'39_russian-twist.webp','woodchopper en polea':'40_woodchopper-polea.webp','peso muerto sumo':'41_peso-muerto-sumo.webp','sentadilla mas press':'42_sentadilla-mas-press.webp','mountain climbers':'43_mountain-climbers.webp','burpees':'44_burpees.webp','battle ropes':'45_battle-ropes.webp','bicicleta estatica':'46_bicicleta-estatica.webp','cinta caminadora inclinada':'47_cinta-caminadora-inclinada.webp'
+  };
+  const DEMO_META={
+    'hip thrust':{instructions:'Apoya la espalda alta, empuja con los pies y extiende la cadera. Pausa arriba sin arquear la zona lumbar y baja con control.',tempo:'2-1-2',rest:90},
+    'peso muerto rumano':{instructions:'Lleva la cadera atrás con espalda neutra y la carga cerca del cuerpo. Baja hasta mantener tensión en isquiotibiales y vuelve apretando glúteos.',tempo:'3-1-1-0',rest:90},
+    'sentadilla goblet':{instructions:'Mantén la mancuerna cerca del pecho. Baja con control, pausa abajo y sube empujando el suelo sin perder el apoyo del pie.',tempo:'3-1-1-0',rest:75},
+    'curl femoral':{instructions:'Mantén la pelvis apoyada. Flexiona las rodillas sin levantar la cadera, pausa arriba y vuelve lentamente.',tempo:'2-1-3-0',rest:75},
+    'abduccion de cadera':{instructions:'Mantén pelvis y tronco quietos. Abre las rodillas sin impulso, aprieta glúteos y vuelve lentamente.',tempo:'2-1-3-0',rest:60},
+    'remo sentado':{instructions:'Mantén el pecho estable. Tira hacia el abdomen juntando escápulas, pausa y vuelve con control sin encoger hombros.',tempo:'2-1-2',rest:75},
+    'press pecho':{instructions:'Mantén escápulas estables. Baja con control hasta un rango cómodo y empuja sin perder la posición del hombro.',tempo:'3-0-1',rest:90},
+    'jalon al pecho':{instructions:'Deprime las escápulas y lleva la barra hacia la parte alta del pecho. Pausa y vuelve controlando la subida.',tempo:'2-1-2',rest:90},
+    'elevacion lateral':{instructions:'Eleva los brazos sin balanceo hasta una altura cómoda, pausa brevemente y baja de forma controlada.',tempo:'2-1-3-0',rest:60},
+    'curl biceps':{instructions:'Mantén codos cerca del cuerpo. Sube sin balancear el tronco, aprieta arriba y baja lentamente.',tempo:'2-1-3-0',rest:60},
+    'prensa':{instructions:'Baja con control sin despegar la pelvis del respaldo. Pausa abajo y empuja sin bloquear agresivamente las rodillas.',tempo:'3-1-1-0',rest:90},
+    'remo mancuerna':{instructions:'Estabiliza el tronco. Lleva la mancuerna hacia la cadera sin rotarte, pausa y controla el descenso.',tempo:'2-1-3-0',rest:75},
+    'press hombro':{instructions:'Mantén abdomen firme. Empuja sobre la cabeza sin arquear la zona lumbar y baja de forma controlada.',tempo:'2-0-2',rest:90},
+    'puente gluteos':{instructions:'Empuja con los pies, eleva la cadera, aprieta glúteos arriba y baja sin perder el control de la pelvis.',tempo:'2-1-2',rest:75},
+    'plancha':{instructions:'Mantén cabeza, tronco y pelvis alineados. Aprieta abdomen y glúteos y termina la serie si pierdes la posición lumbar.',tempo:'isométrico',rest:60}
+  };
+  function cvNorm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
+  function cvImage(name){return CV_BASE+(CV_FILES[cvNorm(name)]||'')}
+  function cvMeta(name){return DEMO_META[cvNorm(name)]||{instructions:'Ejecuta el movimiento con control, sin impulso y respetando el rango indicado por tu coach.',tempo:null,rest:90}}
+  function cvTempoLabel(t){if(!t)return 'Controlado';const x=String(t).toLowerCase();if(x.includes('isom'))return 'Mantén la posición durante el tiempo indicado';if(x.includes('continuo'))return 'Movimiento continuo y controlado';const p=x.split('-').map(v=>Number(v));if(p.every(Number.isFinite)){if(p.length===4)return 'Bajada/vuelta '+p[0]+' s · pausa '+p[1]+' s · subida/tirón '+p[2]+' s'+(p[3]?' · pausa final '+p[3]+' s':'');if(p.length===3)return 'Control '+p[0]+' s · pausa '+p[1]+' s · esfuerzo '+p[2]+' s'}return String(t)}
+  function cvRepsBounds(label){const m=String(label||'').match(/(\d+)\D+(\d+)/);if(m)return [Number(m[1]),Number(m[2])];const s=String(label||'').match(/\d+/);return s?[Number(s[0]),Number(s[0])]:[null,null]}
+  function cvPrestartExercises(){
+    const d=data.days.find(x=>x.id===workout.dayId);const raw=data.exercises[d.id]||[];
+    return raw.map((x,i)=>{const e=exerciseData(x),b=cvRepsBounds(e.reps),m=cvMeta(e.name),sets=Number(e.sets)||1;return {
+      session_exercise_id:null,program_exercise_id:mode==='demo'?null:x.id,exercise_id:mode==='demo'?null:x.exercise_id,name:e.name,order:i+1,
+      instructions:mode==='demo'?m.instructions:(x.exercises?.instructions||e.notes||m.instructions),image_path:cvImage(e.name)||e.image_path,
+      target_sets:sets,rep_min:mode==='demo'?b[0]:x.rep_min,rep_max:mode==='demo'?b[1]:x.rep_max,rir_target:mode==='demo'?String(e.rir||'').replace(/[^0-9.]/g,''):(x.rir_target??null),
+      tempo:mode==='demo'?m.tempo:(x.tempo||x.exercises?.default_tempo||null),rest_seconds:mode==='demo'?m.rest:(x.rest_seconds||x.exercises?.default_rest_sec||e.rest||90),
+      sets:Array.from({length:sets},(_,j)=>({set_log_id:null,set_number:j+1,suggested_weight_kg:null,suggested_reps:b[0],weight_kg:null,reps:null,completed:false,suggestion_source:'program_prescription'}))
+    }})
+  }
+  function cvExercises(){return workout?.liveExercises||cvPrestartExercises()}
+  function cvRefText(s){const w=s.suggested_weight_kg,r=s.suggested_reps;if(w==null&&r==null)return '—';return (w==null?'—':Number(w).toLocaleString('es-CL',{maximumFractionDigits:2})+' kg')+' × '+(r??'—')}
+  function cvInputValue(v,sug){return v??sug??''}
+  function cvRestDock(){let d=document.getElementById('cvRestDock');if(!d){d=document.createElement('div');d.id='cvRestDock';d.className='cvRestDock hidden';d.innerHTML='<div class="cvRestText"><small>DESCANSO</small><b id="cvRestTime">00:00</b><span id="cvRestExercise"></span></div><div class="cvRestActions"><button onclick="cvAddRest(15)">+15 s</button><button onclick="cvSkipRest()">OMITIR</button></div>';document.body.appendChild(d)}return d}
+  let cvRestHandle=null,cvRestEnd=0,cvRestName='';
+  function cvUpdateRest(){const dock=cvRestDock(),left=Math.max(0,Math.ceil((cvRestEnd-Date.now())/1000));document.getElementById('cvRestTime').textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');document.getElementById('cvRestExercise').textContent=cvRestName;if(left<=0){clearInterval(cvRestHandle);cvRestHandle=null;dock.classList.add('done');setTimeout(()=>dock.classList.add('hidden'),1800);toast('Descanso terminado · siguiente serie');try{navigator.vibrate?.([140,80,140])}catch(e){}}}
+  function cvStartRest(sec,name){sec=Number(sec)||0;if(sec<=0)return;clearInterval(cvRestHandle);cvRestEnd=Date.now()+sec*1000;cvRestName=name||'';const d=cvRestDock();d.classList.remove('hidden','done');cvUpdateRest();cvRestHandle=setInterval(cvUpdateRest,250)}
+  window.cvAddRest=s=>{if(!cvRestEnd)return;cvRestEnd+=Number(s||0)*1000;cvUpdateRest()};
+  window.cvSkipRest=()=>{clearInterval(cvRestHandle);cvRestHandle=null;cvRestEnd=0;cvRestDock().classList.add('hidden')};
+  window.cvSetRest=i=>{const ex=cvExercises()[i];if(!ex)return;const v=prompt('Descanso entre series (segundos)',String(ex.rest_seconds||90));if(v===null)return;const n=Math.max(0,Math.min(600,Number(v)));if(!Number.isFinite(n))return toast('Ingresa un número válido');ex.rest_seconds=n;workout.liveExercises=workout.liveExercises||cvExercises();render()};
+  function cvSetFromInputs(i,j){const ex=cvExercises()[i],s=ex?.sets?.[j];if(!s)return null;const w=document.getElementById('cvw_'+i+'_'+j),r=document.getElementById('cvr_'+i+'_'+j);const wt=w&&w.value!==''?Number(w.value):null, rp=r&&r.value!==''?Number(r.value):null;if(wt!=null&&!Number.isFinite(wt))return null;if(rp!=null&&(!Number.isFinite(rp)||rp<0))return null;s.weight_kg=wt;s.reps=rp==null?null:Math.round(rp);return {ex,s,weight_kg:wt,reps:s.reps}}
+  window.cvSaveDraftSet=async(i,j)=>{if(!workout?.sessionId)return;const p=cvSetFromInputs(i,j);if(!p)return;if(mode==='demo')return;if(!p.s.set_log_id)return;const {error}=await sb.from('set_logs').update({weight_kg:p.weight_kg,reps:p.reps,source:'manual'}).eq('id',p.s.set_log_id);if(error)toast('No pude guardar la serie: '+error.message)};
+  window.cvToggleSet=async(i,j)=>{if(!workout?.sessionId)return toast('Primero inicia el entrenamiento.');const p=cvSetFromInputs(i,j);if(!p)return toast('Revisa peso y repeticiones.');const next=!p.s.completed;if(next&&(p.reps==null||p.reps<=0))return toast('Ingresa las repeticiones realizadas.');if(mode!=='demo'&&p.s.set_log_id){const {error}=await sb.from('set_logs').update({weight_kg:p.weight_kg,reps:p.reps,completed:next,completed_at:next?new Date().toISOString():null,source:'manual'}).eq('id',p.s.set_log_id);if(error)return toast('No pude guardar la serie: '+error.message)}p.s.completed=next;if(next)cvStartRest(p.ex.rest_seconds||90,p.ex.name);render();if(workout?.started)startTimer()};
+  
+  function cvFmtRest(sec){sec=Math.max(0,Math.round(Number(sec)||0));if(sec>=60){const m=Math.floor(sec/60),s=sec%60;return m+' min'+(s?' '+s+' s':'')}return sec+' s'}
+  function cvResolveRest(e,i,d){let n=Number(e&&e.rest_seconds);if(Number.isFinite(n)&&n>0)return Math.round(n);try{const raw=(data&&data.exercises&&data.exercises[d.id])||[],x=raw[i]||{};n=Number(x.rest_seconds||(x.exercises&&x.exercises.default_rest_sec)||x.rest);if(Number.isFinite(n)&&n>0)return Math.round(n)}catch(err){}try{n=Number(cvMeta(e&&e.name).rest);if(Number.isFinite(n)&&n>0)return Math.round(n)}catch(err){}return 90}
+  function cvHumanTempo(raw){raw=String(raw||'').trim();if(!raw)return 'Movimiento controlado, sin rebotes ni impulso.';if(/isom/i.test(raw))return 'Mantén la posición durante el tiempo indicado sin perder tensión.';if(/continuo/i.test(raw))return 'Mantén un ritmo continuo, estable y controlado.';const p=raw.split('-').map(Number);if(p.length>=3&&p.every(Number.isFinite)){return 'Baja / regresa: '+p[0]+' s · Pausa: '+p[1]+' s · Sube / esfuerzo: '+p[2]+' s'+(p[3]?' · Pausa final: '+p[3]+' s':'')}return raw}
+  function cvEnsureTech(){let b=document.getElementById('cvTechBackdrop');if(b)return b;b=document.createElement('div');b.id='cvTechBackdrop';b.className='cvTechBackdrop';b.innerHTML='<div class="cvTechSheet"><div class="cvTechHandle"></div><div class="cvTechHead"><h2 id="cvTechTitle">Ejercicio</h2><button class="cvTechClose" type="button">×</button></div><div id="cvTechMedia" class="cvTechMedia"><div class="cvTechLoading">Cargando lámina…</div></div><div class="cvTechBlock"><h4>CÓMO EJECUTARLO</h4><p id="cvTechInstructions"></p><div id="cvTechTempo" class="cvTechTempo"></div></div></div>';document.body.appendChild(b);b.addEventListener('click',function(ev){if(ev.target===b||ev.target.closest('.cvTechClose')){b.classList.remove('show');document.body.style.overflow=''}});return b}
+  window.cvOpenTechnique=function(i){const card=document.querySelectorAll('.cvHevyExercise')[i];if(!card)return;const b=cvEnsureTech(),media=b.querySelector('#cvTechMedia');b.querySelector('#cvTechTitle').textContent=card.getAttribute('data-tech-name')||'Ejercicio';b.querySelector('#cvTechInstructions').textContent=card.getAttribute('data-tech-instructions')||'Sigue la técnica indicada por tu coach.';b.querySelector('#cvTechTempo').textContent=cvHumanTempo(card.getAttribute('data-tech-tempo')||'');media.innerHTML='<div class="cvTechLoading">Cargando lámina…</div>';b.classList.add('show');document.body.style.overflow='hidden';const src=card.getAttribute('data-tech-img')||'';if(!src){media.innerHTML='<div class="cvTechLoading">Lámina no disponible.</div>';return}const img=new Image();img.alt=card.getAttribute('data-tech-name')||'Ejercicio';img.decoding='async';img.onload=function(){media.innerHTML='';media.appendChild(img)};img.onerror=function(){media.innerHTML='<div class="cvTechLoading">No se pudo cargar la lámina.</div>'};img.src=src}
+  window.cvAddSet=async function(i){const ex=cvExercises()[i];if(!ex)return;const next=(ex.sets&&ex.sets.length?ex.sets.length:0)+1,prev=ex.sets&&ex.sets.length?ex.sets[ex.sets.length-1]:null,s={set_log_id:null,set_number:next,suggested_weight_kg:prev?prev.suggested_weight_kg:null,suggested_reps:prev?prev.suggested_reps:ex.rep_min,weight_kg:null,reps:null,completed:false,suggestion_source:'manual'};if(mode!=='demo'&&workout&&workout.sessionId&&ex.session_exercise_id){try{const q=await sb.from('set_logs').insert({session_exercise_id:ex.session_exercise_id,set_number:next,weight_kg:null,reps:null,completed:false,source:'manual',suggested_weight_kg:s.suggested_weight_kg,suggested_reps:s.suggested_reps,suggestion_source:'manual'}).select('id').single();if(q.error)throw q.error;s.set_log_id=q.data&&q.data.id}catch(err){toast('No pude agregar la serie: '+(err.message||err));return}}ex.sets=ex.sets||[];ex.sets.push(s);render()}
+  workoutView=function(){
+    document.body.classList.add('cvFastWorkout');
+    const d=data.days.find(x=>x.id===workout.dayId),exs=cvExercises(),started=!!workout.sessionId;
+    let volume=0,doneSets=0,totalSets=0;exs.forEach(e=>(e.sets||[]).forEach(s=>{totalSets++;if(s.completed){doneSets++;const w=Number(s.weight_kg||0),r=Number(s.reps||0);if(Number.isFinite(w)&&Number.isFinite(r))volume+=w*r}}));
+    return '<div class="workoutTop"><div class="row"><div class="grow"></div>'+(started?'<button class="btn primary" onclick="finishWorkout()">FINALIZAR</button>':'<button class="btn primary" onclick="startWorkout()">INICIAR</button>')+'</div></div><div class="cvSessionStats"><div class="cvSessionStat duration"><small>Duración</small><b id="timer">00:00</b></div><div class="cvSessionStat volume"><small>Volumen</small><b>'+Math.round(volume).toLocaleString('es-CL')+' kg</b></div><div class="cvSessionStat"><small>Series</small><b>'+doneSets+(totalSets?' / '+totalSets:'')+'</b></div></div><div class="ey">DÍA '+d.day_number+'</div><h1 style="font-size:37px;margin:5px 0">'+esc(d.name)+'</h1><div class="sub">'+esc(d.focus||'')+'</div><section class="section">'+exs.map((e,i)=>{
+      const done=e.sets?.filter(s=>s.completed).length||0,total=e.sets?.length||e.target_sets||0,img=cvImage(e.name)||e.image_path||'',rir=e.rir_target!=null?'RIR '+e.rir_target:'',rep=(e.rep_min!=null||e.rep_max!=null)?String(e.rep_min??'—')+'–'+String(e.rep_max??'—'):'',instructions=e.instructions||cvMeta(e.name).instructions,tempo=e.tempo||cvMeta(e.name).tempo,rest=cvResolveRest(e,i,d);e.rest_seconds=rest;
+      return '<article class="card workoutExercise cvHevyExercise" data-tech-name="'+esc(e.name)+'" data-tech-img="'+esc(img)+'" data-tech-instructions="'+esc(instructions)+'" data-tech-tempo="'+esc(tempo||'')+'"><div class="exerciseTop"><div class="num">'+(i+1)+'</div><div class="grow"><h3 onclick="cvOpenTechnique('+i+')">'+esc(e.name)+'</h3><div class="cvPrescription">'+esc([total+' series',rep&&rep+' reps',rir].filter(Boolean).join(' · '))+'</div></div></div><div class="cvRestText">◷ DESCANSO: '+cvFmtRest(rest)+'</div><div class="cvSetsHead"><span>SET</span><span>ANTERIOR</span><span>KG</span><span>REPS</span><span>✓</span></div><div class="cvSetRows">'+(e.sets||[]).map((s,j)=>'<div class="cvSetRow '+(s.completed?'done':'')+'"><div class="cvSetNo">'+s.set_number+'</div><div class="cvPrevious">'+esc(cvRefText(s))+'</div><input id="cvw_'+i+'_'+j+'" inputmode="decimal" type="number" min="0" step="0.5" value="'+esc(cvInputValue(s.weight_kg,s.suggested_weight_kg))+'" onchange="cvSaveDraftSet('+i+','+j+')"><input id="cvr_'+i+'_'+j+'" inputmode="numeric" type="number" min="0" step="1" value="'+esc(cvInputValue(s.reps,s.suggested_reps))+'" onchange="cvSaveDraftSet('+i+','+j+')"><button class="cvSetCheck '+(s.completed?'done':'')+'" onclick="cvToggleSet('+i+','+j+')">✓</button></div>').join('')+'</div><button class="cvAddSet" type="button" onclick="cvAddSet('+i+')">+ Agregar serie</button></article>'
+    }).join('')+'</section>'
+  };
+  window.openDay=id=>{view='workout';workout={dayId:id,sessionId:null,started:null,checks:new Set(),liveExercises:null};render()};
+  window.startWorkout=async()=>{if(workout?.sessionId)return;if(mode==='demo'){workout.sessionId='demo';workout.started=Date.now();workout.liveExercises=cvPrestartExercises();workout.liveExercises.forEach((e,ei)=>e.sets.forEach((s,si)=>s.set_log_id='demo_'+ei+'_'+si));render();startTimer();return}try{const {data:r,error}=await sb.functions.invoke('start-workout',{body:{program_day_id:workout.dayId}});if(error||r?.error)throw new Error(r?.detail||r?.error||error.message);workout.sessionId=r?.session_id||null;workout.liveExercises=Array.isArray(r?.exercises)?r.exercises:null;workout.started=r?.started_at?new Date(r.started_at).getTime():Date.now();if(!workout.sessionId)throw new Error('No se recibió la sesión de entrenamiento.');toast(r?.idempotent?'Sesión reanudada':'Entrenamiento iniciado');render();startTimer()}catch(e){toast(e.message)}};
+  const cvOriginalFinish=window.finishWorkout;window.finishWorkout=async()=>{window.cvSkipRest();return cvOriginalFinish()};
+  const oldDemo=document.getElementById('demoBtn');
+  if(oldDemo){const fn=oldDemo.onclick;oldDemo.onclick=()=>{fn?.();setTimeout(()=>{const x=document.querySelector('.top');if(x)x.classList.add('cvLogoReady')},0)}}
+})();
+</script><script id="cv-night-v12-js">
+(function(){
+  const LOGO='https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-brand/cv-official-logo-header.webp';
+  let soundEnabled=localStorage.getItem('cv_sound_enabled')!=='0';
+  let ac=null;
+  const drafts={};
+  let restObserverHandle=null;
+  let restObservedEl=null;
+
+  function audio(){try{if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;ac=new C()}if(ac.state==='suspended')ac.resume().catch(()=>{});return ac}catch(e){return null}}
+  function tone(ctx,f,d,delay=0,vol=.025,type='square'){try{const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.001,vol),t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+  function sfx(k){if(!soundEnabled)return;const c=audio();if(!c)return;if(k==='menu'){tone(c,620,.045,0,.018);tone(c,840,.05,.04,.014,'triangle')}else if(k==='confirm'){tone(c,523,.065,0,.027,'triangle');tone(c,659,.07,.045,.025,'triangle');tone(c,784,.10,.09,.022,'triangle')}else if(k==='rest'){tone(c,330,.06,0,.023,'square');tone(c,495,.065,.055,.021,'square')}else if(k==='ready'){tone(c,659,.075,0,.03,'triangle');tone(c,784,.08,.07,.03,'triangle');tone(c,988,.16,.14,.028,'triangle')}else if(k==='save'){tone(c,740,.035,0,.013,'triangle')}}
+  window.cvToggleSound=function(){soundEnabled=!soundEnabled;localStorage.setItem('cv_sound_enabled',soundEnabled?'1':'0');soundUI();if(soundEnabled)sfx('confirm')};
+  function soundUI(){const b=document.getElementById('cvSoundToggle');if(!b)return;b.textContent=soundEnabled?'🔊':'🔇';b.classList.toggle('off',!soundEnabled);b.title=soundEnabled?'Sonidos activados':'Sonidos desactivados'}
+
+  function student(){try{const p=data?.profile||{};return ([p.first_name,p.last_name].filter(Boolean).join(' ').trim()||'Cliente')}catch(e){return 'Cliente'}}
+  function headerSub(){try{if(view==='workout'&&workout?.dayId){const d=data?.days?.find(x=>x.id===workout.dayId);if(d)return 'DÍA '+d.day_number+' · '+String(d.name||'ENTRENAMIENTO').toUpperCase()}if(view==='routine')return 'PLAN DE ENTRENAMIENTO';if(view==='habits')return 'HÁBITOS Y ADHERENCIA';if(view==='missions')return 'MISIONES CV12';return 'PANEL DEL ALUMNO'}catch(e){return 'CV COACH'}}
+
+  function brand(){
+    const loginLogo=document.querySelector('#login .logo');
+    if(loginLogo&&!loginLogo.classList.contains('cvOfficialLoginBrand')){loginLogo.classList.add('cvOfficialLoginBrand');loginLogo.innerHTML='<div class="cvLoginLogoPlate"><img class="cvOfficialLoginLogo" src="'+LOGO+'" alt="Camilo Vásquez Fitness Coach"></div>'}
+    const top=document.querySelector('.top');if(!top)return;
+    let img=top.querySelector('.cvOfficialHeaderImg');const old=top.querySelector('.cvLogoMark');
+    if(!img){img=document.createElement('img');img.className='cvOfficialHeaderImg';img.src=LOGO;img.alt='Camilo Vásquez Fitness Coach';if(old)old.replaceWith(img);else top.prepend(img)}
+    let title=top.querySelector('.topTitle');if(!title){title=document.createElement('div');title.className='topTitle';const right=top.querySelector('.topRight');top.insertBefore(title,right||null)}
+    title.classList.add('cvHeaderIdentity');title.innerHTML='<b>RUTINA DE '+student().toUpperCase()+'</b><small>'+headerSub()+'</small>';
+    const right=top.querySelector('.topRight');if(right&&!document.getElementById('cvSoundToggle')){const b=document.createElement('button');b.id='cvSoundToggle';b.type='button';b.className='cvSoundToggle';b.onclick=window.cvToggleSound;const logout=right.querySelector('#logout');right.insertBefore(b,logout||right.firstChild)}
+    soundUI();
+  }
+
+  function effortLabels(name){const n=String(name||'').toLowerCase();if(/remo|jal[oó]n|curl|face pull|pullover/.test(n))return ['VUELVE CONTROLANDO','TIRA / ACERCA'];if(/press|flexi[oó]n|fondo|tr[ií]ceps|extensi[oó]n/.test(n))return ['BAJA / REGRESA','EMPUJA / EXTIENDE'];if(/sentadilla|prensa|zancada|step|peso muerto|hip thrust|gemelo|patada|abducci[oó]n|femoral/.test(n))return ['BAJA CONTROLANDO','SUBE / EXTIENDE'];if(/crunch|russian|woodchopper|elevaci[oó]n de piernas/.test(n))return ['REGRESA CONTROLANDO','CONTRAE / EJECUTA'];return ['FASE DE RETORNO','FASE DE ESFUERZO']}
+  function tempoHuman(el){if(!el||el.dataset.cvHuman==='1')return;el.dataset.cvHuman='1';const raw=(el.textContent||'').trim(),card=el.closest('.cvHevyExercise'),name=card?.querySelector('h3')?.textContent||'';
+    if(/mant[eé]n la posici[oó]n|isom/i.test(raw)){el.innerHTML='<div class="cvTempoHumanTitle">RITMO DEL EJERCICIO</div><div class="cvTempoSingle"><div class="ico">⏱</div><div><strong>MANTÉN LA POSICIÓN</strong><small>Sostén la postura durante el tiempo indicado por tu coach sin perder la técnica.</small></div></div>';return}
+    if(/movimiento continuo|continuo/i.test(raw)){el.innerHTML='<div class="cvTempoHumanTitle">RITMO DEL EJERCICIO</div><div class="cvTempoSingle"><div class="ico">↻</div><div><strong>MOVIMIENTO CONTINUO</strong><small>Mantén un ritmo estable, controlado y sin rebotes durante todo el intervalo.</small></div></div>';return}
+    const secs=[...raw.matchAll(/(\d+(?:\.\d+)?)\s*s/gi)].map(m=>m[1]);if(secs.length<3){el.innerHTML='<div class="cvTempoHumanTitle">RITMO DEL EJERCICIO</div><div class="cvTempoSingle"><div class="ico">✓</div><div><strong>MOVIMIENTO CONTROLADO</strong><small>Evita rebotes o impulsos. Haz cada repetición con la técnica descrita arriba.</small></div></div>';return}
+    const labels=effortLabels(name),rows=[[1,labels[0],'Haz esta fase lentamente y con control.',secs[0]+' s'],[2,'PAUSA / AGUANTA','Mantén la posición y la tensión.',secs[1]+' s'],[3,labels[1],'Haz la fase fuerte sin usar impulso.',secs[2]+' s']];if(secs[3]&&Number(secs[3])>0)rows.push([4,'PAUSA FINAL','Detente antes de la siguiente repetición.',secs[3]+' s']);el.innerHTML='<div class="cvTempoHumanTitle">RITMO DEL EJERCICIO</div>'+rows.map(r=>'<div class="cvTempoStep"><div class="n">'+r[0]+'</div><div class="copy"><strong>'+r[1]+'</strong><small>'+r[2]+'</small></div><div class="secs">'+r[3]+'</div></div>').join('')+'<div class="cvTempoHelp">Lee los pasos de arriba en orden. No necesitas aprender códigos como 3-1-1-0.</div>'
+  }
+
+  function key(i,j){return i+'_'+j}
+  function readDraft(i,j){const k=key(i,j);drafts[k]=drafts[k]||{};const w=document.getElementById('cvw_'+i+'_'+j),r=document.getElementById('cvr_'+i+'_'+j);if(w)drafts[k].weight=w.value;if(r)drafts[k].reps=r.value;return drafts[k]}
+  function applyDraftsDOM(){document.querySelectorAll('input[id^="cvw_"],input[id^="cvr_"]').forEach(inp=>{inp.removeAttribute('disabled');const m=inp.id.match(/^cv([wr])_(\d+)_(\d+)$/);if(!m)return;const d=drafts[key(Number(m[2]),Number(m[3]))];if(!d)return;const v=m[1]==='w'?d.weight:d.reps;if(v!==undefined&&v!==null&&v!=='')inp.value=v});document.querySelectorAll('.cvSetCheck').forEach(b=>b.removeAttribute('disabled'))}
+  function applyDraftsModel(){if(!workout?.liveExercises)return;for(const [k,d] of Object.entries(drafts)){const [i,j]=k.split('_').map(Number),s=workout.liveExercises?.[i]?.sets?.[j];if(!s)continue;if(d.weight!==undefined&&d.weight!=='')s.weight_kg=Number(d.weight);if(d.reps!==undefined&&d.reps!=='')s.reps=Math.round(Number(d.reps))}}
+
+  function fmt(v){if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?n.toLocaleString('es-CL',{maximumFractionDigits:2}):String(v)}
+  function historyText(s,ex){let w=s.reference_weight_kg,r=s.reference_reps;if(w==null&&r==null){w=ex?.previous_best_weight_kg??null;r=ex?.previous_best_reps??null}if(w==null&&r==null)return '—';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}
+  function suggestedText(s){const w=s?.suggested_weight_kg,r=s?.suggested_reps;if(w==null&&r==null)return '';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}
+
+  async function hydrateHistory(){try{if(mode==='demo'||!workout?.liveExercises)return;const all=workout.liveExercises.flatMap(e=>Array.isArray(e.sets)?e.sets:[]),ids=[...new Set(all.map(s=>s.reference_set_log_id).filter(Boolean))];if(ids.length){const {data:rows,error}=await sb.from('set_logs').select('id,weight_kg,reps,completed_at').in('id',ids);if(!error){const map=new Map((rows||[]).map(x=>[x.id,x]));for(const s of all){const ref=map.get(s.reference_set_log_id);if(ref){s.reference_weight_kg=ref.weight_kg;s.reference_reps=ref.reps;s.reference_completed_at=ref.completed_at}}}}workout.cvHistoryHydrated=true;render()}catch(e){console.warn('CV history',e)}}
+  function historyDecorate(){try{document.querySelectorAll('.cvSetsHead').forEach(h=>{if(h.children?.[1])h.children[1].textContent='ANTERIOR'});const exs=typeof cvExercises==='function'?cvExercises():[];document.querySelectorAll('.cvHevyExercise').forEach((card,i)=>{const ex=exs[i];if(!ex)return;card.querySelectorAll('.cvSetRow').forEach((row,j)=>{const s=ex.sets?.[j],cell=row.querySelector('.cvPrevious');if(!s||!cell)return;const prev=historyText(s,ex),sug=suggestedText(s),src=String(s.suggestion_source||'');let meta='SESIÓN ANTERIOR',cls=' previous';if(prev==='—'){if(src==='coach_progression'){meta=sug?'COACH SUGIERE '+sug:'SUGERENCIA DEL COACH';cls=' coach'}else if(src==='program_prescription'){meta='PRIMERA SESIÓN';cls=' program'}else{meta='SIN HISTORIAL';cls=''}}else if(src==='coach_progression'&&sug&&sug!==prev){meta='COACH SUGIERE '+sug;cls=' coach'}cell.innerHTML='<span class="cvPrevMain">'+prev+'</span><small class="cvPrevMeta'+cls+'">'+meta+'</small>'});const progress=card.querySelector('.cvExerciseProgress');if(progress){const done=ex.sets?.filter(s=>s.completed).length||0;progress.classList.toggle('hasProgress',done>0)}});const content=document.querySelector('#content');if(workout?.cvResumed&&content&&!content.querySelector('.cvResumeBadge')){const top=content.querySelector('.workoutTop');if(top)top.insertAdjacentHTML('afterend','<div class="cvResumeBadge">Sesión recuperada · datos guardados</div>')}}catch(e){}}
+
+  function restMeta(){const exs=typeof cvExercises==='function'?cvExercises():[];document.querySelectorAll('.cvRestPill').forEach((b,i)=>{b.classList.add('cvRestMeta');b.removeAttribute('onclick');b.disabled=false;b.textContent=String(exs[i]?.rest_seconds||0)+' s'})}
+  function bindRestObserver(){const dock=document.getElementById('cvRestDock');if(!dock||dock===restObservedEl)return;if(restObserverHandle&&typeof restObserverHandle.disconnect==='function')restObserverHandle.disconnect();restObservedEl=dock;restObserverHandle=new MutationObserver(()=>{if(dock.classList.contains('done')){dock.classList.add('hidden');sfx('ready');try{navigator.vibrate?.([90,55,130])}catch(e){}}});restObserverHandle.observe(dock,{attributes:true,attributeFilter:['class']})}
+
+  function afterRender(){brand();document.querySelectorAll('.workoutTop .ey').forEach(x=>x.remove());document.querySelectorAll('.cvTempo').forEach(tempoHuman);restMeta();applyDraftsDOM();historyDecorate();bindRestObserver()}
+
+  const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(afterRender);return r};
+  const baseStart=window.startWorkout;window.startWorkout=async function(){for(const inp of document.querySelectorAll('input[id^="cvw_"],input[id^="cvr_"]')){const m=inp.id.match(/^cv([wr])_(\d+)_(\d+)$/);if(m)readDraft(Number(m[2]),Number(m[3]))}await baseStart.apply(this,arguments);applyDraftsModel();if(mode!=='demo'&&workout?.sessionId&&!workout.cvHistoryHydrated)await hydrateHistory();else render();if(workout?.started&&typeof startTimer==='function')startTimer()};
+
+  const baseSave=window.cvSaveDraftSet;window.cvSaveDraftSet=async function(i,j){readDraft(i,j);if(!workout?.sessionId)return true;const row=document.getElementById('cvw_'+i+'_'+j)?.closest('.cvSetRow');row?.classList.add('cvSaving');row?.classList.remove('cvSaved','cvSaveError');const ok=await baseSave.apply(this,arguments);row?.classList.remove('cvSaving');if(ok===false){row?.classList.add('cvSaveError');return false}row?.classList.add('cvSaved');sfx('save');setTimeout(()=>row?.classList.remove('cvSaved'),700);return true};
+
+  const baseToggle=window.cvToggleSet;window.cvToggleSet=async function(i,j){readDraft(i,j);if(!workout?.sessionId){await window.startWorkout();applyDraftsModel();render();await new Promise(r=>requestAnimationFrame(()=>r()))}const ex=typeof cvExercises==='function'?cvExercises()?.[i]:null,s=ex?.sets?.[j],was=!!s?.completed;const result=await baseToggle.apply(this,arguments);const now=typeof cvExercises==='function'?!!cvExercises()?.[i]?.sets?.[j]?.completed:false;if(!was&&now){sfx('confirm');setTimeout(()=>sfx('rest'),120)}return result};
+
+  const baseOpen=window.openDay;window.openDay=function(id){Object.keys(drafts).forEach(k=>delete drafts[k]);const r=baseOpen.apply(this,arguments);if(mode!=='demo')setTimeout(()=>tryResume(id),70);return r};
+  async function tryResume(dayId){try{if(!user?.id||!workout||workout.dayId!==dayId||workout.sessionId)return;const {data:open,error}=await sb.from('workout_sessions').select('id,started_at,status').eq('client_id',user.id).eq('program_day_id',dayId).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();if(error||!open||workout.sessionId)return;const {data:r,error:e}=await sb.functions.invoke('start-workout',{body:{program_day_id:dayId}});if(e||r?.error)return;workout.sessionId=r?.session_id||open.id;workout.liveExercises=Array.isArray(r?.exercises)?r.exercises:null;workout.started=r?.started_at?new Date(r.started_at).getTime():new Date(open.started_at).getTime();workout.cvResumed=true;workout.cvHistoryHydrated=false;await hydrateHistory();if(typeof startTimer==='function')startTimer();toast?.('Sesión recuperada · continuamos donde quedaste')}catch(e){console.warn('CV resume',e)}}
+
+  document.addEventListener('input',e=>{const inp=e.target;if(!(inp instanceof HTMLInputElement))return;const m=inp.id.match(/^cv([wr])_(\d+)_(\d+)$/);if(m)readDraft(Number(m[2]),Number(m[3]))},true);
+  document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.id==='cvSoundToggle'||b.classList.contains('cvSetCheck'))return;if(b.closest('.nav'))sfx('menu');else if(b.classList.contains('primary'))sfx('confirm');else sfx('menu')},true);
+
+  afterRender();
+})();
+</script><script id="cv-v21-functional-js">
+(function(){
+  function nextField(inp){
+    const m=inp.id.match(/^cv([wr])_(\d+)_(\d+)$/); if(!m)return null;
+    const kind=m[1],i=Number(m[2]),j=Number(m[3]);
+    if(kind==='w') return document.getElementById('cvr_'+i+'_'+j);
+    return document.getElementById('cvw_'+i+'_'+(j+1));
+  }
+  document.addEventListener('focusin',e=>{
+    const x=e.target;if(!(x instanceof HTMLInputElement)||!/^cv[wr]_/.test(x.id))return;
+    x.classList.add('cvInputActive');
+    setTimeout(()=>{try{x.select()}catch(_){}},20);
+  },true);
+  document.addEventListener('focusout',e=>{
+    const x=e.target;if(x instanceof HTMLInputElement&&/^cv[wr]_/.test(x.id))x.classList.remove('cvInputActive');
+  },true);
+  document.addEventListener('keydown',e=>{
+    const x=e.target;if(!(x instanceof HTMLInputElement)||!/^cv[wr]_/.test(x.id)||e.key!=='Enter')return;
+    e.preventDefault(); const n=nextField(x); if(n){n.focus();setTimeout(()=>{try{n.select()}catch(_){}},20)}else{x.blur()}
+  },true);
+  const oldToggle=window.cvToggleSet;
+  window.cvToggleSet=async function(i,j){
+    const before=!!(typeof cvExercises==='function'&&cvExercises()?.[i]?.sets?.[j]?.completed);
+    const r=await oldToggle.apply(this,arguments);
+    const after=!!(typeof cvExercises==='function'&&cvExercises()?.[i]?.sets?.[j]?.completed);
+    if(!before&&after){
+      try{navigator.vibrate?.(35)}catch(_){}
+      requestAnimationFrame(()=>{const row=document.getElementById('cvw_'+i+'_'+j)?.closest('.cvSetRow');if(row){row.classList.add('cvJustCompleted');setTimeout(()=>row.classList.remove('cvJustCompleted'),380)}})
+    }
+    return r;
+  };
+  const oldAdd=window.cvAddSet;
+  window.cvAddSet=async function(i){
+    const before=(typeof cvExercises==='function'?cvExercises()?.[i]?.sets?.length:0)||0;
+    const r=await oldAdd.apply(this,arguments);
+    requestAnimationFrame(()=>{const x=document.getElementById('cvw_'+i+'_'+before);if(x){x.focus();setTimeout(()=>{try{x.select()}catch(_){}},25)}});
+    return r;
+  };
+  // Keep rest dock strictly ephemeral: hidden unless countdown is actually running.
+  setInterval(()=>{
+    const d=document.getElementById('cvRestDock'); if(!d)return;
+    try{if((typeof cvRestEnd==='number'&&cvRestEnd<=Date.now())&&!d.classList.contains('done'))d.classList.add('hidden')}catch(_){}
+  },1000);
+})();
+</script><script id="cv-v22-ux-js">
+(function(){
+  function tidyResume(){const b=document.querySelector('.cvResumeBadge');if(!b||b.dataset.cvTidy)return;b.dataset.cvTidy='1';setTimeout(()=>b.classList.add('cvResumeCompact'),2200)}
+  const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(tidyResume);return r};
+  requestAnimationFrame(tidyResume);
+})();
+</script><script id="cv-v23-premium-js">
+(function(){
+  let cvPremiumAC=null,lastSecond=null,lastFinished=false;
+  function soundOn(){return localStorage.getItem('cv_sound_enabled')!=='0'}
+  function ctx(){try{if(!cvPremiumAC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;cvPremiumAC=new C()}if(cvPremiumAC.state==='suspended')cvPremiumAC.resume().catch(()=>{});return cvPremiumAC}catch(_){return null}}
+  function tone(f,d,delay=0,vol=.018,type='triangle'){if(!soundOn())return;const c=ctx();if(!c)return;try{const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.02)}catch(_){}}
+  function tick(){tone(780,.042,0,.012,'square')}
+  function ready(){tone(660,.08,0,.025);tone(825,.09,.065,.024);tone(990,.15,.13,.022)}
+  function decorateCards(){if(typeof cvExercises!=='function')return;const exs=cvExercises();document.querySelectorAll('.cvHevyExercise').forEach((c,i)=>{const e=exs[i],sets=e?.sets||[],done=sets.filter(s=>s.completed).length;c.classList.toggle('cvExerciseHasProgress',done>0);c.classList.toggle('cvExerciseComplete',sets.length>0&&done===sets.length)})}
+  function restWatch(){const d=document.getElementById('cvRestDock'),t=document.getElementById('cvRestTime');if(!d||!t)return;const parts=(t.textContent||'').split(':').map(Number);if(parts.length!==2||parts.some(n=>!Number.isFinite(n)))return;const sec=parts[0]*60+parts[1],active=!d.classList.contains('hidden')&&!d.classList.contains('done');d.classList.toggle('cvLastTen',active&&sec>0&&sec<=10);if(active&&sec>0&&sec<=10&&sec!==lastSecond){lastSecond=sec;tick();try{navigator.vibrate?.(18)}catch(_){}}if(active&&sec===0&&!lastFinished){lastFinished=true;ready();try{navigator.vibrate?.([90,55,120])}catch(_){}}if(!active){lastSecond=null;lastFinished=false;d.classList.remove('cvLastTen')}}
+  const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(()=>{decorateCards();restWatch()});return r};
+  setInterval(restWatch,250);
+  requestAnimationFrame(decorateCards);
+})();
+</script><script id="cv-v24-performance-js">
+(function(){
+  // Technique images remain request-on-tap. Give the requested asset decode priority only after opening.
+  const open=window.cvOpenTechnique;
+  window.cvOpenTechnique=function(i){
+    const r=open.apply(this,arguments);
+    requestAnimationFrame(()=>{const media=document.getElementById('cvTechMedia'),img=media?.querySelector('img');if(img){try{img.fetchPriority='high';img.decoding='async'}catch(_){}}});
+    return r;
+  };
+  // Accessibility/UX: announce key controls without adding visible clutter.
+  function labels(){
+    document.querySelectorAll('.cvHevyExercise').forEach((card,i)=>{
+      const name=card.getAttribute('data-tech-name')||('Ejercicio '+(i+1));
+      const h=card.querySelector('.exerciseTop h3');if(h){h.setAttribute('role','button');h.setAttribute('aria-label','Abrir técnica de '+name)}
+      card.querySelectorAll('.cvSetRow').forEach((row,j)=>{
+        row.querySelector('input[id^="cvw_"]')?.setAttribute('aria-label','Peso serie '+(j+1)+' de '+name);
+        row.querySelector('input[id^="cvr_"]')?.setAttribute('aria-label','Repeticiones serie '+(j+1)+' de '+name);
+        row.querySelector('.cvSetCheck')?.setAttribute('aria-label','Completar serie '+(j+1)+' de '+name);
+      });
+    });
+  }
+  const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(labels);return r};
+  requestAnimationFrame(labels);
+})();
+</script><script id="cv-v29-consolidated-js">
+(function(){
+ const LOGO='https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-brand/cv-official-logo-header.webp';
+ const ICONS={
+  home:'<svg viewBox="0 0 24 24"><path d="M3.5 10.5 12 3l8.5 7.5V21H15v-6H9v6H3.5V10.5Z" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  routine:'<svg viewBox="0 0 24 24"><path d="M5 9v6M3 10.5v3M19 9v6M21 10.5v3M7 12h10" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  habits:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" stroke-width="1.7"/><path d="M12 7.5v4.8l3 1.7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  missions:'<svg viewBox="0 0 24 24"><path d="m12 3 7 4v5c0 4.7-3 7.6-7 9-4-1.4-7-4.3-7-9V7l7-4Z" stroke-width="1.7" stroke-linejoin="round"/><path d="m9.2 12.2 1.8 1.8 3.9-4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+ };
+ function inferView(){
+   if(document.querySelector('.cvSessionStats'))return 'workout';
+   if(document.querySelector('#content>.hero'))return 'home';
+   if(document.querySelector('#content .dayGrid'))return 'routine';
+   const h=(document.querySelector('#content h1')?.textContent||'').toUpperCase();
+   if(h.includes('HÁBITOS'))return 'habits';if(h.includes('MISIONES'))return 'missions';return 'home';
+ }
+ function ensureSidebar(){
+   const app=document.getElementById('app');if(!app||app.classList.contains('hidden'))return;
+   let side=document.getElementById('cvDesktopSide');
+   if(!side){side=document.createElement('aside');side.id='cvDesktopSide';side.className='cvDesktopSide';side.innerHTML='<div class="cvSideBrand"><img src="'+LOGO+'" alt="CV Coach"><small>Diseño · Disciplina · Progreso</small></div><div class="cvSideNav"></div>';app.prepend(side)}
+   const nav=side.querySelector('.cvSideNav');if(!nav.children.length){['home','routine','habits','missions'].forEach(v=>{const b=document.createElement('button');b.type='button';b.dataset.view=v;b.innerHTML=ICONS[v]+'<span>'+(v==='home'?'Inicio':v==='routine'?'Rutina':v==='habits'?'Hábitos':'Misiones')+'</span>';b.onclick=()=>window.nav(v);nav.appendChild(b)})}
+ }
+ function upgradeBottom(){document.querySelectorAll('.nav button').forEach(b=>{const i=b.querySelector('.ico'),v=b.dataset.view;if(i&&ICONS[v])i.innerHTML=ICONS[v]})}
+ function enhanceRoutine(v){
+   const c=document.getElementById('content');if(!c||v!=='routine'||c.querySelector('.cvRoutineHero'))return;
+   const ey=c.querySelector(':scope > .ey'),h1=c.querySelector(':scope > h1'),sub=c.querySelector(':scope > .sub'),grid=c.querySelector(':scope > .dayGrid');if(!ey||!h1||!sub||!grid)return;
+   const hero=document.createElement('section');hero.className='cvRoutineHero';c.insertBefore(hero,ey);hero.append(ey,h1,sub);
+ }
+ function sync(){
+   const v=inferView();document.body.dataset.cvView=v;ensureSidebar();upgradeBottom();enhanceRoutine(v);
+   const target=v==='workout'?'routine':v;document.querySelectorAll('.cvSideNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===target));
+ }
+ const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(sync);return r};
+ const baseNav=window.nav;window.nav=function(){const r=baseNav.apply(this,arguments);requestAnimationFrame(sync);return r};
+ window.addEventListener('resize',()=>requestAnimationFrame(sync),{passive:true});requestAnimationFrame(sync);
+})();
+</script><script id="cv-v30-responsive-qa-js">
+(function(){
+ const prior=window.nav;window.nav=function(){const r=prior.apply(this,arguments);requestAnimationFrame(()=>{const s=document.getElementById('cvDesktopSide');if(s)s.setAttribute('aria-hidden',matchMedia('(min-width:1024px)').matches?'false':'true')});return r};
+ requestAnimationFrame(()=>{const s=document.getElementById('cvDesktopSide');if(s)s.setAttribute('aria-hidden',matchMedia('(min-width:1024px)').matches?'false':'true')});
+})();
+</script><script id="cv-v25-js">
+(function(){
+  const REST_KEY='cv_v25_rest';let restHandle=null,restEnd=0,restName='';
+  const fmt=v=>{if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?n.toLocaleString('es-CL',{maximumFractionDigits:2}):String(v)};
+  function cleanDay(n){return String(n||'').replace(/^D[ií]a\s*\d+\s*[—-]?\s*/i,'').trim()||String(n||'ENTRENAMIENTO')}
+  function setNav(){document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',view==='workout'?b.dataset.view==='routine':b.dataset.view===view))}
+  function fixHeader(){const sub=document.querySelector('.cvHeaderIdentity small');if(sub&&view==='workout'&&workout?.dayId){const d=data?.days?.find(x=>x.id===workout.dayId);if(d)sub.textContent='DÍA '+d.day_number+' · '+cleanDay(d.name).toUpperCase()}}
+  function prevText(s,ex){let w=s?.previous_weight_kg,r=s?.previous_reps;if(w==null&&r==null){w=s?.reference_weight_kg;r=s?.reference_reps}if(w==null&&r==null){w=ex?.previous_best_weight_kg;r=ex?.previous_best_reps}if(w==null&&r==null)return '—';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}
+  function decorateHistory(){try{const exs=typeof cvExercises==='function'?cvExercises():[];document.querySelectorAll('.cvHevyExercise').forEach((card,i)=>{const ex=exs[i];if(!ex)return;card.querySelectorAll('.cvSetRow').forEach((row,j)=>{const s=ex.sets?.[j],cell=row.querySelector('.cvPrevious');if(!s||!cell)return;const prev=prevText(s,ex),sug=(s.suggested_weight_kg!=null||s.suggested_reps!=null)?((s.suggested_weight_kg==null?'—':fmt(s.suggested_weight_kg)+' kg')+' × '+(s.suggested_reps??'—')):'';let meta=prev==='—'?'SIN HISTORIAL':'SESIÓN ANTERIOR',cls=prev==='—'?' program':' previous';if(prev==='—'&&s.suggestion_source==='coach_program'){meta=sug?'COACH DEFINE '+sug:'VALOR DEL COACH';cls=' coach'}else if(s.suggestion_source==='coach_progression'&&sug&&sug!==prev){meta='COACH SUGIERE '+sug;cls=' coach'}cell.innerHTML='<span class="cvPrevMain">'+prev+'</span><small class="cvPrevMeta'+cls+'">'+meta+'</small>'})})}catch(e){console.warn('v25 history',e)}}
+  function updateStats(){try{const exs=cvExercises(),sets=exs.flatMap(e=>e.sets||[]),done=sets.filter(s=>s.completed),vol=done.reduce((a,s)=>a+(Number(s.weight_kg)||0)*(Number(s.reps)||0),0),stats=document.querySelectorAll('.cvSessionStat');if(stats[1]?.querySelector('b'))stats[1].querySelector('b').textContent=Math.round(vol).toLocaleString('es-CL')+' kg';if(stats[2]?.querySelector('b'))stats[2].querySelector('b').textContent=done.length+' / '+sets.length}catch(_){}}
+  function ensureDock(){let d=document.getElementById('cvRestDock');if(!d){d=document.createElement('div');d.id='cvRestDock';d.className='cvRestDock hidden';d.innerHTML='<div class="cvRestText"><small>DESCANSO</small><b id="cvRestTime">00:00</b><span id="cvRestExercise"></span></div><div class="cvRestActions"><button class="cvRestMin" type="button">—</button><button type="button" class="cvRestPlus">+15 s</button><button type="button" class="cvRestSkip">OMITIR</button></div>';document.body.appendChild(d)}let m=d.querySelector('.cvRestMin');if(!m){m=document.createElement('button');m.type='button';m.className='cvRestMin';m.textContent='—';d.querySelector('.cvRestActions')?.prepend(m)}m.onclick=()=>{d.classList.toggle('cvMinimized');m.textContent=d.classList.contains('cvMinimized')?'↗':'—';persistRest()};const plus=d.querySelector('.cvRestPlus')||[...d.querySelectorAll('.cvRestActions button')].find(x=>x.textContent.includes('+15'));if(plus)plus.onclick=()=>{restEnd+=15000;tickRest();persistRest()};const skip=d.querySelector('.cvRestSkip')||[...d.querySelectorAll('.cvRestActions button')].find(x=>/OMITIR/i.test(x.textContent));if(skip)skip.onclick=stopRest;return d}
+  function persistRest(){try{if(!restEnd){sessionStorage.removeItem(REST_KEY);return}sessionStorage.setItem(REST_KEY,JSON.stringify({end:restEnd,name:restName,min:ensureDock().classList.contains('cvMinimized')}))}catch(_){}}
+  function tickRest(){if(!restEnd)return;const d=ensureDock(),left=Math.max(0,Math.ceil((restEnd-Date.now())/1000)),t=document.getElementById('cvRestTime'),n=document.getElementById('cvRestExercise');if(t)t.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');if(n)n.textContent=restName;if(left<=0){clearInterval(restHandle);restHandle=null;restEnd=0;d.classList.add('done');setTimeout(()=>d.classList.add('hidden'),1700);persistRest();try{navigator.vibrate?.([90,55,120])}catch(_){}}}
+  function startRest(sec,name){sec=Number(sec)||0;if(sec<=0)return;clearInterval(restHandle);restEnd=Date.now()+sec*1000;restName=name||'';const d=ensureDock();d.classList.remove('hidden','done');tickRest();restHandle=setInterval(tickRest,250);persistRest()}
+  function stopRest(){clearInterval(restHandle);restHandle=null;restEnd=0;const d=document.getElementById('cvRestDock');d?.classList.add('hidden');persistRest()}
+  function restoreRest(){try{const x=JSON.parse(sessionStorage.getItem(REST_KEY)||'null');if(!x?.end||x.end<=Date.now())return;restEnd=Number(x.end);restName=x.name||'';const d=ensureDock();d.classList.toggle('cvMinimized',!!x.min);d.querySelector('.cvRestMin').textContent=x.min?'↗':'—';d.classList.remove('hidden','done');tickRest();clearInterval(restHandle);restHandle=setInterval(tickRest,250)}catch(_){}}
+  const oldOpen=window.openDay;window.openDay=async function(id){try{if(mode==='real'&&user?.id){const q=await sb.from('workout_sessions').select('program_day_id,started_at').eq('client_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();if(q.data?.program_day_id&&q.data.program_day_id!==id){id=q.data.program_day_id;toast?.('Ya tenías una sesión activa · la recuperé')}}}catch(e){console.warn('v25 active workout',e)}return oldOpen.call(this,id)};
+  window.cvToggleSet=async function(i,j){
+    if(!workout?.sessionId){await window.startWorkout();if(!workout?.sessionId)return}
+    const ex=typeof cvExercises==='function'?cvExercises()?.[i]:null,s=ex?.sets?.[j];if(!ex||!s)return;
+    const wi=document.getElementById('cvw_'+i+'_'+j),ri=document.getElementById('cvr_'+i+'_'+j),w=wi&&wi.value!==''?Number(wi.value):null,r=ri&&ri.value!==''?Math.round(Number(ri.value)):null;if(w!=null&&!Number.isFinite(w))return toast?.('Revisa el peso.');if(r==null||!Number.isFinite(r)||r<=0)return toast?.('Ingresa las repeticiones realizadas.');
+    const next=!s.completed,old={w:s.weight_kg,r:s.reps,c:s.completed};s.weight_kg=w;s.reps=r;s.completed=next;
+    const row=wi?.closest('.cvSetRow'),btn=row?.querySelector('.cvSetCheck');row?.classList.toggle('done',next);btn?.classList.toggle('done',next);updateStats();const card=row?.closest('.cvHevyExercise'),all=ex.sets||[],done=all.filter(x=>x.completed).length;card?.classList.toggle('cvExerciseHasProgress',done>0);card?.classList.toggle('cvExerciseComplete',all.length>0&&done===all.length);if(next)startRest(ex.rest_seconds||90,ex.name);
+    if(mode==='demo'||!s.set_log_id)return;
+    try{const {error}=await sb.from('set_logs').update({weight_kg:w,reps:r,completed:next,completed_at:next?new Date().toISOString():null,source:'manual'}).eq('id',s.set_log_id);if(error)throw error}catch(e){s.weight_kg=old.w;s.reps=old.r;s.completed=old.c;row?.classList.toggle('done',old.c);btn?.classList.toggle('done',old.c);updateStats();if(next)stopRest();toast?.('No pude guardar la serie. Se revirtió para proteger tus datos.')}
+  };
+  const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(()=>{setNav();fixHeader();decorateHistory();ensureDock()});return r};
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&restEnd)tickRest()});window.addEventListener('pageshow',()=>{if(restEnd)tickRest()});requestAnimationFrame(()=>{setNav();fixHeader();decorateHistory();restoreRest()});
+})();
+</script></body></html>
