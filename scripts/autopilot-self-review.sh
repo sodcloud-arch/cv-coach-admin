@@ -109,6 +109,18 @@ review_merge_retry() {
   call_gateway "${EDGE_URL}" "${payload}"
 }
 
+dispatch_production_deploy() {
+  local attempt
+  for attempt in 1 2 3; do
+    if gh workflow run deploy-cv-coach-admin-production.yml --ref main; then
+      echo "Autopilot self-review: production deploy dispatched."
+      return 0
+    fi
+    sleep "$((attempt * 3))"
+  done
+  return 1
+}
+
 validate_worktree() {
   if [[ ! -f "${TARGET_PATH}" ]]; then
     echo "Self-review validation: missing ${TARGET_PATH}" >&2
@@ -411,6 +423,12 @@ while (( iteration <= max_review_passes )); do
     fi
 
     merge_sha="$(gh pr view "${pr_number}" --json mergeCommit --jq '.mergeCommit.oid // ""' 2>/dev/null || true)"
+    if ! dispatch_production_deploy; then
+      review_human_blocker "${request_id}" "LOW-risk PR merged successfully, but production deployment dispatch failed after 3 attempts." "Inspect GitHub Actions permission or production deploy workflow availability; source is already merged but not confirmed deployed." "${pr_url}" "${iteration}" "MEDIUM" >/dev/null
+      git checkout main >/dev/null 2>&1 || true
+      bash scripts/autopilot-worker.sh
+      exit 0
+    fi
     review_resolved "${request_id}" "${pr_url}" "${pr_number}" "${merge_sha}" "${iteration}" "LOW" >/dev/null
     git checkout main >/dev/null 2>&1 || true
     git pull --ff-only origin main >/dev/null 2>&1 || true
