@@ -1,0 +1,38 @@
+name: Compile CV Agentic Workflows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cv-autopilot-codex.md"
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install gh-aw
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh extension install github/gh-aw
+
+      - name: Compile agentic workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh aw compile .github/workflows/cv-autopilot-codex.md
+
+      - name: Verify compiled file exists
+        run: test -s .github/workflows/cv-autopilot-codex.lock.yml
+
+      - name: Upload compiled workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: cv-autopilot-codex-lock
+          path: .github/workflows/cv-autopilot-codex.lock.yml
+          if-no-files-found: error
