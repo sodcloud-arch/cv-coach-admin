@@ -1,0 +1,23 @@
+{
+  "id": "./",
+  "name": "CV Coach",
+  "short_name": "CV Coach",
+  "description": "Portal de entrenamiento, progreso, hábitos y nutrición de CV Coach.",
+  "lang": "es-CL",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#070707",
+  "theme_color": "#070707",
+  "categories": ["fitness", "health", "lifestyle"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
