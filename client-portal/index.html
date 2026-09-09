@@ -909,7 +909,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   }
   function achievementView(){
     const cv=data?.cv||{},unlockedById=new Map((achievementState.unlocked||[]).map(x=>[String(x.achievement_id),x]));
-    const visible=(achievementState.rows||[]).filter(a=>!a.secret||unlockedById.has(String(a.id))),count=(achievementState.rows||[]).filter(a=>unlockedById.has(String(a.id))).length;
+    const visible=(achievementState.rows||[]).filter(a=>!a.secret||unlockedById.has(String(a.id))),count=visible.filter(a=>unlockedById.has(String(a.id))).length;
     const root=document.createElement('div');text(root,'div','CV12 · PROGRESO','ey');text(root,'h1','LOGROS');text(root,'div','Desbloquea hitos reales de tu proceso. Esta vista es solo de lectura.','sub');
     const summary=document.createElement('div');summary.className='achievementSummary';[['Nivel actual',cv.current_level??1],['XP total',cv.total_xp??0],['Créditos CV',cv.credit_balance??0],['Desbloqueados',count+' / '+visible.length]].forEach(([k,v])=>{const s=document.createElement('div');s.className='stat';text(s,'div',k,'l');text(s,'div',v,'v');summary.append(s)});root.append(summary);
     const section=document.createElement('section');section.className='section';const head=document.createElement('div');head.className='sectionHead';text(head,'h2','TUS LOGROS');section.append(head);const grid=document.createElement('div');grid.className='achievementGrid';section.append(grid);root.append(section);
@@ -924,7 +924,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   const baseRender=window.render;window.render=function(){const result=baseRender.apply(this,arguments);if(view==='achievements'){const c=document.getElementById('content');if(c){c.replaceChildren(achievementView());if(mode==='real'&&!achievementState.rows.length&&!achievementState.loading)loadAchievements()}}return result};
   const baseSetLogged=window.setLogged;window.setLogged=function(){const result=baseSetLogged.apply(this,arguments);if(mode==='real')loadAchievements();return result};
   const baseNav=window.nav;window.nav=function(v){const result=baseNav.apply(this,arguments);if(v==='achievements')loadAchievements();return result};
-  function addDesktopAchievementLink(){const nav=document.querySelector('.cvSideNav');if(!nav||nav.querySelector('[data-view="achievements"]'))return;const b=document.createElement('button');b.type='button';b.dataset.view='achievements';b.classList.toggle('active',view==='achievements');text(b,'span','🏆');text(b,'span','Logros');b.onclick=()=>window.nav('achievements');nav.append(b)}
+  function addDesktopAchievementLink(){const nav=document.querySelector('.cvSideNav');if(!nav)return;let b=nav.querySelector('[data-view="achievements"]');if(!b){b=document.createElement('button');b.type='button';b.dataset.view='achievements';text(b,'span','🏆');text(b,'span','Logros');b.onclick=()=>window.nav('achievements');nav.append(b)}nav.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.view===view))}
   const baseRender2=window.render;window.render=function(){const result=baseRender2.apply(this,arguments);requestAnimationFrame(addDesktopAchievementLink);return result};
   sb.auth.onAuthStateChange((event,session)=>{if(session?.user?.id&&event==='TOKEN_REFRESHED'){user=session.user;achievementState={rows:[],unlocked:[],loading:false,error:''};if(view==='achievements')loadAchievements()}});
 })();
