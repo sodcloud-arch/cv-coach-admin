@@ -194,15 +194,17 @@ input_text="$(jq -nr \
   --rawfile source "${TARGET_PATH}" \
   '"MISSION: "+$mission_key+"\nACTION: "+$action_key+" ("+$action_type+")\nTITLE: "+$title+"\nINSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\n\nCURRENT TARGET SOURCE:\n"+$source')"
 
+input_file="$(mktemp)"
+printf '%s' "${input_text}" > "${input_file}"
 body_file="$(mktemp)"
 response_file="$(mktemp)"
 proposal_file="$(mktemp)"
-trap 'rm -f "${body_file}" "${response_file}" "${proposal_file}" /tmp/cv-autopilot-inline.js' EXIT
+trap 'rm -f "${input_file}" "${body_file}" "${response_file}" "${proposal_file}" /tmp/cv-autopilot-inline.js' EXIT
 
 jq -n \
   --arg model "${OPENAI_MODEL}" \
   --arg instructions "${system_instructions}" \
-  --arg input "${input_text}" \
+  --rawfile input "${input_file}" \
   --argjson max_output_tokens "${MAX_OUTPUT_TOKENS}" \
   --argjson schema "${schema}" \
   '{model:$model,instructions:$instructions,input:$input,store:false,max_output_tokens:$max_output_tokens,text:{format:{type:"json_schema",name:"cv_autopilot_patch_v1",strict:true,schema:$schema}}}' \
