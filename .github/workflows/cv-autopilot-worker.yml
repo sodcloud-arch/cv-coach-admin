@@ -2,6 +2,11 @@ name: CV Coach Autopilot Worker
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cv-autopilot-worker.yml"
+      - "scripts/autopilot-worker.sh"
   schedule:
     - cron: "*/30 * * * *"
   issues:
