@@ -20,7 +20,15 @@ jobs:
         with:
           fetch-depth: 0
       - name: Apply review queue recovery patch
-        run: python3 scripts/patch-autopilot-review-queue.py
+        shell: bash
+        run: |
+          if ! python3 scripts/patch-autopilot-review-queue.py; then
+            if grep -q 'sensitive_scan_text=' scripts/autopilot-self-review.sh && grep -q 'review_merge_retry()' scripts/autopilot-self-review.sh; then
+              echo 'Review queue recovery already applied in newer runtime.'
+            else
+              exit 1
+            fi
+          fi
       - name: Refine read-only sensitive-context classification
         run: python3 scripts/patch-autopilot-readonly-sensitive.py
       - name: Wire production deployment after Autopilot merges
