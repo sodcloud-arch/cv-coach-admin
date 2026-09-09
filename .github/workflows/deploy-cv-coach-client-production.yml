@@ -6,6 +6,8 @@ on:
     paths:
       - 'client-portal/index.html'
       - 'client-portal/stabilize.py'
+      - 'client-portal/manifest.webmanifest'
+      - 'client-portal/sw.js'
       - '.github/workflows/deploy-cv-coach-client-production.yml'
   workflow_dispatch:
 
@@ -24,6 +26,7 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: team_pD5aAwrw2qpbPgoEarWhxcKF
       VERCEL_PROJECT_ID: prj_PmFZQqN9tVEAUgKH8ekcnOoSgNOL
+      VERCEL_CLI_VERSION: 59.13.1
     steps:
       - name: Checkout canonical main
         uses: actions/checkout@v4
@@ -62,6 +65,8 @@ jobs:
           mkdir -p .vercel/output/static
           printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
           cp index.html .vercel/output/static/index.html
+          if [[ -f ../manifest.webmanifest ]]; then cp ../manifest.webmanifest .vercel/output/static/manifest.webmanifest; fi
+          if [[ -f ../sw.js ]]; then cp ../sw.js .vercel/output/static/sw.js; fi
           cat > .vercel/output/config.json <<'JSON'
           {
             "version": 3,
@@ -70,6 +75,8 @@ jobs:
                 "src": "/",
                 "dest": "/index.html",
                 "headers": {
+                  "Cache-Control": "no-store",
+                  "Content-Security-Policy": "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://fmhcansyxcsqkrivqchr.supabase.co wss://fmhcansyxcsqkrivqchr.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests",
                   "X-Content-Type-Options": "nosniff",
                   "X-Frame-Options": "DENY",
                   "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -82,6 +89,8 @@ jobs:
                 "src": "/(.*)",
                 "dest": "/index.html",
                 "headers": {
+                  "Cache-Control": "no-store",
+                  "Content-Security-Policy": "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://fmhcansyxcsqkrivqchr.supabase.co wss://fmhcansyxcsqkrivqchr.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests",
                   "X-Content-Type-Options": "nosniff",
                   "X-Frame-Options": "DENY",
                   "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -99,7 +108,7 @@ jobs:
         if: steps.auth.outputs.available == 'true'
         working-directory: client-portal/stable
         shell: bash
-        run: npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
       - name: Verify public production alias
         if: steps.auth.outputs.available == 'true'
@@ -112,6 +121,7 @@ jobs:
             if [[ "$body" == *"CV Coach"* && "$body" != *"Cliente Premium Preview"* && "$body" == *"America/Santiago"* ]]; then
               grep -qi '^x-content-type-options: nosniff' "$headers"
               grep -qi '^x-frame-options: DENY' "$headers"
+              grep -qi '^content-security-policy:' "$headers"
               echo 'PUBLIC_PORTAL_OK'
               rm -f "$headers"
               exit 0

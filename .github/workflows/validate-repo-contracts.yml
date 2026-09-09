@@ -1,0 +1,30 @@
+name: CV Coach Repository Contracts
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate repository contracts
+        run: python scripts/validate-repo-contracts.py
+      - name: Build client stabilized artifact
+        run: python client-portal/stabilize.py
+      - name: Validate JSON and shell syntax
+        run: |
+          python -m json.tool vercel.json >/dev/null
+          bash -n scripts/autopilot-worker.sh
+          bash -n scripts/autopilot-external-executor.sh
+          bash -n scripts/autopilot-self-review.sh
+          git diff --check
