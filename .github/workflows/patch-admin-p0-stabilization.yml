@@ -1,0 +1,83 @@
+name: CV Coach Admin P0 Source Stabilization
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-admin-p0-stabilization.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cv-coach-admin-p0-source
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout canonical main
+        uses: actions/checkout@v4
+
+      - name: Apply deterministic P0 replacements
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  "client_url:'https://cv-coach-sodcloud-1237.vercel.app'",
+                  "client_url:'https://cv-coach-roan.vercel.app'",
+                  'public client URL',
+              ),
+              (
+                  "await req('/rest/v1/rpc/publish_program_backend',{method:'POST',body:JSON.stringify({p_actor_id:me.id,p_program_id:id})});",
+                  "await req('/functions/v1/publish-program',{method:'POST',body:JSON.stringify({program_id:id})});",
+                  'secure publish Edge Function',
+              ),
+          ]
+
+          changed = False
+          for old, new, label in replacements:
+              old_count = text.count(old)
+              new_count = text.count(new)
+              if old_count == 1:
+                  text = text.replace(old, new, 1)
+                  changed = True
+              elif old_count == 0 and new_count >= 1:
+                  pass
+              else:
+                  raise SystemExit(f'{label}: unexpected source state old={old_count} new={new_count}')
+
+          if 'cv-coach-sodcloud-1237.vercel.app' in text:
+              raise SystemExit('protected client domain still present')
+          if "'/functions/v1/publish-program'" not in text:
+              raise SystemExit('secure publish route missing')
+          if "'/functions/v1/provision-client'" not in text:
+              raise SystemExit('client provisioning route missing')
+
+          if changed:
+              path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit patched Admin source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Admin source already stabilized.'
+            exit 0
+          fi
+          git config user.name 'cv-coach-autopilot'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'fix(admin): use public client URL and secure publish function'
+          git push origin HEAD:main
