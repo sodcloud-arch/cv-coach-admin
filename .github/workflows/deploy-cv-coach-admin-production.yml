@@ -1,4 +1,5 @@
 name: CV Coach Admin Production Deploy
+# Deployment contract verified for Advanced Reports V1 on 2026-09-09.
 
 on:
   push:
