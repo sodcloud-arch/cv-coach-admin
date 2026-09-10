@@ -1,0 +1,69 @@
+name: Install Client Training History V1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-client-training-history-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic training history patch
+        run: python3 scripts/install-client-training-history-v1.py
+
+      - name: Validate inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import pathlib,re
+          text=pathlib.Path('client-portal/index.html').read_text()
+          scripts=[x for x in re.findall(r'<script(?:\s+[^>]*)?>(.*?)</script>',text,flags=re.S|re.I) if x.strip()]
+          if not scripts: raise SystemExit('No inline script found')
+          pathlib.Path('/tmp/cv-client-history-inline.js').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/cv-client-history-inline.js
+
+      - name: Validate history contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('client-portal/index.html').read_text()
+          required=['cv-training-history-v1-css',"sb.rpc('get_client_training_history',{p_limit:20})",'trainingHistory:history.error','HISTORIAL DE ENTRENAMIENTOS','RÉCORDS PERSONALES','Mejor carga real','Máximo de reps','No se estima 1RM','kg·reps','PROGRESO VISUAL']
+          missing=[x for x in required if x not in text]
+          if missing: raise SystemExit('Missing training history contract markers: '+', '.join(missing))
+          start=text.index('function cvTrainingHistory')
+          end=text.index('async function loadProgressPhotos',start)
+          block=text[start:end]
+          if 'best_weight_kg' not in block or 'max_reps' not in block:
+            raise SystemExit('Persisted record fields are not rendered')
+          if 'estimated_1rm' in block.lower() or 'e1rm' in block.lower():
+            raise SystemExit('Training History V1 must not invent estimated 1RM')
+          if 'esc(s.pain_notes)' not in block or 'esc(s.session_notes)' not in block:
+            raise SystemExit('Session notes must be escaped')
+          PY
+          git diff --check
+
+      - name: Commit validated history and remove installer
+        run: |
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/install-client-training-history-v1.py .github/workflows/install-client-training-history-v1.yml
+          git add client-portal/index.html
+          git commit -m "feat(client): add training history and personal records v1"
+          git push origin HEAD:main
+
+      - name: Dispatch canonical client production deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-cv-coach-client-production.yml --ref main
