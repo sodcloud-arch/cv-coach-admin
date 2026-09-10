@@ -1,0 +1,79 @@
+name: Install Admin Reports Weekly Recovery V1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-admin-reports-weekly-recovery-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic weekly recovery reports patch
+        run: python3 scripts/install-admin-reports-weekly-recovery-v1.py
+
+      - name: Validate inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import pathlib,re
+          text=pathlib.Path('index.html').read_text()
+          scripts=re.findall(r'<script>(.*?)</script>',text,flags=re.S|re.I)
+          if not scripts: raise SystemExit('No inline script found')
+          pathlib.Path('/tmp/cv-admin-weekly-reports.js').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/cv-admin-weekly-reports.js
+
+      - name: Validate read-only weekly reports contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('index.html').read_text()
+          required=[
+            "reportOptional('weekly_checkins'",
+            "weekSrc=src('weekly_checkins')",
+            "reportSection('Recuperación semanal'",
+            'Check-ins del periodo',
+            'Molestia semanal:',
+            'Comentario semanal:',
+            "'Check-ins semanales: '+weekly.length",
+          ]
+          missing=[x for x in required if x not in text]
+          if missing: raise SystemExit('Missing weekly reports markers: '+', '.join(missing))
+          start=text.index('function reports(){')
+          end=text.index('function retentionMoney',start)
+          block=text[start:end]
+          forbidden=["method:'POST'",'method:"POST"',"method:'PATCH'",'method:"PATCH"',"method:'DELETE'",'method:"DELETE"','/functions/v1/','service_role','OPENAI_API_KEY']
+          found=[x for x in forbidden if x in block]
+          if found: raise SystemExit('Reports must remain read-only: '+', '.join(found))
+          if 'esc(latestWeekly.pain_notes)' not in block or 'esc(latestWeekly.notes)' not in block:
+              raise SystemExit('Weekly report notes must be escaped')
+          if 'weekly=weekSrc.rows.filter(x=>within' not in block:
+              raise SystemExit('Weekly check-ins must respect selected report period')
+          PY
+          git diff --check
+
+      - name: Commit validated weekly reports and clean transient files
+        run: |
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/install-admin-reports-weekly-recovery-v1.py .github/workflows/install-admin-reports-weekly-recovery-v1.yml
+          git rm -f .github/workflows/inspect-reports-temp.yml
+          git add index.html
+          git commit -m "feat(admin): add weekly recovery to advanced reports"
+          git push origin HEAD:main
+
+      - name: Dispatch canonical Admin production deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-cv-coach-admin-production.yml --ref main
