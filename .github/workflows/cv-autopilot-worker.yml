@@ -90,7 +90,11 @@ jobs:
         run: bash scripts/autopilot-self-review.sh
 
   resume-after-human-blocker:
-    if: github.event_name == 'issues' && github.event.action == 'closed' && startsWith(github.event.issue.title, '🔴 CV Coach Autopilot —')
+    if: >-
+      github.event_name == 'issues' &&
+      github.event.action == 'closed' &&
+      github.actor != 'github-actions[bot]' &&
+      startsWith(github.event.issue.title, '🔴 CV Coach Autopilot —')
     permissions:
       contents: write
       actions: write
