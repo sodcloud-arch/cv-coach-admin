@@ -377,6 +377,10 @@ body.cvFastWorkout .nav button{font-size:9.5px!important}
 <style id="cv-achievements-v1-css">
 .achievementSummary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:14px}.achievementSummary .stat{min-height:88px}.achievementGrid{display:grid;gap:12px}.achievementCard{padding:16px;border-left:3px solid #39454c}.achievementCard.unlocked{border-left-color:#58e2a3}.achievementCard.neutralRarity{border-left-color:#39454c}.achievementCard h3{font-size:24px;margin:7px 0 5px}.achievementMeta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.achievementTag{display:inline-flex;padding:4px 7px;border:1px solid #39454c;border-radius:999px;color:#b9c3c8;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.05em}.achievementCard p{margin:0;color:#b8c1c6;font-size:11px;line-height:1.5}.achievementReward{margin-top:11px;color:#dce2e5;font-size:10px;font-weight:800}.achievementDate{margin-top:8px;color:#8f9ba2;font-size:9px}.achievementWarning{margin-top:12px;padding:10px 12px;border:1px solid rgba(255,193,118,.35);border-radius:11px;background:rgba(105,61,16,.16);color:#ffc176;font-size:11px;line-height:1.4}.achievementLoading{color:#8f9ba2;font-size:11px}@media(max-width:390px){.achievementSummary{grid-template-columns:repeat(2,minmax(0,1fr))}.achievementSummary .stat{min-height:76px;padding:10px}.achievementSummary .stat .v{font-size:25px}}
 </style>
+<style id="cv-client-activation-setup-v1-css">
+#setupPasswordForm{display:grid;gap:2px}.setupStatus{min-height:20px;margin-top:10px;color:#aeb8be;font-size:11px;line-height:1.45}.setupStatus.error{color:#ff8d99}.setupStatus.success{color:#82edb5}.setupRecoveryError{padding:12px;border:1px solid rgba(255,45,63,.38);border-radius:12px;background:rgba(225,29,46,.08);color:#ffb0b8;font-size:12px;line-height:1.5}.setupIntro{margin:8px 0 14px}.setupActions{margin-top:14px}.setupActions:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+@media(max-width:390px){#setupPasswordForm .btn{min-height:50px;font-size:10px}.setupRecoveryError{font-size:11px}}
+</style>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="./icon.svg">
 <meta name="mobile-web-app-capable" content="yes">
@@ -466,6 +470,9 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const today=()=>new Date().toISOString().slice(0,10);
 let mode='demo',user=null,view='home',data=null,workout=null,timerHandle=null;
+const setupMode=new URLSearchParams(location.search).get('setup')==='1';
+let setupInProgress=false,setupSession=null;
+const setupInvalidMessage='El enlace de activación no es válido o expiró. Pide un nuevo enlace a tu coach.';
 const achievementState={catalog:[],snapshots:[],catalogLoaded:false,snapshotsLoaded:false,catalogError:'',snapshotsError:'',request:null};
 const achievementLabels={rarity:{common:'común',rare:'raro',epic:'épico',legendary:'legendario'},category:{training:'entrenamiento',missions:'misiones',progress:'progreso'}};
 const demo={
@@ -496,7 +503,11 @@ sessions:[],weeklyCheckins:[],weeklyCheckinsError:'',trainingHistory:{summary:{w
 };
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.add('hidden'),2600)}
-function setLogged(){ $('#login').classList.add('hidden');$('#app').classList.remove('hidden');$('#modeBadge').innerHTML=mode==='demo'?'<span class="demoBadge">DEMO</span>':'';render() }
+function setupShowInvalid(){if(!setupMode||setupInProgress)return;const glass=$('#login .glass');if(!glass)return;glass.innerHTML='<div class="ey">ACTIVACIÓN DE CUENTA</div><h2 style="font-size:30px;margin:7px 0 10px">ENLACE NO DISPONIBLE</h2><div class="setupRecoveryError" role="alert">'+setupInvalidMessage+'</div>'}
+function setupShowForm(session){if(!setupMode||setupInProgress||!session?.user?.id)return;setupSession=session;const glass=$('#login .glass');if(!glass)return;glass.innerHTML='<div class="ey">ACTIVACIÓN PREMIUM</div><h2 style="font-size:38px;line-height:.95;margin:7px 0 8px">ACTIVA TU CUENTA</h2><p class="sub setupIntro">Crea una contraseña segura para continuar con tu proceso en CV Coach.</p><form id="setupPasswordForm"><label for="setupPassword">Nueva contraseña</label><input id="setupPassword" class="input" type="password" autocomplete="new-password" required><label for="setupPasswordRepeat">Repetir contraseña</label><input id="setupPasswordRepeat" class="input" type="password" autocomplete="new-password" required><div id="setupStatus" class="setupStatus" role="status" aria-live="polite"></div><button id="setupPasswordButton" class="btn primary full setupActions" type="submit">GUARDAR CONTRASEÑA Y CONTINUAR</button></form>';const first=$('#setupPassword');first?.focus();$('#setupPasswordForm').onsubmit=setupSubmit}
+function setupStatus(message,error=false){const el=$('#setupStatus');if(el){el.textContent=message;el.className='setupStatus'+(error?' error':'')}}
+async function setupSubmit(event){event.preventDefault();if(setupInProgress||!setupMode)return;const first=$('#setupPassword')?.value||'',repeat=$('#setupPasswordRepeat')?.value||'',button=$('#setupPasswordButton');if(first.length<8)return setupStatus('La contraseña debe tener al menos 8 caracteres.',true);if(first!==repeat)return setupStatus('Las contraseñas no coinciden.',true);setupInProgress=true;if(button){button.disabled=true;button.textContent='GUARDANDO…'}setupStatus('Guardando contraseña…');try{const result=await sb.auth.updateUser({password:first,data:{must_set_password:false}});if(result.error||!result.data?.user?.id)throw new Error('No se pudo confirmar la contraseña.');const current=await sb.auth.getSession(),session=current.data?.session,confirmed=session?.user;if(!session?.access_token||!confirmed?.id||confirmed.id!==result.data.user.id)throw new Error('No se pudo confirmar la sesión.');user=confirmed;mode='real';history.replaceState(null,'',location.origin+location.pathname);try{await loadReal()}catch(_){setupInProgress=false;if(button){button.disabled=false;button.textContent='REINTENTAR CARGA'}setupStatus('La contraseña se guardó, pero no pudimos cargar tu portal. Puedes reintentar la carga sin volver a crear la contraseña.',true);return}setupMode=false;setupSession=null;setLogged()}catch(_){setupInProgress=false;setupStatus('No se pudo guardar la contraseña. Inténtalo nuevamente.',true);if(button){button.disabled=false;button.textContent='GUARDAR CONTRASEÑA Y CONTINUAR'}}}
+function setLogged(){if(setupMode&&!setupInProgress)return;$('#login').classList.add('hidden');$('#app').classList.remove('hidden');$('#modeBadge').innerHTML=mode==='demo'?'<span class="demoBadge">DEMO</span>':'';render()}
 
 async function loadReal(){
  const id=user.id;
@@ -641,7 +652,7 @@ $('#demoBtn').onclick=()=>{mode='demo';data=demo;setLogged()};
 $('#loginBtn').onclick=async()=>{const b=$('#loginBtn');b.disabled=true;b.textContent='INGRESANDO…';$('#loginStatus').textContent='';try{const {data:r,error}=await sb.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});if(error)throw error;user=r.user;mode='real';await loadReal();setLogged()}catch(e){$('#loginStatus').textContent=e.message||'No se pudo ingresar.'}finally{b.disabled=false;b.textContent='INGRESAR'}};
 $('#password').addEventListener('keydown',e=>{if(e.key==='Enter')$('#loginBtn').click()});
 $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await sb.auth.signOut();location.reload()};
-(async()=>{const s=await sb.auth.getSession();if(s.data.session){try{user=s.data.session.user;mode='real';await loadReal();setLogged()}catch(e){await sb.auth.signOut()}}})();
+(async()=>{const s=await sb.auth.getSession();if(setupMode){if(s.data?.session?.user?.id)setupShowForm(s.data.session);else setupShowInvalid();return}if(s.data.session){try{user=s.data.session.user;mode='real';await loadReal();setLogged()}catch(e){await sb.auth.signOut()}}})();
 </script>
 <script id='cv-hevy-v1-js'>(function(){
   const CV_BASE='https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/';
@@ -964,7 +975,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   window.openNotifications=function(){view='notifications';document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));render();refreshNotifications()};
   const baseRender=window.render;window.render=function(){const result=baseRender.apply(this,arguments);if(view==='notifications'){const c=document.getElementById('content');if(c){c.innerHTML=notificationShell();document.getElementById('cvMarkAll').onclick=markAllNotifications;renderNotificationList()}}else if(view==='home'&&mode==='real'){refreshNotifications()}return result};
   const baseSetLogged=window.setLogged;window.setLogged=function(){const result=baseSetLogged.apply(this,arguments);refreshNotifications();return result};
-  sb.auth.onAuthStateChange((event,session)=>{if(session?.user?.id){user=session.user;mode='real';if(event==='SIGNED_IN'||event==='INITIAL_SESSION')refreshNotifications();if(event==='TOKEN_REFRESHED'){refreshNotifications();Promise.allSettled([loadReal(),loadAchievements()]).then(results=>{const failure=results.find(r=>r.status==='rejected');if(failure)console.warn('Portal refresh failed',failure.reason);if(view!=='workout')render()})}}});
+  sb.auth.onAuthStateChange((event,session)=>{if(setupMode){if(session?.user?.id){user=session.user;mode='real';if(!setupInProgress&&!$('#setupPassword'))setupShowForm(session)}else if(!setupInProgress&&(event==='INITIAL_SESSION'||event==='SIGNED_OUT'))setupShowInvalid();return}if(session?.user?.id){user=session.user;mode='real';if(event==='SIGNED_IN'||event==='INITIAL_SESSION')refreshNotifications();if(event==='TOKEN_REFRESHED'){refreshNotifications();Promise.allSettled([loadReal(),loadAchievements()]).then(results=>{const failure=results.find(r=>r.status==='rejected');if(failure)console.warn('Portal refresh failed',failure.reason);if(view!=='workout')render()})}}});
   updateNotificationBadge();
 })();
 </script></body></html>
