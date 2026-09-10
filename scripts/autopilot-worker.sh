@@ -34,7 +34,16 @@ resolve_blocker_if_requested() {
     --arg blocker_id "${RESOLVE_BLOCKER_ID}" \
     --arg note "${RESOLUTION_NOTE:-Resolved from GitHub issue close}" \
     '{op:"resolve_blocker", blocker_id:$blocker_id, resolution_note:$note}')"
-  response="$(call_edge "${token}" "${payload}")"
+
+  # GitHub can retain an old blocker Issue after the backend already resolved it.
+  # Treat that resume signal as idempotent: a rejected/already-resolved resolution
+  # must not abort the worker before it gets a chance to tick the current queue.
+  if ! response="$(call_edge "${token}" "${payload}" 2>&1)"; then
+    echo "Autopilot blocker resolution: non-fatal stale/already-resolved signal (${RESOLVE_BLOCKER_ID})."
+    echo "Gateway response: ${response}" >&2
+    return 0
+  fi
+
   echo "Autopilot blocker resolution: ${response}"
 }
 
