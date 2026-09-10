@@ -51,6 +51,6 @@ jobs:
           git config user.name 'CV Coach Release Bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html scripts/validate-repo-contracts.py
-          git rm scripts/patch_ai_generation_comparison_v1.py .github/workflows/oneshot-ai-generation-comparison-v1.yml
+          git rm -f scripts/patch_ai_generation_comparison_v1.py .github/workflows/oneshot-ai-generation-comparison-v1.yml
           git commit -m 'feat(admin): compare AI routine before and after generation'
           git push origin HEAD:main
