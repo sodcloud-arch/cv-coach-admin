@@ -1,0 +1,69 @@
+name: Install Reports Workout Feedback V1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-reports-workout-feedback-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic Reports feedback patch
+        run: python3 scripts/install-reports-workout-feedback-v1.py
+
+      - name: Validate inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import pathlib,re
+          text=pathlib.Path('index.html').read_text()
+          scripts=[x for x in re.findall(r'<script(?:\s+[^>]*)?>(.*?)</script>',text,flags=re.S|re.I) if x.strip()]
+          if not scripts: raise SystemExit('No inline script found')
+          pathlib.Path('/tmp/cv-admin-reports-feedback-inline.js').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/cv-admin-reports-feedback-inline.js
+
+      - name: Validate report feedback contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('index.html').read_text()
+          required=['Feedback post-entrenamiento','Sesiones con feedback','RPE promedio','Fatiga promedio','Dolor máximo','feedbackSessions=','effortFeedback=','fatigueFeedback=','painFeedback=']
+          missing=[x for x in required if x not in text]
+          if missing: raise SystemExit('Missing report feedback markers: '+', '.join(missing))
+          start=text.index('async function reports()')
+          end=text.index('function subscriptionBlockHtml',start)
+          block=text[start:end]
+          if 'client_effort,fatigue_score,pain_score,pain_notes,session_notes' not in block:
+            raise SystemExit('Workout feedback fields not selected by reports')
+          if 'esc(lastFeedback.pain_notes)' not in block or 'esc(lastFeedback.session_notes)' not in block:
+            raise SystemExit('Report feedback notes must be escaped')
+          if 'Math.max(...painFeedback)' not in block:
+            raise SystemExit('Pain metric must be descriptive maximum, not inferred score')
+          PY
+          git diff --check
+
+      - name: Commit validated report feedback and remove installer
+        run: |
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/install-reports-workout-feedback-v1.py .github/workflows/install-reports-workout-feedback-v1.yml
+          git add index.html
+          git commit -m "feat(admin): add workout feedback metrics to reports"
+          git push origin HEAD:main
+
+      - name: Dispatch canonical Admin production deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-cv-coach-admin-production.yml --ref main
