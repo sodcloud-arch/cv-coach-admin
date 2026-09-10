@@ -1,0 +1,31 @@
+name: Inspect Reports Temp
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-reports-temp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print reports block
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('index.html').read_text()
+          starts=[text.find('async function reports(){'),text.find('function reports(){')]
+          start=max(starts)
+          if start<0: raise SystemExit('reports function not found')
+          candidates=[text.find('async function retention(){',start),text.find('function retention(){',start),text.find('function communicationStatusPill',start)]
+          candidates=[x for x in candidates if x>start]
+          end=min(candidates) if candidates else min(len(text),start+30000)
+          print('REPORT_BLOCK_START')
+          print(text[start:end])
+          print('REPORT_BLOCK_END')
+          PY
