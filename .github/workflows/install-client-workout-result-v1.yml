@@ -1,0 +1,75 @@
+name: Install Client Workout Result V1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-client-workout-result-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic client patch
+        run: python3 scripts/install-client-workout-result-v1.py
+
+      - name: Validate inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import pathlib,re
+          text=pathlib.Path('client-portal/index.html').read_text()
+          scripts=re.findall(r'<script[^>]*>(.*?)</script>',text,flags=re.S|re.I)
+          inline=[s for s in scripts if s.strip()]
+          if not inline: raise SystemExit('No inline script found')
+          pathlib.Path('/tmp/cv-client-workout-result.js').write_text('\n'.join(inline))
+          PY
+          node --check /tmp/cv-client-workout-result.js
+
+      - name: Validate workout completion contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('client-portal/index.html').read_text()
+          required=[
+            'id="cv-workout-result-v1"',
+            'function cvShowWorkoutResult(result)',
+            'ENTRENAMIENTO COMPLETADO',
+            'SESIÓN PARCIAL GUARDADA',
+            'SESIÓN CERRADA',
+            'completion_pct','total_volume','xp_earned','credits_earned',
+            'missions_completed','achievements_unlocked','level_up',
+            "sb.functions.invoke('complete-workout'",
+            'cvShowWorkoutResult(r||{})'
+          ]
+          missing=[x for x in required if x not in text]
+          if missing: raise SystemExit('Missing completion contract markers: '+', '.join(missing))
+          if "toast('Entrenamiento completado')" in text:
+            raise SystemExit('Legacy unconditional completion toast still present')
+          if text.count("sb.functions.invoke('complete-workout'") != 1:
+            raise SystemExit('Expected exactly one complete-workout invocation')
+          PY
+          git diff --check
+
+      - name: Commit validated client result summary and remove installer
+        run: |
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/install-client-workout-result-v1.py .github/workflows/install-client-workout-result-v1.yml
+          git add client-portal/index.html
+          git commit -m "feat(client): show workout completion progress summary"
+          git push origin HEAD:main
+
+      - name: Dispatch canonical client production deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-cv-coach-client-production.yml --ref main
