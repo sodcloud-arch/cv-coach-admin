@@ -1,0 +1,85 @@
+name: Install Admin Weekly Recovery V1 Final
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-admin-weekly-recovery-v1-final.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Repair transient installer string terminator
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/install-admin-weekly-recovery-v1.py')
+          text=p.read_text()
+          marker="\nreplace_once('async function clientDetail(id){'"
+          idx=text.index(marker)
+          prefix=text[:idx]
+          if not prefix.endswith('"'):
+              raise SystemExit('Installer helper terminator anchor not found')
+          prefix=prefix[:-1]+'"""'
+          p.write_text(prefix+text[idx:])
+          PY
+          python3 -m py_compile scripts/install-admin-weekly-recovery-v1.py
+
+      - name: Apply deterministic weekly recovery patch
+        run: python3 scripts/install-admin-weekly-recovery-v1.py
+
+      - name: Validate inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import pathlib,re
+          text=pathlib.Path('index.html').read_text()
+          scripts=re.findall(r'<script>(.*?)</script>',text,flags=re.S|re.I)
+          if not scripts: raise SystemExit('No inline script found')
+          pathlib.Path('/tmp/cv-admin-weekly-recovery.js').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/cv-admin-weekly-recovery.js
+
+      - name: Validate read-only weekly recovery contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('index.html').read_text()
+          required=['function weeklyRecoveryHtml(rows)',"table('weekly_checkins'",'Recuperación semanal','Workouts · 7d','Hábitos · 7d','Nutrición · 7d','weeklyRecoveryHtml(weeklyCheckins)']
+          missing=[x for x in required if x not in text]
+          if missing: raise SystemExit('Missing weekly recovery markers: '+', '.join(missing))
+          start=text.index('function weeklyRecoveryValue')
+          end=text.index('async function clientDetail(id)',start)
+          block=text[start:end]
+          forbidden=["method:'POST'",'method:"POST"',"method:'PATCH'",'method:"PATCH"',"method:'DELETE'",'method:"DELETE"','/functions/v1/','service_role','OPENAI_API_KEY']
+          found=[x for x in forbidden if x in block]
+          if found: raise SystemExit('Weekly recovery Ficha renderer must remain read-only: '+', '.join(found))
+          if 'esc(c.pain_notes)' not in block or 'esc(c.notes)' not in block:
+              raise SystemExit('Weekly recovery free-text fields must be escaped')
+          PY
+          git diff --check
+
+      - name: Commit validated Admin weekly recovery and clean installers
+        run: |
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -f scripts/install-admin-weekly-recovery-v1.py
+          git rm -f .github/workflows/install-admin-weekly-recovery-v1.yml .github/workflows/install-admin-weekly-recovery-v1-final.yml
+          git add index.html
+          git commit -m "feat(admin): show weekly recovery in Ficha 360"
+          git push origin HEAD:main
+
+      - name: Dispatch canonical Admin production deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-cv-coach-admin-production.yml --ref main
