@@ -1,0 +1,92 @@
+name: CV Coach Prescription Units Patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/oneshot-prescription-units-run.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cv-coach-prescription-units-patch
+  cancel-in-progress: false
+
+jobs:
+  patch-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply patch
+        run: python scripts/patch_prescription_units_v1.py
+
+      - name: Validate source markers
+        run: |
+          set -euo pipefail
+          grep -q 'prescription_unit' supabase/functions/generate-ai-program/index.ts
+          grep -q 'Segundos' index.html
+          grep -q 'suggested_duration_seconds' client-portal/index.html
+          grep -q 'duration_seconds' client-portal/index.html
+
+      - name: Commit canonical changes and remove temporary files
+        run: |
+          set -euo pipefail
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html client-portal/index.html supabase/functions/generate-ai-program/index.ts
+          git rm scripts/patch_prescription_units_v1.py .github/workflows/oneshot-prescription-units-run.yml
+          git commit -m 'feat: support rep and time based prescriptions'
+          git push origin HEAD:main
+
+      - name: Deploy AI generator when Supabase credential exists
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+            echo 'SUPABASE_ACCESS_TOKEN_NOT_CONFIGURED'
+            exit 0
+          fi
+          npx --yes supabase@latest functions deploy generate-ai-program --project-ref fmhcansyxcsqkrivqchr
+
+      - name: Deploy Admin production
+        run: |
+          set -euo pipefail
+          test -n "${VERCEL_TOKEN:-}"
+          rm -rf .vercel
+          mkdir -p .vercel
+          printf '{"orgId":"team_pD5aAwrw2qpbPgoEarWhxcKF","projectId":"prj_fkeoRxjDY3ZDQlIadS1EaIowFi87"}\n' > .vercel/project.json
+          npx --yes vercel@59.13.1 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@59.13.1 build --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@59.13.1 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+      - name: Deploy Client production
+        run: |
+          set -euo pipefail
+          python client-portal/stabilize.py
+          cd client-portal/stable
+          rm -rf .vercel
+          mkdir -p .vercel
+          printf '{"orgId":"team_pD5aAwrw2qpbPgoEarWhxcKF","projectId":"prj_PmFZQqN9tVEAUgKH8ekcnOoSgNOL"}\n' > .vercel/project.json
+          npx --yes vercel@59.13.1 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@59.13.1 build --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@59.13.1 deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+      - name: Verify public surfaces
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6 7 8; do
+            admin="$(curl -fsSL --max-time 20 https://cv-coach-admin.vercel.app || true)"
+            client="$(curl -fsSL --max-time 20 https://cv-coach-roan.vercel.app || true)"
+            if [[ "$admin" == *'Segundos'* && "$client" == *'suggested_duration_seconds'* && "$client" == *'duration_seconds'* ]]; then
+              echo 'PUBLIC_PRESCRIPTION_UNITS_V1_OK'
+              exit 0
+            fi
+            sleep 3
+          done
+          echo 'Public prescription unit verification failed' >&2
+          exit 1
