@@ -20,8 +20,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Apply comparison patch
-        run: python scripts/patch_ai_generation_comparison_v1.py
+      - name: Correct patch anchor and apply comparison patch
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/patch_ai_generation_comparison_v1.py')
+          t=p.read_text(encoding='utf-8')
+          old="+aiReviewExplanations(generation)+'</div>'"
+          new="+aiReviewExplanations(generation.explanations)+'</div>'"
+          if old not in t:
+              raise SystemExit('temporary patch anchor not found')
+          p.write_text(t.replace(old,new,1),encoding='utf-8')
+          PY
+          python scripts/patch_ai_generation_comparison_v1.py
 
       - name: Validate comparison contracts
         run: |
