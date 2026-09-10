@@ -478,7 +478,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const today=()=>new Date().toISOString().slice(0,10);
 let mode='demo',user=null,view='home',data=null,workout=null,timerHandle=null;
-const setupMode=new URLSearchParams(location.search).get('setup')==='1';
+let setupMode=new URLSearchParams(location.search).get('setup')==='1';
 let setupInProgress=setupMode,setupSession=null,setupPasswordSaved=false,setupRecoverySignal=new URLSearchParams(location.search).get('type')==='recovery';
 try{if(!setupRecoverySignal&&location.hash){setupRecoverySignal=new URLSearchParams(location.hash.replace(/^#/,'')).get('type')==='recovery'}}catch(_){ }
 function setupAuthorized(session){const u=session?.user;if(!session?.access_token||!u?.id)return false;return u.user_metadata?.must_set_password===true||((u.user_metadata?.must_set_password!==true)&&setupRecoverySignal)}
