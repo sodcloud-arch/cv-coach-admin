@@ -1,0 +1,24 @@
+from pathlib import Path
+
+path=Path('index.html')
+text=path.read_text()
+
+def replace_once(old,new,label):
+    global text
+    count=text.count(old)
+    if count!=1:
+        raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+    text=text.replace(old,new,1)
+
+helper="""function weeklyRecoveryValue(v,suffix=''){return v==null||v===''?'—':esc(v)+suffix}function weeklyRecoveryHtml(rows){let c=Array.isArray(rows)&&rows.length?rows[0]:null;if(!c)return '<section style=\"margin:18px 0\"><div class=\"row\"><h2 class=\"grow\">Recuperación semanal</h2><span class=\"muted\">Solo lectura</span></div><div class=\"card muted\">El alumno aún no ha enviado un check-in semanal.</div></section>';let pain=Number(c.pain_score),stress=Number(c.stress_level),energy=Number(c.energy_level),soreness=Number(c.soreness_score),sleep=Number(c.sleep_hours_avg),cls=Number.isFinite(pain)&&pain>=7?'red':Number.isFinite(pain)&&pain>=4?'warn':((Number.isFinite(sleep)&&sleep<5&&Number.isFinite(energy)&&energy<=2)||(Number.isFinite(stress)&&stress>=5&&Number.isFinite(energy)&&energy<=2)||(Number.isFinite(soreness)&&soreness>=8&&Number.isFinite(energy)&&energy<=2))?'warn':'green',label=cls==='red'?'REVISIÓN PRIORITARIA':cls==='warn'?'REVISAR RECUPERACIÓN':'ESTABLE',week=c.week_start?String(c.week_start):'—',submitted=c.submitted_at?new Date(c.submitted_at).toLocaleString('es-CL'):'—',habitPct=c.habit_completion_pct_7d==null?'—':Number(c.habit_completion_pct_7d).toFixed(1)+'%',nutritionPct=c.nutrition_adherence_pct_7d==null?'—':Number(c.nutrition_adherence_pct_7d).toFixed(1)+'%';return '<section style=\"margin:18px 0\"><div class=\"row\"><h2 class=\"grow\">Recuperación semanal</h2><span class=\"pill '+cls+'\">'+esc(label)+'</span></div><div class=\"card\"><div class=\"muted\">Semana: '+esc(week)+' · Enviado: '+esc(submitted)+'</div><div class=\"metrics\"><div class=\"metric\"><span>Sueño promedio</span><b>'+weeklyRecoveryValue(c.sleep_hours_avg,' h')+'</b></div><div class=\"metric\"><span>Calidad sueño</span><b>'+weeklyRecoveryValue(c.sleep_quality,' / 5')+'</b></div><div class=\"metric\"><span>Energía</span><b>'+weeklyRecoveryValue(c.energy_level,' / 5')+'</b></div><div class=\"metric\"><span>Estrés</span><b>'+weeklyRecoveryValue(c.stress_level,' / 5')+'</b></div><div class=\"metric\"><span>Rigidez</span><b>'+weeklyRecoveryValue(c.soreness_score,' / 10')+'</b></div><div class=\"metric\"><span>Dolor</span><b>'+weeklyRecoveryValue(c.pain_score,' / 10')+'</b></div><div class=\"metric\"><span>Motivación</span><b>'+weeklyRecoveryValue(c.motivation_level,' / 5')+'</b></div><div class=\"metric\"><span>Días disponibles</span><b>'+weeklyRecoveryValue(c.available_days_next_week,' / 7')+'</b></div></div><div class=\"metrics nutritionMetrics\"><div class=\"metric\"><span>Workouts · 7d</span><b>'+weeklyRecoveryValue(c.workouts_completed_7d)+'</b></div><div class=\"metric\"><span>Hábitos · 7d</span><b>'+esc(habitPct)+'</b><div class=\"muted\">'+weeklyRecoveryValue(c.habit_logs_7d)+' registros</div></div><div class=\"metric\"><span>Nutrición · 7d</span><b>'+esc(nutritionPct)+'</b><div class=\"muted\">'+weeklyRecoveryValue(c.nutrition_days_7d)+' días</div></div><div class=\"metric\"><span>Último workout</span><b style=\"font-size:12px\">'+esc(c.last_workout_at?new Date(c.last_workout_at).toLocaleDateString('es-CL'):'—')+'</b></div></div>'+(c.pain_notes?'<div class=\"muted\" style=\"margin-top:10px\"><b>Molestia:</b> '+esc(c.pain_notes)+'</div>':'')+(c.notes?'<div class=\"muted\" style=\"margin-top:6px\"><b>Comentario:</b> '+esc(c.notes)+'</div>':'')+'</div></section>'}"
+replace_once('async function clientDetail(id){',helper+'async function clientDetail(id){','weekly helper')
+replace_once(',progress_photos,billingRows]=await Promise.all([',',progress_photos,billingRows,weeklyCheckins]=await Promise.all([','weekly destructuring')
+old_tail="table('subscription_billing_records','client_id=eq.'+encodeURIComponent(id)+'&select=*&order=due_at.desc,created_at.desc&limit=5').catch(()=>[]) ])"
+new_tail="table('subscription_billing_records','client_id=eq.'+encodeURIComponent(id)+'&select=*&order=due_at.desc,created_at.desc&limit=5').catch(()=>[]),table('weekly_checkins','client_id=eq.'+encodeURIComponent(id)+'&select=*&order=week_start.desc&limit=8').catch(()=>[]) ])"
+replace_once(old_tail,new_tail,'weekly query')
+replace_once('${measurementHtml(measurements,id)}${progressPhotosHtml}','${measurementHtml(measurements,id)}${weeklyRecoveryHtml(weeklyCheckins)}${progressPhotosHtml}','weekly ficha placement')
+
+required=['function weeklyRecoveryHtml(rows)','weeklyCheckins]=await Promise.all','weekly_checkins','Recuperación semanal','Workouts · 7d','Hábitos · 7d','Nutrición · 7d','weeklyRecoveryHtml(weeklyCheckins)']
+missing=[x for x in required if x not in text]
+if missing: raise SystemExit('Missing admin weekly recovery markers: '+', '.join(missing))
+path.write_text(text)
