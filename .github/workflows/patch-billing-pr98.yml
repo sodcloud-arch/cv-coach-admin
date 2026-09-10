@@ -28,9 +28,9 @@ jobs:
           p=Path('index.html')
           s=p.read_text()
           replacements=[
-            ("'<tbody>'+records.map(", "'<tbody>'+(records.map("),
+            ("<tbody>'+records.map(", "<tbody>'+(records.map("),
             ("}).join('')||'<tr><td colspan=\"9\" class=\"muted\">No hay cobros registrados.</td></tr>'+'</tbody>", "}).join('')||'<tr><td colspan=\"9\" class=\"muted\">No hay cobros registrados.</td></tr>')+'</tbody>"),
-            ("'<div class=\"stack\">'+visibleSubs.map(", "'<div class=\"stack\">'+(visibleSubs.map("),
+            ("<div class=\"stack\">'+visibleSubs.map(", "<div class=\"stack\">'+(visibleSubs.map("),
             ("}).join('')||'<div class=\"card muted\">No hay suscripciones visibles para crear cobros.</div>'+'</div>';if(!records.length)", "}).join('')||'<div class=\"card muted\">No hay suscripciones visibles para crear cobros.</div>')+'</div>';if(!records.length)"),
             ("if(!id)throw Error('El backend no confirmó el cobro con un id válido.');", "if(typeof id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))throw Error('El backend no confirmó el cobro con un id válido.');"),
             ("msg.toLowerCase().includes('duplicate')||msg.toLowerCase().includes('unique')?'Ya existe un cobro para esa suscripción y fecha.'", "msg.toLowerCase().includes('duplicate')||msg.toLowerCase().includes('unique')||msg.toLowerCase().includes('already exists')?'Ya existe un cobro para esa suscripción y fecha.'")
@@ -46,12 +46,16 @@ jobs:
             "function billingDateInput(v)",
             "v==='pending'?(localDue&&localDue<=chileToday()?'warn':'blue'):''",
             "billingRows.slice(0,5)",
+            "typeof id!=='string'||!/^[0-9a-f]{8}"
           ]
           for marker in required:
             if marker not in s:
               raise SystemExit('Missing required billing marker: '+marker)
-          if "/rest/v1/subscription_billing_records'" in s and "method:'POST'" in s[s.find("/rest/v1/subscription_billing_records'"):s.find("/rest/v1/subscription_billing_records'")+300]:
-            raise SystemExit('Direct billing POST detected')
+          billing_start=s.index('async function billing(){')
+          billing_end=s.index('async function plansSubscriptions(){',billing_start)
+          billing_block=s[billing_start:billing_end]
+          if "'/rest/v1/subscription_billing_records'" in billing_block and ("method:'POST'" in billing_block or "method:'PATCH'" in billing_block or "method:'DELETE'" in billing_block):
+            raise SystemExit('Direct billing write detected')
           p.write_text(s)
           PY
 
