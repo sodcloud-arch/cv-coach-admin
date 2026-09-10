@@ -26,6 +26,7 @@ client_build = read("client-portal/stabilize.py")
 admin_deploy = read(".github/workflows/deploy-cv-coach-admin-production.yml")
 client_deploy = read(".github/workflows/deploy-cv-coach-client-production.yml")
 vercel = read("vercel.json")
+edge_program = read("supabase/functions/generate-ai-program/index.ts")
 
 require(admin, "client_url:'https://cv-coach-roan.vercel.app'", "public client URL")
 require(admin, "'/functions/v1/publish-program'", "secure program publication")
@@ -33,6 +34,10 @@ require(admin, "'/functions/v1/provision-client'", "client provisioning")
 require(admin, "openAiGenerationComparison", "AI generation before-after comparison")
 require(admin, "VER CAMBIOS", "AI comparison reopen action")
 require(admin, "Rutina anterior vs nueva rutina", "AI comparison summary modal")
+require(admin, "AUDITOR DE VOLUMEN SEMANAL", "deterministic weekly volume audit UI")
+require(admin, "aiVolumeAuditHtml", "volume audit renderer")
+require(edge_program, "cv-volume-audit-v1", "volume audit contract version")
+require(edge_program, "buildVolumeAudit", "deterministic volume audit builder")
 forbid(admin, "cv-coach-sodcloud-1237.vercel.app", "protected client domain")
 
 for marker in (

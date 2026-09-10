@@ -190,6 +190,155 @@ function deterministicWarnings(context: unknown): JsonObject[] {
   return warnings;
 }
 
+
+const focusMuscleMap: Record<string, string> = {
+  glutes: "glúteos",
+  quadriceps: "cuádriceps",
+  hamstrings: "isquiotibiales",
+  calves: "gemelos",
+  back: "espalda",
+  chest: "pecho",
+  shoulders: "hombros",
+  biceps: "bíceps",
+  triceps: "tríceps",
+  core: "core",
+};
+
+function normalizedAuditMuscle(value: unknown): string | null {
+  const muscle = cleanText(value, 80)?.toLowerCase() ?? null;
+  if (!muscle || muscle === "cardio" || muscle === "full body") return null;
+  if (muscle === "deltoide posterior") return "hombros";
+  return muscle;
+}
+
+function volumeBand(
+  experience: string | null,
+  muscle: string,
+  priority: boolean,
+): { min: number; max: number } | null {
+  if (!experience || !["beginner", "intermediate", "advanced"].includes(experience)) return null;
+  const small = new Set(["bíceps", "tríceps", "core", "gemelos"]).has(muscle);
+  const bands = small
+    ? {
+        beginner: priority ? [4, 10] : [2, 8],
+        intermediate: priority ? [5, 12] : [3, 10],
+        advanced: priority ? [6, 14] : [4, 12],
+      }
+    : {
+        beginner: priority ? [6, 14] : [4, 10],
+        intermediate: priority ? [8, 16] : [6, 12],
+        advanced: priority ? [10, 20] : [6, 16],
+      };
+  const [min, max] = bands[experience as keyof typeof bands];
+  return { min, max };
+}
+
+function buildVolumeAudit(
+  context: unknown,
+  plan: unknown,
+  scope: string,
+  targetDayNumber: number | null,
+): JsonObject {
+  const root = isObject(context) ? context : {};
+  const trainingContext = isObject(root.client_training_context) ? root.client_training_context : {};
+  const profile = isObject(trainingContext.profile) ? trainingContext.profile : {};
+  const preferences = isObject(trainingContext.training_preferences) ? trainingContext.training_preferences : {};
+  const currentDraft = isObject(root.current_draft) ? root.current_draft : {};
+  const generatedPlan = isObject(plan) ? plan : {};
+  const generatedDays = Array.isArray(generatedPlan.days) ? generatedPlan.days : [];
+  const currentDays = Array.isArray(currentDraft.days) ? currentDraft.days : [];
+  const weeklyDays = scope === "day" && targetDayNumber !== null
+    ? [
+        ...currentDays.filter((day) => !isObject(day) || integer(day.day_number) !== targetDayNumber),
+        ...generatedDays,
+      ]
+    : generatedDays;
+
+  const catalog = Array.isArray(root.exercise_catalog) ? root.exercise_catalog : [];
+  const muscleByExercise = new Map<string, string>();
+  for (const raw of catalog) {
+    if (!isObject(raw) || typeof raw.id !== "string") continue;
+    const muscle = normalizedAuditMuscle(raw.primary_muscle);
+    if (muscle) muscleByExercise.set(raw.id, muscle);
+  }
+
+  const focusRaw = Array.isArray(preferences.muscle_focus) ? preferences.muscle_focus : [];
+  const fullBodyFocus = focusRaw.some((value) => String(value) === "full_body");
+  const focusGroups = fullBodyFocus
+    ? []
+    : [...new Set(focusRaw.map((value) => focusMuscleMap[String(value)]).filter(Boolean))];
+  const focusSet = new Set(focusGroups);
+  const setsByMuscle = new Map<string, number>();
+  let directSetsTotal = 0;
+
+  for (const rawDay of weeklyDays) {
+    if (!isObject(rawDay) || !Array.isArray(rawDay.exercises)) continue;
+    for (const rawExercise of rawDay.exercises) {
+      if (!isObject(rawExercise) || typeof rawExercise.exercise_id !== "string") continue;
+      const muscle = muscleByExercise.get(rawExercise.exercise_id);
+      const sets = integer(rawExercise.target_sets);
+      if (!muscle || sets === null || sets < 0) continue;
+      setsByMuscle.set(muscle, (setsByMuscle.get(muscle) ?? 0) + sets);
+      directSetsTotal += sets;
+    }
+  }
+
+  const experience = cleanText(profile.experience_level, 40)?.toLowerCase() ?? null;
+  const allGroups = [...new Set([...setsByMuscle.keys(), ...focusGroups])].sort((a, b) => a.localeCompare(b, "es"));
+  let flaggedCount = 0;
+  let overallReview = !experience || !["beginner", "intermediate", "advanced"].includes(experience);
+  const muscles = allGroups.map((muscle) => {
+    const weeklySets = setsByMuscle.get(muscle) ?? 0;
+    const priority = focusSet.has(muscle);
+    const band = volumeBand(experience, muscle, priority);
+    let status = "review";
+    let note = "Nivel de experiencia no disponible; revisión manual requerida.";
+    if (band) {
+      if (weeklySets < band.min) {
+        status = "low";
+        note = priority
+          ? "Por debajo de la referencia operativa para un grupo prioritario."
+          : "Por debajo de la referencia operativa; puede ser intencional si el objetivo es mantenimiento o menor prioridad.";
+      } else if (weeklySets > band.max) {
+        status = "high";
+        note = "Por encima de la referencia operativa; revisar recuperación, redundancia y tolerancia antes de publicar.";
+      } else {
+        status = "in_range";
+        note = priority
+          ? "Dentro de la referencia operativa para un grupo prioritario."
+          : "Dentro de la referencia operativa general.";
+      }
+      if (status === "high" || (priority && status !== "in_range")) overallReview = true;
+    }
+    if (status !== "in_range") flaggedCount += 1;
+    return {
+      muscle,
+      weekly_sets: weeklySets,
+      priority,
+      range_min: band?.min ?? null,
+      range_max: band?.max ?? null,
+      status,
+      note,
+    };
+  });
+
+  return {
+    version: "cv-volume-audit-v1",
+    experience_level: experience,
+    scope,
+    full_body_focus: fullBodyFocus,
+    focus_groups: focusGroups,
+    overall_status: overallReview ? "review" : "ok",
+    flagged_count: flaggedCount,
+    direct_sets_total: directSetsTotal,
+    methodology:
+      "Cuenta series directas según el músculo primario del catálogo. No suma participación indirecta de ejercicios compuestos. Las bandas son una referencia operativa CV Coach v1 para revisión del coach, no umbrales clínicos ni una garantía de resultado.",
+    criteria:
+      "La referencia considera nivel de experiencia y eleva el rango esperado de los grupos marcados como foco muscular vigente. Dolor, recuperación, adherencia y restricciones pueden justificar valores fuera de banda.",
+    muscles,
+  };
+}
+
 const outputSchema = {
   type: "object",
   additionalProperties: false,
@@ -341,6 +490,7 @@ REGLAS OBLIGATORIAS:
 7. scope="program": devuelve una rutina completa. Usa la frecuencia declarada razonable (1-7 días); si falta, conserva la estructura existente y, si tampoco existe, usa 3 días.
 8. Máximos: 14 días, 20 ejercicios/día, 1-10 series; reps 1-100; seconds 1-600; RIR 0-10; descanso 0-900 s.
 9. Prioriza técnica, adherencia, progresión gradual y volumen razonable. Evita redundancia innecesaria.
+9A. En explanations.summary explica brevemente cómo el nivel de experiencia y muscle_focus influyeron en la distribución del volumen. No declares rangos científicos exactos: CV Coach hará una auditoría determinística independiente.
 10. Las explicaciones, advertencias y conflictos deben escribirse en español claro para el coach.
 11. Nunca publiques, apruebes ni declares seguro el programa. El coach debe revisarlo y publicarlo por separado.
 12. Devuelve únicamente la estructura JSON solicitada por el schema.`;
@@ -892,7 +1042,7 @@ Deno.serve(async (req: Request) => {
     ...(Array.isArray(generated?.warnings) ? generated.warnings : []),
   ];
   const conflicts = Array.isArray(generated?.conflicts) ? generated.conflicts : [];
-  const explanations = isObject(generated?.explanations) ? generated.explanations : {};
+  let explanations = isObject(generated?.explanations) ? generated.explanations : {};
 
   if (validationErrors.length) {
     const validationConflicts = validationErrors.map((message, index) => ({
@@ -921,6 +1071,11 @@ Deno.serve(async (req: Request) => {
       422,
     );
   }
+
+  explanations = {
+    ...explanations,
+    volume_audit: buildVolumeAudit(modelContext, generated.plan, scope, targetDayNumber),
+  };
 
   await patchGeneration(supabaseUrl, serviceKey, generationId, {
     output_snapshot: generated,
