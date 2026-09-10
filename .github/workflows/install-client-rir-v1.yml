@@ -1,0 +1,72 @@
+name: Install Client RIR V1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-client-rir-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply deterministic RIR patch
+        run: python3 scripts/install-client-rir-v1.py
+
+      - name: Validate inline JavaScript
+        run: |
+          python3 - <<'PY'
+          import pathlib,re
+          text=pathlib.Path('client-portal/index.html').read_text()
+          scripts=re.findall(r'<script[^>]*>(.*?)</script>',text,flags=re.S|re.I)
+          inline=[s for s in scripts if s.strip()]
+          if not inline: raise SystemExit('No inline script found')
+          pathlib.Path('/tmp/cv-client-rir.js').write_text('\n'.join(inline))
+          PY
+          node --check /tmp/cv-client-rir.js
+
+      - name: Validate RIR persistence contract
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('client-portal/index.html').read_text()
+          required=[
+            'id="cv-rir-v1-css"','<span>RIR</span>','id="cvri_',
+            "min=\"0\" max=\"10\" step=\"0.5\"",
+            'rir:p.rir',
+            'update({weight_kg:w,reps:r,rir,completed:next',
+            'RIR debe estar entre 0 y 10.',
+            's.rir=rir','s.rir=old.rir'
+          ]
+          missing=[x for x in required if x not in text]
+          if missing: raise SystemExit('Missing RIR contract markers: '+', '.join(missing))
+          if text.count('id="cvri_') != 1:
+            raise SystemExit('Unexpected RIR input template count')
+          if text.count("update({weight_kg:w,reps:r,rir,completed:next") != 1:
+            raise SystemExit('Expected exactly one final v25 RIR persistence call')
+          PY
+          git diff --check
+
+      - name: Commit validated RIR capture and remove installer
+        run: |
+          git config user.name "cv-coach-autopilot[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/install-client-rir-v1.py .github/workflows/install-client-rir-v1.yml
+          git add client-portal/index.html
+          git commit -m "feat(client): capture per-set RIR for progression"
+          git push origin HEAD:main
+
+      - name: Dispatch canonical client production deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-cv-coach-client-production.yml --ref main
