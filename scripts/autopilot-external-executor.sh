@@ -107,6 +107,8 @@ title="$(jq -r '.request.title' <<<"${response}")"
 instructions="$(jq -r '.request.instructions' <<<"${response}")"
 request_payload="$(jq -c '.request.request_payload' <<<"${response}")"
 action_payload="$(jq -c '.request.action_payload' <<<"${response}")"
+request_attempts="$(jq -r '.request.attempts // 0' <<<"${response}")"
+request_last_error="$(jq -r '.request.last_error // empty' <<<"${response}")"
 
 payload_target="$(jq -r '.file // .target_path // empty' <<<"${action_payload}")"
 if [[ -n "${payload_target}" ]]; then
@@ -181,7 +183,7 @@ schema='{
   }
 }'
 
-system_instructions='You are the constrained technical proposal layer for CV Coach Autopilot. SEARCH BEFORE CREATE. Preserve existing behavior and production data. You do not have GitHub credentials and must never request, reveal, infer, or output secrets. The only code target is the canonical repository-relative TARGET_PATH selected from the trusted action payload; do not edit any other file. If a safe exact-text patch cannot be produced, return HUMAN_BLOCKER or NO_CHANGE. For PATCH, return only the smallest exact old_text→new_text substitutions required. Every old_text must be copied verbatim from the provided source and be specific enough to occur exactly once. Never modify authentication to weaken access control, never insert API secrets, service-role keys, passwords, remote scripts, eval, Function constructors, or credential exfiltration. Do not claim tests ran; the deterministic runner performs validation after your proposal.'
+system_instructions='You are the constrained technical proposal layer for CV Coach Autopilot. SEARCH BEFORE CREATE. Preserve existing behavior and production data. You do not have GitHub credentials and must never request, reveal, infer, or output secrets. The only code target is the canonical repository-relative TARGET_PATH selected from the trusted action payload; do not edit any other file. If a safe exact-text patch cannot be produced, return HUMAN_BLOCKER or NO_CHANGE. For PATCH, return only the smallest exact old_text→new_text substitutions required. Every old_text must be copied verbatim from the provided source, must occur exactly once in the ORIGINAL source, and all replacement ranges must be non-overlapping. Prefer small stable anchors instead of large replacements on minified files. Never modify authentication to weaken access control, never insert API secrets, service-role keys, passwords, remote scripts, eval, Function constructors, or credential exfiltration. Do not claim tests ran; the deterministic runner performs validation after your proposal.'
 
 input_text="$(jq -nr \
   --arg mission_key "${mission_key}" \
@@ -191,15 +193,18 @@ input_text="$(jq -nr \
   --arg instructions "${instructions}" \
   --arg request_payload "${request_payload}" \
   --arg action_payload "${action_payload}" \
+  --arg request_attempts "${request_attempts}" \
+  --arg request_last_error "${request_last_error}" \
   --rawfile source "${TARGET_PATH}" \
-  '"MISSION: "+$mission_key+"\nACTION: "+$action_key+" ("+$action_type+")\nTITLE: "+$title+"\nINSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\n\nCURRENT TARGET SOURCE:\n"+$source')"
+  '"MISSION: "+$mission_key+"\nACTION: "+$action_key+" ("+$action_type+")\nTITLE: "+$title+"\nINSTRUCTIONS:\n"+$instructions+"\nREQUEST PAYLOAD:\n"+$request_payload+"\nACTION PAYLOAD:\n"+$action_payload+"\nRETRY ATTEMPT: "+$request_attempts+"\nPREVIOUS FAILURE (if any): "+($request_last_error|if .=="" then "none" else . end)+"\n\nCURRENT TARGET SOURCE:\n"+$source')"
 
 input_file="$(mktemp)"
 printf '%s' "${input_text}" > "${input_file}"
 body_file="$(mktemp)"
 response_file="$(mktemp)"
 proposal_file="$(mktemp)"
-trap 'rm -f "${input_file}" "${body_file}" "${response_file}" "${proposal_file}" /tmp/cv-autopilot-inline.js' EXIT
+patch_error_file="$(mktemp)"
+trap 'rm -f "${input_file}" "${body_file}" "${response_file}" "${proposal_file}" "${patch_error_file}" /tmp/cv-autopilot-inline.js' EXIT
 
 jq -n \
   --arg model "${OPENAI_MODEL}" \
@@ -287,23 +292,34 @@ case "${decision}" in
     fi
 
     cp "${TARGET_PATH}" "${TARGET_PATH}.autopilot-backup"
-    if ! python3 - "${TARGET_PATH}" "${proposal_file}" <<'PY'
+    if ! python3 - "${TARGET_PATH}" "${proposal_file}" 2>"${patch_error_file}" <<'PY'
 import json, pathlib, sys
 path = pathlib.Path(sys.argv[1])
 proposal = json.loads(pathlib.Path(sys.argv[2]).read_text())
-text = path.read_text()
+original = path.read_text()
+ranges = []
 for i, repl in enumerate(proposal["replacements"], 1):
     old = repl["old_text"]
     new = repl["new_text"]
-    count = text.count(old)
+    count = original.count(old)
     if count != 1:
-        raise SystemExit(f"replacement {i}: old_text occurs {count} times, expected exactly 1")
-    text = text.replace(old, new, 1)
+        preview = old[:500].replace("\n", "\\n").replace("\r", "\\r")
+        raise SystemExit(f"replacement {i}: old_text occurs {count} times in ORIGINAL source, expected exactly 1; preview={preview!r}")
+    start = original.index(old)
+    ranges.append((start, start + len(old), new, i))
+ordered = sorted(ranges, key=lambda item: item[0])
+for prev, current in zip(ordered, ordered[1:]):
+    if current[0] < prev[1]:
+        raise SystemExit(f"replacement ranges overlap in ORIGINAL source: replacement {prev[3]} with replacement {current[3]}; use smaller non-overlapping anchors")
+text = original
+for start, end, new, _ in sorted(ranges, key=lambda item: item[0], reverse=True):
+    text = text[:start] + new + text[end:]
 path.write_text(text)
 PY
     then
       mv "${TARGET_PATH}.autopilot-backup" "${TARGET_PATH}"
-      external_retry "${request_id}" "Deterministic replacement validation failed" 15
+      patch_error="$(tail -c 1800 "${patch_error_file}" | tr '\n' ' ')"
+      external_retry "${request_id}" "Deterministic replacement validation failed${patch_error:+: ${patch_error}}" 15
       exit 0
     fi
 
