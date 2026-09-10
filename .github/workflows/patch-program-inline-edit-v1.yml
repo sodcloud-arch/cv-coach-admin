@@ -1,0 +1,43 @@
+name: Patch Program Inline Edit V1
+
+on:
+  push:
+    branches: [feature/program-inline-edit-v1]
+    paths:
+      - ".github/workflows/patch-program-inline-edit-v1.yml"
+      - "scripts/patch-program-inline-edit-v1.py"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/program-inline-edit-v1
+      - name: Apply deterministic inline edit patch
+        run: python3 scripts/patch-program-inline-edit-v1.py
+      - name: Validate inline editing anchors
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          text = Path('index.html').read_text(encoding='utf-8')
+          for anchor in ['inlineExerciseEditor','inlineExerciseSave','GUARDAR PARÁMETROS','target_sets','initial_weight_kg','ensureDraft(id)']:
+              assert anchor in text, anchor
+          assert "'/rest/v1/program_exercises?id=eq.'" in text
+          print('inline edit anchors ok')
+          PY
+      - name: Commit patched UI
+        run: |
+          if git diff --quiet -- index.html; then
+            echo "No UI changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(programs): add inline exercise parameter editing"
+          git push origin HEAD:feature/program-inline-edit-v1
