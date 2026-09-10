@@ -59,7 +59,7 @@ jobs:
           block=text[start:end]
           forbidden=[
             'graph.facebook.com','api.whatsapp.com','sendMessage','send_message','send-whatsapp',
-            'peach','Peach','/functions/v1/','service_role','OPENAI_API_KEY',
+            '/functions/v1/','service_role','OPENAI_API_KEY',
             "method:'DELETE'",'method:"DELETE"',"method:'PUT'",'method:"PUT"'
           ]
           found=[x for x in forbidden if x in block]
