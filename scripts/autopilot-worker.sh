@@ -47,6 +47,62 @@ resolve_blocker_if_requested() {
   echo "Autopilot blocker resolution: ${response}"
 }
 
+reconcile_resolved_blocker_issues() {
+  local token payload response kind blocker_id notification_ref issue_number issue_json issue_state issue_title issue_body
+
+  token="$(get_oidc_token)"
+  payload='{"op":"resolved_blocker_notifications","limit":200}'
+  if ! response="$(call_edge "${token}" "${payload}" 2>&1)"; then
+    echo "Autopilot blocker reconciliation: non-fatal gateway failure." >&2
+    echo "Gateway response: ${response}" >&2
+    return 0
+  fi
+
+  kind="$(jq -r '.kind // "ERROR"' <<<"${response}")"
+  if [[ "${kind}" != "RESOLVED_BLOCKER_NOTIFICATIONS" ]]; then
+    echo "Autopilot blocker reconciliation: unexpected response kind ${kind}; skipping." >&2
+    return 0
+  fi
+
+  while IFS=$'\t' read -r blocker_id notification_ref; do
+    [[ -n "${blocker_id}" && -n "${notification_ref}" ]] || continue
+
+    if [[ ! "${notification_ref}" =~ ^https://github\.com/${GITHUB_REPOSITORY}/issues/([0-9]+)$ ]]; then
+      echo "Autopilot blocker reconciliation: ignored non-canonical notification ref ${notification_ref}."
+      continue
+    fi
+    issue_number="${BASH_REMATCH[1]}"
+
+    if ! issue_json="$(gh issue view "${issue_number}" --repo "${GITHUB_REPOSITORY}" --json state,title,body 2>/dev/null)"; then
+      echo "Autopilot blocker reconciliation: issue #${issue_number} is unavailable; skipping."
+      continue
+    fi
+
+    issue_state="$(jq -r '.state // "UNKNOWN"' <<<"${issue_json}")"
+    [[ "${issue_state}" == "OPEN" ]] || continue
+
+    issue_title="$(jq -r '.title // ""' <<<"${issue_json}")"
+    issue_body="$(jq -r '.body // ""' <<<"${issue_json}")"
+    if [[ "${issue_title}" != "🔴 CV Coach Autopilot — "* ]]; then
+      echo "Autopilot blocker reconciliation: issue #${issue_number} is not an Autopilot blocker; skipping."
+      continue
+    fi
+    if ! grep -Fqx "AUTOPILOT_BLOCKER_ID: ${blocker_id}" <<<"${issue_body}"; then
+      echo "Autopilot blocker reconciliation: blocker marker mismatch in issue #${issue_number}; skipping."
+      continue
+    fi
+
+    if gh issue close "${issue_number}" \
+      --repo "${GITHUB_REPOSITORY}" \
+      --reason completed \
+      --comment "Autopilot housekeeping: el backend ya registra este blocker como RESOLVED y su misión/acción como completadas. Cierre automático; no requiere intervención de Camilo."; then
+      echo "Autopilot blocker reconciliation: closed stale issue #${issue_number}."
+    else
+      echo "Autopilot blocker reconciliation: could not close issue #${issue_number}; continuing." >&2
+    fi
+  done < <(jq -r '.blockers[]? | [.blocker_id, .notification_ref] | @tsv' <<<"${response}")
+}
+
 notify_blocker() {
   local response="$1"
   local blocker_id mission_id mission_key mission_title action_id action_key reason required_action issue_body issue_url token ack_payload ack_response
@@ -129,4 +185,5 @@ run_loop() {
 }
 
 resolve_blocker_if_requested
+reconcile_resolved_blocker_issues
 run_loop
