@@ -1,0 +1,282 @@
+from pathlib import Path
+import re
+
+
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    if old not in text:
+        raise SystemExit(f"{label}: anchor not found")
+    return text.replace(old, new, 1)
+
+
+def regex_once(text: str, pattern: str, replacement: str, label: str, flags=0) -> str:
+    updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+    if count != 1:
+        raise SystemExit(f"{label}: replacement count={count}")
+    return updated
+
+
+# ---------------------------------------------------------------------------
+# Edge Function: explicit prescription-unit contract for OpenAI generation.
+# ---------------------------------------------------------------------------
+edge_path = Path("supabase/functions/generate-ai-program/index.ts")
+edge = edge_path.read_text(encoding="utf-8")
+
+edge = replace_once(
+    edge,
+    '                  "rep_max",\n                  "rir_target",',
+    '                  "rep_max",\n                  "prescription_unit",\n                  "rir_target",',
+    "edge draft prescription_unit",
+)
+edge = replace_once(
+    edge,
+    '      "default_rest_sec",\n    ])',
+    '      "default_rest_sec",\n      "prescription_unit",\n    ])',
+    "edge catalog prescription_unit",
+)
+edge = replace_once(
+    edge,
+    '                    "rep_max",\n                    "rir_target",',
+    '                    "rep_max",\n                    "prescription_unit",\n                    "rir_target",',
+    "edge schema required prescription_unit",
+)
+edge = replace_once(
+    edge,
+    '                    rep_min: { type: "integer", minimum: 1, maximum: 100 },\n'
+    '                    rep_max: { type: "integer", minimum: 1, maximum: 100 },\n'
+    '                    rir_target:',
+    '                    rep_min: { type: "integer", minimum: 1, maximum: 600 },\n'
+    '                    rep_max: { type: "integer", minimum: 1, maximum: 600 },\n'
+    '                    prescription_unit: { type: "string", enum: ["reps", "seconds"] },\n'
+    '                    rir_target:',
+    "edge schema unit properties",
+)
+edge = replace_once(
+    edge,
+    '2. Usa exclusivamente exercise_id que aparezcan en exercise_catalog. Nunca inventes UUID ni ejercicios.\n'
+    '3. Respeta equipamiento, disponibilidad, duración de sesión, experiencia y objetivo cuando estén presentes.',
+    '2. Usa exclusivamente exercise_id que aparezcan en exercise_catalog. Nunca inventes UUID ni ejercicios.\n'
+    '2A. Respeta prescription_unit del catálogo. Si es reps, rep_min/rep_max representan repeticiones (1-100). Si es seconds, representan segundos de trabajo (1-600). Devuelve prescription_unit exactamente igual al del ejercicio elegido. Para seconds, initial_weight_kg debe ser null en esta versión.\n'
+    '3. Respeta equipamiento, disponibilidad, duración de sesión, experiencia y objetivo cuando estén presentes.',
+    "edge developer prompt unit rule",
+)
+edge = replace_once(
+    edge,
+    '8. Máximos: 14 días, 20 ejercicios/día, 1-10 series, 1-100 reps, RIR 0-10, descanso 0-900 s.',
+    '8. Máximos: 14 días, 20 ejercicios/día, 1-10 series; reps 1-100; seconds 1-600; RIR 0-10; descanso 0-900 s.',
+    "edge developer prompt limits",
+)
+edge = replace_once(
+    edge,
+    '''  const activeIds = new Set(\n    catalog\n      .map((exercise) => (isObject(exercise) ? exercise.id : null))\n      .filter((id): id is string => typeof id === "string" && uuidPattern.test(id)),\n  );''',
+    '''  const activeUnits = new Map<string, string>();\n  for (const exercise of catalog) {\n    if (!isObject(exercise)) continue;\n    const id = exercise.id;\n    const unit = exercise.prescription_unit;\n    if (typeof id === "string" && uuidPattern.test(id) && (unit === "reps" || unit === "seconds")) {\n      activeUnits.set(id, unit);\n    }\n  }\n  const activeIds = new Set(activeUnits.keys());''',
+    "edge active unit map",
+)
+edge = replace_once(
+    edge,
+    '''      const weight = rawExercise.initial_weight_kg === null\n        ? null\n        : finiteNumber(rawExercise.initial_weight_kg);''',
+    '''      const weight = rawExercise.initial_weight_kg === null\n        ? null\n        : finiteNumber(rawExercise.initial_weight_kg);\n      const prescriptionUnit = typeof rawExercise.prescription_unit === "string"\n        ? rawExercise.prescription_unit\n        : "";\n      const targetMax = prescriptionUnit === "seconds" ? 600 : 100;''',
+    "edge generated unit local",
+)
+edge = replace_once(
+    edge,
+    '''      if (typeof exerciseId !== "string" || !activeIds.has(exerciseId)) {\n        errors.push(`Día ${dayNumber ?? "?"}: exercise_id fuera del catálogo activo.`);\n      }''',
+    '''      if (typeof exerciseId !== "string" || !activeIds.has(exerciseId)) {\n        errors.push(`Día ${dayNumber ?? "?"}: exercise_id fuera del catálogo activo.`);\n      } else if (activeUnits.get(exerciseId) !== prescriptionUnit) {\n        errors.push(`Día ${dayNumber ?? "?"}: prescription_unit no coincide con el catálogo.`);\n      }''',
+    "edge unit/catalog validation",
+)
+edge = replace_once(
+    edge,
+    '      if (repMin === null || repMin < 1 || repMin > 100) errors.push("rep_min fuera de rango.");\n'
+    '      if (repMax === null || repMax < 1 || repMax > 100) errors.push("rep_max fuera de rango.");',
+    '      if (repMin === null || repMin < 1 || repMin > targetMax) errors.push("rep_min fuera de rango para la unidad.");\n'
+    '      if (repMax === null || repMax < 1 || repMax > targetMax) errors.push("rep_max fuera de rango para la unidad.");',
+    "edge unit target bounds",
+)
+edge = replace_once(
+    edge,
+    '''      if (weight !== null && (weight < 0 || weight > 1000)) {\n        errors.push("initial_weight_kg fuera de rango.");\n      }''',
+    '''      if (weight !== null && (weight < 0 || weight > 1000)) {\n        errors.push("initial_weight_kg fuera de rango.");\n      }\n      if (prescriptionUnit === "seconds" && weight !== null && weight !== 0) {\n        errors.push("Los ejercicios por tiempo no admiten peso inicial en v1.");\n      }''',
+    "edge time exercise weight validation",
+)
+edge_path.write_text(edge, encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Admin: display/edit the target range with its real unit.
+# ---------------------------------------------------------------------------
+admin_path = Path("index.html")
+admin = admin_path.read_text(encoding="utf-8")
+
+admin = replace_once(
+    admin,
+    "let reps=(a.rep_min==null&&a.rep_max==null)?'—':display((a.rep_min??'—')+'–'+(a.rep_max??'—'));",
+    "let reps=(a.rep_min==null&&a.rep_max==null)?'—':display((a.rep_min??'—')+'–'+(a.rep_max??'—')),unit=a.prescription_unit==='seconds'?'seconds':'reps';",
+    "admin assignment unit variable",
+)
+admin = replace_once(
+    admin,
+    'Series: ${display(a.target_sets)} · Reps: ${reps} · RIR:',
+    "Series: ${display(a.target_sets)} · ${unit==='seconds'?'Segundos':'Reps'}: ${reps} · RIR:",
+    "admin assignment unit display",
+)
+admin = replace_once(
+    admin,
+    '>Reps mín.<input class="input inlineExerciseInput" data-field="rep_min" type="number" min="1" max="100"',
+    ">${a.prescription_unit==='seconds'?'Seg. mín.':'Reps mín.'}<input class=\"input inlineExerciseInput\" data-field=\"rep_min\" type=\"number\" min=\"1\" max=\"${a.prescription_unit==='seconds'?600:100}\"",
+    "admin inline min label",
+)
+admin = replace_once(
+    admin,
+    '>Reps máx.<input class="input inlineExerciseInput" data-field="rep_max" type="number" min="1" max="100"',
+    ">${a.prescription_unit==='seconds'?'Seg. máx.':'Reps máx.'}<input class=\"input inlineExerciseInput\" data-field=\"rep_max\" type=\"number\" min=\"1\" max=\"${a.prescription_unit==='seconds'?600:100}\"",
+    "admin inline max label",
+)
+admin = replace_once(
+    admin,
+    "rep_min=read('rep_min','Reps mínimas',{integer:true,min:1,max:100}),rep_max=read('rep_max','Reps máximas',{integer:true,min:1,max:100})",
+    "unit=assignments.find(x=>x.id===b.dataset.id)?.prescription_unit==='seconds'?'seconds':'reps',targetMax=unit==='seconds'?600:100,rep_min=read('rep_min',unit==='seconds'?'Segundos mínimos':'Reps mínimas',{integer:true,min:1,max:targetMax}),rep_max=read('rep_max',unit==='seconds'?'Segundos máximos':'Reps máximas',{integer:true,min:1,max:targetMax})",
+    "admin inline unit bounds",
+)
+admin = replace_once(
+    admin,
+    '<label>Reps mínimas</label><input id="peMin" class="input" type="number" min="0" step="1"',
+    '<label>Objetivo mínimo</label><input id="peMin" class="input" type="number" min="1" step="1"',
+    "admin full editor minimum label",
+)
+admin = replace_once(
+    admin,
+    '<label>Reps máximas</label><input id="peMax" class="input" type="number" min="0" step="1"',
+    '<label>Objetivo máximo</label><input id="peMax" class="input" type="number" min="1" step="1"',
+    "admin full editor maximum label",
+)
+admin = replace_once(
+    admin,
+    "${allExercises.map(x=>`<option value=\"${esc(x.id)}\">${esc(x.name||'Sin nombre')} · ${esc(x.primary_muscle||'—')} · ${esc(x.equipment||'—')}</option>`).join('')}",
+    "${allExercises.map(x=>`<option value=\"${esc(x.id)}\">${esc(x.name||'Sin nombre')} · ${esc(x.primary_muscle||'—')} · ${esc(x.equipment||'—')} · ${x.prescription_unit==='seconds'?'segundos':'reps'}</option>`).join('')}",
+    "admin exercise option unit",
+)
+admin_path.write_text(admin, encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Client Portal: actual duration logging, UI, history and volume isolation.
+# ---------------------------------------------------------------------------
+portal_path = Path("client-portal/index.html")
+portal = portal_path.read_text(encoding="utf-8")
+
+portal = regex_once(
+    portal,
+    r"function exerciseData\(x\)\{.*?\nfunction workoutView\(\)\{",
+    """function exerciseData(x){if(mode==='demo'){const raw=String(x[2]??'');return {name:x[0],sets:x[1],reps:raw,rir:x[3],rest:90,image:previewHDByName[x[0]]||null,notes:null,prescription_unit:/\\bs\\b/i.test(raw)?'seconds':'reps'}}const slug=x.exercises?.slug||'',unit=x.prescription_unit||x.exercises?.prescription_unit||'reps';return {name:x.exercises?.name||'Ejercicio',sets:x.target_sets,reps:`${x.rep_min??'—'}–${x.rep_max??'—'}`,rir:`RIR ${x.rir_target??'—'}`,rest:x.rest_seconds,image:previewHDImages[slug]||x.exercises?.image_path,notes:x.coach_notes||x.exercises?.instructions,prescription_unit:unit}}\nfunction workoutView(){""",
+    "portal exerciseData",
+    flags=re.S,
+)
+
+portal = regex_once(
+    portal,
+    r"  function cvPrestartExercises\(\)\{.*?\n  function cvExercises\(\)",
+    """  function cvPrestartExercises(){
+    const d=data.days.find(x=>x.id===workout.dayId);const raw=data.exercises[d.id]||[];
+    return raw.map((x,i)=>{const e=exerciseData(x),b=cvRepsBounds(e.reps),m=cvMeta(e.name),sets=Number(e.sets)||1,unit=e.prescription_unit||'reps',suggested=b[0];return {
+      session_exercise_id:null,program_exercise_id:mode==='demo'?null:x.id,exercise_id:mode==='demo'?null:x.exercise_id,name:e.name,order:i+1,
+      instructions:mode==='demo'?m.instructions:(x.exercises?.instructions||e.notes||m.instructions),image_path:cvImage(e.name)||e.image_path,
+      target_sets:sets,rep_min:mode==='demo'?b[0]:x.rep_min,rep_max:mode==='demo'?b[1]:x.rep_max,prescription_unit:unit,rir_target:mode==='demo'?String(e.rir||'').replace(/[^0-9.]/g,''):(x.rir_target??null),
+      tempo:mode==='demo'?m.tempo:(x.tempo||x.exercises?.default_tempo||null),rest_seconds:mode==='demo'?m.rest:(x.rest_seconds||x.exercises?.default_rest_sec||e.rest||90),
+      sets:Array.from({length:sets},(_,j)=>({set_log_id:null,set_number:j+1,suggested_weight_kg:null,suggested_reps:unit==='reps'?suggested:null,suggested_duration_seconds:unit==='seconds'?suggested:null,weight_kg:null,reps:null,duration_seconds:null,rir:null,completed:false,suggestion_source:'program_prescription'}))
+    }})
+  }
+  function cvExercises()""",
+    "portal prestart exercise model",
+    flags=re.S,
+)
+
+portal = replace_once(
+    portal,
+    "  function cvRefText(s){const w=s.suggested_weight_kg,r=s.suggested_reps;if(w==null&&r==null)return '—';return (w==null?'—':Number(w).toLocaleString('es-CL',{maximumFractionDigits:2})+' kg')+' × '+(r??'—')}",
+    "  function cvRefText(s,e){const unit=e?.prescription_unit||'reps';if(unit==='seconds'){const v=s.previous_duration_seconds??s.reference_duration_seconds??s.suggested_duration_seconds;if(v==null)return '—';return String(v)+' s'}const w=s.suggested_weight_kg,r=s.suggested_reps;if(w==null&&r==null)return '—';return (w==null?'—':Number(w).toLocaleString('es-CL',{maximumFractionDigits:2})+' kg')+' × '+(r??'—')}",
+    "portal previous reference formatter",
+)
+
+set_block_start = portal.find("  function cvSetFromInputs(i,j){")
+set_block_end = portal.find("  function cvFmtRest(sec){", set_block_start)
+if set_block_start < 0 or set_block_end < 0:
+    raise SystemExit("portal set save/toggle block: anchors not found")
+portal = portal[:set_block_start] + """  function cvSetFromInputs(i,j){const ex=cvExercises()[i],s=ex?.sets?.[j];if(!s)return null;const unit=ex.prescription_unit||'reps',w=document.getElementById('cvw_'+i+'_'+j),r=document.getElementById('cvr_'+i+'_'+j),ri=document.getElementById('cvri_'+i+'_'+j);const wt=unit==='reps'&&w&&w.value!==''?Number(w.value):null,target=r&&r.value!==''?Number(r.value):null,rir=ri&&ri.value!==''?Number(ri.value):null;if(wt!=null&&!Number.isFinite(wt))return null;if(target!=null&&(!Number.isFinite(target)||target<0))return null;if(rir!=null&&(!Number.isFinite(rir)||rir<0||rir>10))return null;s.weight_kg=unit==='reps'?wt:null;if(unit==='seconds'){s.duration_seconds=target==null?null:Math.round(target);s.reps=null}else{s.reps=target==null?null:Math.round(target);s.duration_seconds=null}s.rir=rir;return {ex,s,unit,weight_kg:s.weight_kg,reps:s.reps,duration_seconds:s.duration_seconds,rir,target}}
+  window.cvSaveDraftSet=async(i,j)=>{if(!workout?.sessionId)return;const p=cvSetFromInputs(i,j);if(!p)return;if(mode==='demo')return true;if(!p.s.set_log_id)return;const body=p.unit==='seconds'?{weight_kg:null,reps:null,duration_seconds:p.duration_seconds,rir:p.rir,source:'manual'}:{weight_kg:p.weight_kg,reps:p.reps,duration_seconds:null,rir:p.rir,source:'manual'};const {error}=await sb.from('set_logs').update(body).eq('id',p.s.set_log_id);if(error){toast('No pude guardar la serie: '+error.message);return false}return true};
+  window.cvToggleSet=async(i,j)=>{if(!workout?.sessionId)return toast('Primero inicia el entrenamiento.');const p=cvSetFromInputs(i,j);if(!p)return toast('Revisa los valores de la serie.');const next=!p.s.completed;if(next&&(p.target==null||p.target<=0))return toast(p.unit==='seconds'?'Ingresa los segundos realizados.':'Ingresa las repeticiones realizadas.');if(mode!=='demo'&&p.s.set_log_id){const body=p.unit==='seconds'?{weight_kg:null,reps:null,duration_seconds:p.duration_seconds,rir:p.rir,completed:next,completed_at:next?new Date().toISOString():null,source:'manual'}:{weight_kg:p.weight_kg,reps:p.reps,duration_seconds:null,rir:p.rir,completed:next,completed_at:next?new Date().toISOString():null,source:'manual'};const {error}=await sb.from('set_logs').update(body).eq('id',p.s.set_log_id);if(error)return toast('No pude guardar la serie: '+error.message)}p.s.completed=next;if(next)cvStartRest(p.ex.rest_seconds||90,p.ex.name);render();if(workout?.started)startTimer()};
+
+""" + portal[set_block_end:]
+
+add_start = portal.find("  window.cvAddSet=async function(i){")
+add_end = portal.find("  workoutView=function(){", add_start)
+if add_start < 0 or add_end < 0:
+    raise SystemExit("portal add-set block: anchors not found")
+portal = portal[:add_start] + """  window.cvAddSet=async function(i){const ex=cvExercises()[i];if(!ex)return;const unit=ex.prescription_unit||'reps',next=(ex.sets&&ex.sets.length?ex.sets.length:0)+1,prev=ex.sets&&ex.sets.length?ex.sets[ex.sets.length-1]:null,s={set_log_id:null,set_number:next,suggested_weight_kg:unit==='reps'?(prev?prev.suggested_weight_kg:null):null,suggested_reps:unit==='reps'?(prev?prev.suggested_reps:ex.rep_min):null,suggested_duration_seconds:unit==='seconds'?(prev?prev.suggested_duration_seconds:ex.rep_min):null,weight_kg:null,reps:null,duration_seconds:null,rir:null,completed:false,suggestion_source:'manual'};if(mode!=='demo'&&workout&&workout.sessionId&&ex.session_exercise_id){try{const body={session_exercise_id:ex.session_exercise_id,set_number:next,weight_kg:null,reps:null,duration_seconds:null,completed:false,source:'manual',suggested_weight_kg:s.suggested_weight_kg,suggested_reps:s.suggested_reps,suggested_duration_seconds:s.suggested_duration_seconds,suggestion_source:'manual'};const q=await sb.from('set_logs').insert(body).select('id').single();if(q.error)throw q.error;s.set_log_id=q.data&&q.data.id}catch(err){toast('No pude agregar la serie: '+(err.message||err));return}}ex.sets=ex.sets||[];ex.sets.push(s);render()}
+""" + portal[add_end:]
+
+view_start = portal.find("  workoutView=function(){", portal.find("<script id='cv-hevy-v1-js'"))
+view_end = portal.find("  window.openDay=id=>", view_start)
+if view_start < 0 or view_end < 0:
+    raise SystemExit("portal Hevy workout view: anchors not found")
+portal = portal[:view_start] + """  workoutView=function(){
+    document.body.classList.add('cvFastWorkout');
+    const d=data.days.find(x=>x.id===workout.dayId),exs=cvExercises(),started=!!workout.sessionId;
+    let volume=0,doneSets=0,totalSets=0;exs.forEach(e=>(e.sets||[]).forEach(s=>{totalSets++;if(s.completed){doneSets++;if((e.prescription_unit||'reps')==='reps'){const w=Number(s.weight_kg||0),r=Number(s.reps||0);if(Number.isFinite(w)&&Number.isFinite(r))volume+=w*r}}}));
+    return '<div class="workoutTop"><div class="row"><div class="grow"></div>'+(started?'<button class="btn primary" onclick="finishWorkout()">FINALIZAR</button>':'<button class="btn primary" onclick="startWorkout()">INICIAR</button>')+'</div></div><div class="cvSessionStats"><div class="cvSessionStat duration"><small>Duración</small><b id="timer">00:00</b></div><div class="cvSessionStat volume"><small>Volumen</small><b>'+Math.round(volume).toLocaleString('es-CL')+' kg</b></div><div class="cvSessionStat"><small>Series</small><b>'+doneSets+(totalSets?' / '+totalSets:'')+'</b></div></div><div class="ey">DÍA '+d.day_number+'</div><h1 style="font-size:37px;margin:5px 0">'+esc(d.name)+'</h1><div class="sub">'+esc(d.focus||'')+'</div><section class="section">'+exs.map((e,i)=>{
+      const total=e.sets?.length||e.target_sets||0,img=cvImage(e.name)||e.image_path||'',rir=e.rir_target!=null?'RIR '+e.rir_target:'',unit=e.prescription_unit||'reps',target=(e.rep_min!=null||e.rep_max!=null)?String(e.rep_min??'—')+'–'+String(e.rep_max??'—'):'',instructions=e.instructions||cvMeta(e.name).instructions,tempo=e.tempo||cvMeta(e.name).tempo,rest=cvResolveRest(e,i,d);e.rest_seconds=rest;
+      return '<article class="card workoutExercise cvHevyExercise" data-tech-name="'+esc(e.name)+'" data-tech-img="'+esc(img)+'" data-tech-instructions="'+esc(instructions)+'" data-tech-tempo="'+esc(tempo||'')+'"><div class="exerciseTop"><div class="num">'+(i+1)+'</div><div class="grow"><h3 onclick="cvOpenTechnique('+i+')">'+esc(e.name)+'</h3><div class="cvPrescription">'+esc([total+' series',target&&(unit==='seconds'?target+' s':target+' reps'),rir].filter(Boolean).join(' · '))+'</div></div></div><div class="cvRestText">◷ DESCANSO: '+cvFmtRest(rest)+'</div><div class="cvSetsHead"><span>SET</span><span>ANTERIOR</span><span>KG</span><span>'+(unit==='seconds'?'SEG':'REPS')+'</span><span>RIR</span><span>✓</span></div><div class="cvSetRows">'+(e.sets||[]).map((s,j)=>'<div class="cvSetRow '+(s.completed?'done':'')+'"><div class="cvSetNo">'+s.set_number+'</div><div class="cvPrevious">'+esc(cvRefText(s,e))+'</div><input id="cvw_'+i+'_'+j+'" inputmode="decimal" type="number" min="0" step="0.5" '+(unit==='seconds'?'disabled':'')+' value="'+esc(unit==='seconds'?'':cvInputValue(s.weight_kg,s.suggested_weight_kg))+'" onchange="cvSaveDraftSet('+i+','+j+')"><input id="cvr_'+i+'_'+j+'" inputmode="numeric" type="number" min="0" step="1" value="'+esc(unit==='seconds'?cvInputValue(s.duration_seconds,s.suggested_duration_seconds):cvInputValue(s.reps,s.suggested_reps))+'" onchange="cvSaveDraftSet('+i+','+j+')"><input id="cvri_'+i+'_'+j+'" class="cvRirInput" inputmode="decimal" type="number" min="0" max="10" step="0.5" placeholder="—" value="'+esc(s.rir??'')+'" onchange="cvSaveDraftSet('+i+','+j+')" aria-label="RIR real serie '+(j+1)+' de '+esc(e.name)+'"><button class="cvSetCheck '+(s.completed?'done':'')+'" onclick="cvToggleSet('+i+','+j+')">✓</button></div>').join('')+'</div><button class="cvAddSet" type="button" onclick="cvAddSet('+i+')">+ Agregar serie</button></article>'
+    }).join('')+'</section>'
+  };
+""" + portal[view_end:]
+
+portal = replace_once(
+    portal,
+    "function applyDraftsDOM(){document.querySelectorAll('input[id^=\"cvw_\"],input[id^=\"cvr_\"]').forEach(inp=>{inp.removeAttribute('disabled');const m=inp.id.match(/^cv([wr])_(\\d+)_(\\d+)$/);if(!m)return;const d=drafts[key(Number(m[2]),Number(m[3]))];if(!d)return;const v=m[1]==='w'?d.weight:d.reps;if(v!==undefined&&v!==null&&v!=='')inp.value=v});document.querySelectorAll('.cvSetCheck').forEach(b=>b.removeAttribute('disabled'))}",
+    "function applyDraftsDOM(){document.querySelectorAll('input[id^=\"cvw_\"],input[id^=\"cvr_\"]').forEach(inp=>{const m=inp.id.match(/^cv([wr])_(\\d+)_(\\d+)$/);if(!m)return;const i=Number(m[2]),ex=typeof cvExercises==='function'?cvExercises()?.[i]:null;if(m[1]==='w'&&ex?.prescription_unit==='seconds'){inp.setAttribute('disabled','');inp.value='';return}inp.removeAttribute('disabled');const d=drafts[key(i,Number(m[3]))];if(!d)return;const v=m[1]==='w'?d.weight:d.reps;if(v!==undefined&&v!==null&&v!=='')inp.value=v});document.querySelectorAll('.cvSetCheck').forEach(b=>b.removeAttribute('disabled'))}",
+    "portal draft DOM preserves disabled weight",
+)
+portal = replace_once(
+    portal,
+    "function applyDraftsModel(){if(!workout?.liveExercises)return;for(const [k,d] of Object.entries(drafts)){const [i,j]=k.split('_').map(Number),s=workout.liveExercises?.[i]?.sets?.[j];if(!s)continue;if(d.weight!==undefined&&d.weight!=='')s.weight_kg=Number(d.weight);if(d.reps!==undefined&&d.reps!=='')s.reps=Math.round(Number(d.reps))}}",
+    "function applyDraftsModel(){if(!workout?.liveExercises)return;for(const [k,d] of Object.entries(drafts)){const [i,j]=k.split('_').map(Number),ex=workout.liveExercises?.[i],s=ex?.sets?.[j];if(!s)continue;const unit=ex?.prescription_unit||'reps';if(unit==='reps'&&d.weight!==undefined&&d.weight!=='')s.weight_kg=Number(d.weight);if(d.reps!==undefined&&d.reps!==''){if(unit==='seconds'){s.duration_seconds=Math.round(Number(d.reps));s.reps=null;s.weight_kg=null}else{s.reps=Math.round(Number(d.reps));s.duration_seconds=null}}}}",
+    "portal draft model unit awareness",
+)
+portal = replace_once(
+    portal,
+    "function historyText(s,ex){let w=s.reference_weight_kg,r=s.reference_reps;if(w==null&&r==null){w=ex?.previous_best_weight_kg??null;r=ex?.previous_best_reps??null}if(w==null&&r==null)return '—';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}",
+    "function historyText(s,ex){if((ex?.prescription_unit||'reps')==='seconds'){const d=s.reference_duration_seconds??s.previous_duration_seconds??ex?.previous_best_duration_seconds??null;return d==null?'—':fmt(d)+' s'}let w=s.reference_weight_kg,r=s.reference_reps;if(w==null&&r==null){w=ex?.previous_best_weight_kg??null;r=ex?.previous_best_reps??null}if(w==null&&r==null)return '—';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}",
+    "portal history seconds",
+)
+portal = replace_once(
+    portal,
+    "function suggestedText(s){const w=s?.suggested_weight_kg,r=s?.suggested_reps;if(w==null&&r==null)return '';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}",
+    "function suggestedText(s,ex){if((ex?.prescription_unit||'reps')==='seconds'){const d=s?.suggested_duration_seconds;return d==null?'':fmt(d)+' s'}const w=s?.suggested_weight_kg,r=s?.suggested_reps;if(w==null&&r==null)return '';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}",
+    "portal suggestion seconds",
+)
+portal = replace_once(portal, "const prev=historyText(s,ex),sug=suggestedText(s),src=", "const prev=historyText(s,ex),sug=suggestedText(s,ex),src=", "portal suggestion caller")
+portal = replace_once(
+    portal,
+    "async function hydrateHistory(){try{if(mode==='demo'||!workout?.liveExercises)return;const all=workout.liveExercises.flatMap(e=>Array.isArray(e.sets)?e.sets:[]),ids=[...new Set(all.map(s=>s.reference_set_log_id).filter(Boolean))];if(ids.length){const {data:rows,error}=await sb.from('set_logs').select('id,weight_kg,reps,completed_at').in('id',ids);if(!error){const map=new Map((rows||[]).map(x=>[x.id,x]));for(const s of all){const ref=map.get(s.reference_set_log_id);if(ref){s.reference_weight_kg=ref.weight_kg;s.reference_reps=ref.reps;s.reference_completed_at=ref.completed_at}}}}workout.cvHistoryHydrated=true;render()}catch(e){console.warn('CV history',e)}}",
+    "async function hydrateHistory(){try{if(mode==='demo'||!workout?.liveExercises)return;const all=workout.liveExercises.flatMap(e=>Array.isArray(e.sets)?e.sets:[]),ids=[...new Set(all.map(s=>s.reference_set_log_id).filter(Boolean))];if(ids.length){const {data:rows,error}=await sb.from('set_logs').select('id,weight_kg,reps,duration_seconds,completed_at').in('id',ids);if(!error){const map=new Map((rows||[]).map(x=>[x.id,x]));for(const s of all){const ref=map.get(s.reference_set_log_id);if(ref){s.reference_weight_kg=ref.weight_kg;s.reference_reps=ref.reps;s.reference_duration_seconds=ref.duration_seconds;s.reference_completed_at=ref.completed_at}}}}workout.cvHistoryHydrated=true;render()}catch(e){console.warn('CV history',e)}}",
+    "portal hydrate duration history",
+)
+portal = replace_once(
+    portal,
+    "function prevText(s,ex){let w=s?.previous_weight_kg,r=s?.previous_reps;if(w==null&&r==null){w=s?.reference_weight_kg;r=s?.reference_reps}if(w==null&&r==null){w=ex?.previous_best_weight_kg;r=ex?.previous_best_reps}if(w==null&&r==null)return '—';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}",
+    "function prevText(s,ex){if((ex?.prescription_unit||'reps')==='seconds'){const d=s?.previous_duration_seconds??s?.reference_duration_seconds??ex?.previous_best_duration_seconds??null;return d==null?'—':fmt(d)+' s'}let w=s?.previous_weight_kg,r=s?.previous_reps;if(w==null&&r==null){w=s?.reference_weight_kg;r=s?.reference_reps}if(w==null&&r==null){w=ex?.previous_best_weight_kg;r=ex?.previous_best_reps}if(w==null&&r==null)return '—';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}",
+    "portal v25 previous seconds",
+)
+portal = replace_once(
+    portal,
+    "const prev=prevText(s,ex),sug=(s.suggested_weight_kg!=null||s.suggested_reps!=null)?((s.suggested_weight_kg==null?'—':fmt(s.suggested_weight_kg)+' kg')+' × '+(s.suggested_reps??'—')):'';",
+    "const prev=prevText(s,ex),sug=(ex?.prescription_unit||'reps')==='seconds'?(s.suggested_duration_seconds==null?'':fmt(s.suggested_duration_seconds)+' s'):((s.suggested_weight_kg!=null||s.suggested_reps!=null)?((s.suggested_weight_kg==null?'—':fmt(s.suggested_weight_kg)+' kg')+' × '+(s.suggested_reps??'—')):'');",
+    "portal v25 suggestion seconds",
+)
+portal = replace_once(
+    portal,
+    "vol=done.reduce((a,s)=>a+(Number(s.weight_kg)||0)*(Number(s.reps)||0),0)",
+    "vol=exs.reduce((a,e)=>a+((e.prescription_unit||'reps')==='reps'?(e.sets||[]).filter(s=>s.completed).reduce((v,s)=>v+(Number(s.weight_kg)||0)*(Number(s.reps)||0),0):0),0)",
+    "portal v25 volume excludes time",
+)
+portal_path.write_text(portal, encoding="utf-8")
+
+print("PRESCRIPTION_UNIT_PATCH_OK")
