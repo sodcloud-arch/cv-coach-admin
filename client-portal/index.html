@@ -479,8 +479,8 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const today=()=>new Date().toISOString().slice(0,10);
 let mode='demo',user=null,view='home',data=null,workout=null,timerHandle=null;
 let setupMode=new URLSearchParams(location.search).get('setup')==='1';
-let setupInProgress=setupMode,setupSession=null,setupPasswordSaved=false,setupRecoverySignal=new URLSearchParams(location.search).get('type')==='recovery';
-try{if(!setupRecoverySignal&&location.hash){setupRecoverySignal=new URLSearchParams(location.hash.replace(/^#/,'')).get('type')==='recovery'}}catch(_){ }
+let setupInProgress=setupMode,setupSession=null,setupPasswordSaved=false,setupRecoverySignal=false;
+try{if(location.hash){setupRecoverySignal=new URLSearchParams(location.hash.replace(/^#/,'')).get('type')==='recovery'}}catch(_){ }
 function setupAuthorized(session){const u=session?.user;if(!session?.access_token||!u?.id)return false;return u.user_metadata?.must_set_password===true||((u.user_metadata?.must_set_password!==true)&&setupRecoverySignal)}
 function setupStatus(message,kind=''){const el=$('#setupStatus');if(!el)return;el.className='setupActivationStatus'+(kind?' '+kind:'');el.textContent=message}
 function setupShow(session){setupSession=session||null;$('#loginNormal')?.classList.add('hidden');const panel=$('#setupActivation');panel?.classList.add('active');const fields=$('#setupPasswordFields');if(!session||!setupAuthorized(session)){fields?.classList.add('hidden');setupStatus('El enlace de activación no es válido o expiró. Pide un nuevo enlace a tu coach.','error');return}fields?.classList.remove('hidden');if(setupPasswordSaved){$('#setupPasswordBtn').textContent='CONTINUAR';setupStatus('Contraseña guardada. Cargando tu proceso…','success')}else{setupStatus('Usa al menos 8 caracteres.','')};$('#setupPassword')?.focus()}
