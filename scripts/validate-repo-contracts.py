@@ -30,6 +30,9 @@ vercel = read("vercel.json")
 require(admin, "client_url:'https://cv-coach-roan.vercel.app'", "public client URL")
 require(admin, "'/functions/v1/publish-program'", "secure program publication")
 require(admin, "'/functions/v1/provision-client'", "client provisioning")
+require(admin, "openAiGenerationComparison", "AI generation before-after comparison")
+require(admin, "VER CAMBIOS", "AI comparison reopen action")
+require(admin, "Rutina anterior vs nueva rutina", "AI comparison summary modal")
 forbid(admin, "cv-coach-sodcloud-1237.vercel.app", "protected client domain")
 
 for marker in (
