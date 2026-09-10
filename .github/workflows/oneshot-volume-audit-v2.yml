@@ -1,0 +1,78 @@
+name: CV Coach Deterministic Volume Audit V2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/oneshot-volume-audit-v2.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cv-coach-volume-audit-v2
+  cancel-in-progress: false
+
+jobs:
+  patch-and-deploy-admin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_pD5aAwrw2qpbPgoEarWhxcKF
+      VERCEL_PROJECT_ID: prj_fkeoRxjDY3ZDQlIadS1EaIowFi87
+      VERCEL_CLI_VERSION: 59.13.1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Repair anchor and apply patch
+        run: |
+          set -euo pipefail
+          python scripts/oneshot-volume-audit-anchor-fix.py
+          python scripts/oneshot-volume-audit-v1.py
+
+      - name: Validate repository contracts
+        run: |
+          set -euo pipefail
+          python scripts/validate-repo-contracts.py
+          grep -q 'cv-volume-audit-v1' supabase/functions/generate-ai-program/index.ts
+          grep -q 'buildVolumeAudit' supabase/functions/generate-ai-program/index.ts
+          grep -q 'AUDITOR DE VOLUMEN SEMANAL' index.html
+          grep -q 'aiVolumeAuditHtml' index.html
+          grep -q 'aiReviewExplanations(generation.explanations)' index.html
+          git diff --check
+
+      - name: Commit canonical change and remove temporary files
+        run: |
+          set -euo pipefail
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html supabase/functions/generate-ai-program/index.ts scripts/validate-repo-contracts.py
+          git rm -f scripts/oneshot-volume-audit-v1.py scripts/oneshot-volume-audit-anchor-fix.py .github/workflows/oneshot-volume-audit-v1.yml .github/workflows/oneshot-volume-audit-v2.yml
+          git commit -m 'feat(ai): add deterministic weekly volume audit'
+          git push origin HEAD:main
+
+      - name: Deploy Admin production
+        run: |
+          set -euo pipefail
+          test -n "${VERCEL_TOKEN:-}"
+          rm -rf .vercel
+          mkdir -p .vercel
+          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
+          npx --yes vercel@${VERCEL_CLI_VERSION} pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@${VERCEL_CLI_VERSION} build --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+      - name: Verify public production
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6 7 8; do
+            body="$(curl -fsSL --max-time 20 https://cv-coach-admin.vercel.app || true)"
+            if [[ "$body" == *'AUDITOR DE VOLUMEN SEMANAL'* && "$body" == *'aiVolumeAuditHtml'* && "$body" == *'Rutina anterior vs nueva rutina'* ]]; then
+              echo 'PUBLIC_VOLUME_AUDIT_V1_OK'
+              exit 0
+            fi
+            sleep 3
+          done
+          echo 'Volume audit production verification failed' >&2
+          exit 1
