@@ -9,6 +9,7 @@ on:
       - 'client-portal/manifest.webmanifest'
       - 'client-portal/sw.js'
       - 'client-portal/icon.svg'
+      - 'client-portal/assets/**'
       - '.github/workflows/deploy-cv-coach-client-production.yml'
   workflow_dispatch:
 
@@ -49,6 +50,7 @@ jobs:
           test -s client-portal/manifest.webmanifest
           test -s client-portal/sw.js
           test -s client-portal/icon.svg
+          test -s client-portal/assets/cv-isotipo-header-v1.webp
 
       - name: Check Vercel credential
         id: auth
@@ -68,12 +70,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p .vercel/output/static
+          mkdir -p .vercel/output/static/assets
           printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
           cp index.html .vercel/output/static/index.html
           cp ../manifest.webmanifest .vercel/output/static/manifest.webmanifest
           cp ../sw.js .vercel/output/static/sw.js
           cp ../icon.svg .vercel/output/static/icon.svg
+          cp ../assets/cv-isotipo-header-v1.webp .vercel/output/static/assets/cv-isotipo-header-v1.webp
           cat > .vercel/output/config.json <<'JSON'
           {
             "version": 3,
@@ -118,6 +121,14 @@ jobs:
                   "X-Content-Type-Options": "nosniff"
                 }
               },
+              {
+                "src": "/assets/(.*)",
+                "dest": "/assets/$1",
+                "headers": {
+                  "Cache-Control": "public, max-age=3600",
+                  "X-Content-Type-Options": "nosniff"
+                }
+              },
               { "handle": "filesystem" },
               {
                 "src": "/(.*)",
@@ -139,6 +150,7 @@ jobs:
           test -s .vercel/output/static/manifest.webmanifest
           test -s .vercel/output/static/sw.js
           test -s .vercel/output/static/icon.svg
+          test -s .vercel/output/static/assets/cv-isotipo-header-v1.webp
           test -s .vercel/output/config.json
 
       - name: Deploy CV Coach client production
@@ -157,11 +169,13 @@ jobs:
             sw_headers="$(mktemp)"
             manifest_headers="$(mktemp)"
             icon_headers="$(mktemp)"
+            asset_headers="$(mktemp)"
             root_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$root_headers" https://cv-coach-roan.vercel.app || true)"
             manifest_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$manifest_headers" https://cv-coach-roan.vercel.app/manifest.webmanifest || true)"
             sw_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$sw_headers" https://cv-coach-roan.vercel.app/sw.js || true)"
             icon_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$icon_headers" https://cv-coach-roan.vercel.app/icon.svg || true)"
-            if [[ "$root_body" == *"CV Coach"* && "$root_body" != *"Cliente Premium Preview"* && "$root_body" == *"America/Santiago"* && "$root_body" == *"manifest.webmanifest"* && "$manifest_body" == *'"name": "CV Coach"'* && "$manifest_body" == *'"src": "./icon.svg"'* && "$sw_body" == *"cv-coach-shell"* && "$icon_body" == *"<svg"* ]]; then
+            asset_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 -D "$asset_headers" https://cv-coach-roan.vercel.app/assets/cv-isotipo-header-v1.webp || true)"
+            if [[ "$root_body" == *"CV Coach"* && "$root_body" != *"Cliente Premium Preview"* && "$root_body" == *"America/Santiago"* && "$root_body" == *"manifest.webmanifest"* && "$root_body" == *"cv-client-header-v39"* && "$root_body" == *"cv-isotipo-header-v1.webp"* && "$manifest_body" == *'"name": "CV Coach"'* && "$manifest_body" == *'"src": "./icon.svg"'* && "$sw_body" == *"cv-coach-shell"* && "$icon_body" == *"<svg"* && "$asset_status" == "200" ]]; then
               grep -qi '^x-content-type-options: nosniff' "$root_headers"
               grep -qi '^x-frame-options: DENY' "$root_headers"
               grep -qi '^content-security-policy:' "$root_headers"
@@ -169,10 +183,10 @@ jobs:
               grep -qi '^content-type:.*application/manifest' "$manifest_headers"
               grep -qi '^content-type:.*image/svg' "$icon_headers"
               echo 'PUBLIC_PORTAL_PWA_OK'
-              rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers"
+              rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers" "$asset_headers"
               exit 0
             fi
-            rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers"
+            rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers" "$asset_headers"
             sleep 3
           done
           echo 'Public PWA alias verification failed' >&2
