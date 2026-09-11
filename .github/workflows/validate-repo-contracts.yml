@@ -31,6 +31,14 @@ jobs:
           python client-portal/upgrade_client_v51.py
           python client-portal/upgrade_client_v52.py
           python client-portal/upgrade_client_v53.py
+          python client-portal/upgrade_client_v54.py
+          python scripts/test-mobile-workout-v54.py
+          python client-portal/upgrade_client_v55.py
+          python scripts/test-workout-sound-v55.py
+          python client-portal/upgrade_client_v56.py
+          python scripts/test-set-toggle-runtime-v56.py
+          python client-portal/upgrade_client_v57.py
+          python scripts/test-client-modules-v57.py
           grep -q 'cv-feedback-simple-v48' client-portal/stable/index.html
           grep -q 'save_workout_feedback_v2' client-portal/stable/index.html
           grep -q 'cvSetToggleLocksV48' client-portal/stable/index.html
@@ -49,6 +57,13 @@ jobs:
           grep -q 'cv-workout-regression-guard-v52' client-portal/stable/index.html
           grep -q 'cv-client-sound-v53' client-portal/stable/index.html
           grep -q 'cv-sound-manager-v53-js' client-portal/stable/index.html
+          grep -q 'cv-mobile-workout-reliability-v54' client-portal/stable/index.html
+          grep -q 'cv-workout-sound-language-v55' client-portal/stable/index.html
+          grep -q 'cv-set-toggle-runtime-v56' client-portal/stable/index.html
+          grep -q 'cv-client-modules-v57' client-portal/stable/index.html
+          grep -q 'cv-client-modules-v57-js' client-portal/stable/index.html
+          grep -q 'Check-in semanal pendiente' client-portal/stable/index.html
+          grep -q 'cvLogNutritionMealsV57' client-portal/stable/index.html
           grep -q './assets/sounds/cv-set-confirmed-v1.mp3' client-portal/stable/index.html
           grep -q './assets/sounds/cv-workout-complete-v1.mp3' client-portal/stable/index.html
           test -s client-portal/assets/sounds/cv-set-confirmed-v1.mp3
@@ -73,6 +88,8 @@ jobs:
         run: python scripts/test-workout-runtime-v52.py
       - name: Run client sound regression guard V53
         run: python scripts/test-client-sound-v53.py
+      - name: Run client modules regression guard V57
+        run: python scripts/test-client-modules-v57.py
       - name: Validate client inline JavaScript
         run: |
           python - <<'PY'
