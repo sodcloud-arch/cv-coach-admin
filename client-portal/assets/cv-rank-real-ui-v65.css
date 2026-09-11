@@ -1,0 +1,154 @@
+/* CV Coach · Rank Track V65
+   iPhone-first alignment pass: seven equal slots, empty Tutorial slot,
+   compact risk state and consistent current/next emphasis without geometry changes. */
+
+.cv64CompactPath{
+  display:grid!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:4px!important;
+  padding:8px 5px!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.cv64CompactPath .cv64Step{
+  position:relative!important;
+  display:grid!important;
+  grid-template-rows:42px 13px 10px!important;
+  align-items:center!important;
+  justify-items:center!important;
+  min-width:0!important;
+  width:100%!important;
+  height:72px!important;
+  min-height:72px!important;
+  margin:0!important;
+  padding:4px 1px 3px!important;
+  border:1px solid transparent!important;
+  border-radius:9px!important;
+  overflow:visible!important;
+  box-sizing:border-box!important;
+}
+.cv64CompactPath .cv64Step img{
+  display:block!important;
+  width:40px!important;
+  height:40px!important;
+  max-width:40px!important;
+  max-height:40px!important;
+  margin:0 auto!important;
+  object-fit:contain!important;
+  align-self:center!important;
+  justify-self:center!important;
+  transform:none!important;
+}
+.cv64CompactPath .cv64Step b{
+  display:block!important;
+  width:100%!important;
+  margin:0!important;
+  overflow:visible!important;
+  white-space:nowrap!important;
+  text-overflow:clip!important;
+  text-align:center!important;
+  font-size:5.8px!important;
+  line-height:1!important;
+  letter-spacing:-.01em!important;
+  align-self:end!important;
+}
+.cv64CompactPath .cv64Step::after{
+  display:block!important;
+  position:static!important;
+  width:auto!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  background:none!important;
+  box-shadow:none!important;
+  border:0!important;
+  font-size:4.6px!important;
+  font-weight:900!important;
+  line-height:1!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  opacity:.92!important;
+}
+.cv64CompactPath .cv64Step.current{
+  border-color:color-mix(in srgb,var(--r) 50%,#26323a)!important;
+  background:color-mix(in srgb,var(--r) 7%,#05090c)!important;
+}
+.cv64CompactPath .cv64Step.current::after{content:'ACTUAL'!important;color:var(--r)!important}
+.cv64CompactPath .cv64Step.next{
+  min-height:72px!important;
+  height:72px!important;
+  padding:4px 1px 3px!important;
+  border-color:rgba(218,227,233,.24)!important;
+  background:linear-gradient(180deg,rgba(218,227,233,.055),rgba(5,9,12,.16))!important;
+}
+.cv64CompactPath .cv64Step.next::after{content:'PRÓXIMO'!important;color:#dbe3e8!important}
+.cv64CompactPath .cv64Step.reached:not(.current){border-color:rgba(120,138,148,.10)!important}
+.cv64CompactPath .cv64Step.locked{border-color:transparent!important;background:transparent!important}
+
+/* Tutorial is a true empty slot: preserve the place in the ladder, but no earned crest. */
+.cv64CompactPath .cv64Step:first-child img{opacity:0!important;filter:none!important}
+.cv64CompactPath .cv64Step:first-child::before{
+  content:'';
+  grid-row:1;
+  display:block;
+  width:34px;
+  height:34px;
+  align-self:center;
+  justify-self:center;
+  border:1px solid rgba(163,179,188,.34);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(140,158,168,.07),rgba(4,8,10,.04) 58%,transparent 62%);
+  box-shadow:inset 0 0 0 5px rgba(117,135,145,.025),0 0 10px rgba(149,168,177,.05);
+}
+.cv64CompactPath .cv64Step:first-child.current::after{content:'INICIO'!important;color:#aab6bd!important}
+.cv64CompactPath .cv64Step:first-child.reached:not(.current)::after{content:'HECHO'!important;color:#77858d!important}
+
+/* V65 card hierarchy. */
+.cv65LeagueProgress{
+  display:inline-flex;
+  align-items:center;
+  min-height:20px;
+  margin-top:7px;
+  padding:0 8px;
+  border:1px solid color-mix(in srgb,var(--r) 30%,#2a343a);
+  border-radius:999px;
+  background:color-mix(in srgb,var(--r) 6%,#071014);
+  color:var(--r);
+  font-size:7px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.cv61RankCard.cv64Real .cv61Next.cv65Next{
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:flex-start!important;
+  flex-wrap:wrap!important;
+  gap:5px 8px!important;
+  margin-top:11px!important;
+}
+.cv61RankCard.cv64Real .cv61Next.cv65Next strong{color:var(--r)!important;font-size:9px!important;letter-spacing:.035em!important}
+.cv61RankCard.cv64Real .cv61Next.cv65Next span{color:#9aa6ad!important;font-size:8px!important;line-height:1.25!important}
+.cv61RankCard.cv64Real .cv64State.cv65CompactState{
+  min-height:34px!important;
+  margin-top:9px!important;
+  padding:7px 10px!important;
+  border-radius:10px!important;
+}
+.cv61RankCard.cv64Real .cv64State.cv65CompactState strong{font-size:8px!important;white-space:nowrap!important}
+.cv61RankCard.cv64Real .cv64State.cv65CompactState span{font-size:7.5px!important;line-height:1.2!important}
+
+@media(max-width:390px){
+  .cv64CompactPath{gap:2px!important;padding:7px 3px!important}
+  .cv64CompactPath .cv64Step{grid-template-rows:38px 12px 9px!important;height:66px!important;min-height:66px!important;padding:3px 0 2px!important;border-radius:8px!important}
+  .cv64CompactPath .cv64Step.next{height:66px!important;min-height:66px!important;padding:3px 0 2px!important}
+  .cv64CompactPath .cv64Step img{width:36px!important;height:36px!important;max-width:36px!important;max-height:36px!important}
+  .cv64CompactPath .cv64Step b{font-size:5.25px!important}
+  .cv64CompactPath .cv64Step::after{font-size:4.1px!important}
+  .cv64CompactPath .cv64Step:first-child::before{width:31px;height:31px}
+  .cv65LeagueProgress{font-size:6.5px;min-height:19px;padding:0 7px}
+  .cv61RankCard.cv64Real .cv61Next.cv65Next{gap:3px 6px!important;margin-top:9px!important}
+  .cv61RankCard.cv64Real .cv61Next.cv65Next strong{font-size:8.4px!important}
+  .cv61RankCard.cv64Real .cv61Next.cv65Next span{font-size:7.5px!important}
+  .cv61RankCard.cv64Real .cv64State.cv65CompactState{min-height:32px!important;padding:6px 8px!important}
+}

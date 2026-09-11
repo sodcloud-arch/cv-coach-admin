@@ -16,6 +16,7 @@ on:
       - 'scripts/test-cv-rank-system-v60.py'
       - 'scripts/test-cv-rank-engine-v61.py'
       - 'scripts/test-cv-rank-ui-v64.py'
+      - 'scripts/test-cv-rank-ui-v65.py'
       - 'supabase/migrations/**'
       - '.github/workflows/deploy-cv-coach-client-production.yml'
   workflow_dispatch:
@@ -39,7 +40,7 @@ jobs:
       - name: Checkout canonical main
         uses: actions/checkout@v4
 
-      - name: Build and regression-gate client artifact through V64
+      - name: Build and regression-gate client artifact through V65
         shell: bash
         run: |
           set -euo pipefail
@@ -70,7 +71,9 @@ jobs:
           python client-portal/upgrade_client_v61.py
           python scripts/test-cv-rank-engine-v61.py
           python scripts/test-cv-rank-ui-v64.py
+          python scripts/test-cv-rank-ui-v65.py
           node --check client-portal/assets/cv-rank-real-ui-v64.js
+          node --check client-portal/assets/cv-rank-real-ui-v65.js
           python scripts/test-workout-runtime-v52.py
           python scripts/test-client-sound-v53.py
 
@@ -79,7 +82,9 @@ jobs:
           grep -q 'America/Santiago' client-portal/stable/index.html
           grep -q 'cv-rank-engine-v61' client-portal/stable/index.html
           grep -q 'cv-rank-real-ui-v64' client-portal/stable/index.html
+          grep -q 'cv-rank-real-ui-v65' client-portal/stable/index.html
           grep -q 'cv64WorkoutRankHud' client-portal/stable/index.html
+          grep -q 'cv65LeagueProgress' client-portal/stable/index.html
           grep -q './assets/cv-rank-v61.js' client-portal/stable/index.html
           grep -q './assets/cv-rank-v61.css' client-portal/stable/index.html
           if grep -q 'cv-rank-system-v60-js' client-portal/stable/index.html; then echo 'V60 rank runtime still active' >&2; exit 1; fi
@@ -142,7 +147,7 @@ jobs:
         shell: bash
         run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
-      - name: Verify public production alias through V64
+      - name: Verify public production alias through V65
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
@@ -158,18 +163,18 @@ jobs:
               status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 "https://cv-coach-roan.vercel.app/assets/ranks/cv-rank-${f}-v61.webp?v=64" || true)"
               [[ "$status" == "200" ]] || assets_ok=false
             done
-            if [[ "$body" == *"cv-rank-engine-v61"* && "$body" == *"cv-rank-real-ui-v64"* && "$body" == *"cv64WorkoutRankHud"* && "$body" == *"./assets/cv-rank-v61.js"* && "$body" != *"cv-rank-system-v60-js"* && "$body" != *"cv-rank-real-ui-v63-js"* && "$js_status" == "200" && "$css_status" == "200" && "$sw_status" == "200" && "$assets_ok" == "true" ]]; then
+            if [[ "$body" == *"cv-rank-engine-v61"* && "$body" == *"cv-rank-real-ui-v64"* && "$body" == *"cv-rank-real-ui-v65"* && "$body" == *"cv64WorkoutRankHud"* && "$body" == *"cv65LeagueProgress"* && "$body" == *"./assets/cv-rank-v61.js"* && "$body" != *"cv-rank-system-v60-js"* && "$body" != *"cv-rank-real-ui-v63-js"* && "$js_status" == "200" && "$css_status" == "200" && "$sw_status" == "200" && "$assets_ok" == "true" ]]; then
               grep -qi '^x-content-type-options: nosniff' "$headers"
               grep -qi '^x-frame-options: DENY' "$headers"
               grep -qi '^content-security-policy:' "$headers"
-              echo 'PUBLIC_PORTAL_CV_RANK_V64_OK'
+              echo 'PUBLIC_PORTAL_CV_RANK_V65_OK'
               rm -f "$headers"
               exit 0
             fi
             rm -f "$headers"
             sleep 3
           done
-          echo 'Public CV Rank V64 alias verification failed' >&2
+          echo 'Public CV Rank V65 alias verification failed' >&2
           exit 1
 
       - name: Vercel credential required for canonical production
