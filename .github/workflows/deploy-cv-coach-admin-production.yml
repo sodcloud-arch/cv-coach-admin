@@ -43,7 +43,13 @@ jobs:
         id: auth
         shell: bash
         run: |
-          if [[ -z "${VERCEL_TOKEN:-}" ]]; then echo "available=false" >> "$GITHUB_OUTPUT"; echo "VERCEL_TOKEN_MISSING"; else echo "available=true" >> "$GITHUB_OUTPUT"; echo "VERCEL_TOKEN_AVAILABLE"; fi
+          if [[ -z "${VERCEL_TOKEN:-}" ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "VERCEL_TOKEN_MISSING"
+          else
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "VERCEL_TOKEN_AVAILABLE"
+          fi
       - name: Link canonical Vercel project
         if: steps.auth.outputs.available == 'true'
         shell: bash
@@ -59,7 +65,7 @@ jobs:
       - name: Deploy canonical production
         if: steps.auth.outputs.available == 'true'
         run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-      - name: Verify public Admin Rank V62
+      - name: Verify public Admin alias — Rank V62
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
