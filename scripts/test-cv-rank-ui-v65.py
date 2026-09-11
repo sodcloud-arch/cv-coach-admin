@@ -20,11 +20,30 @@ for token in [
     '.cv64CompactPath .cv64Step.next',
     '.cv64CompactPath .cv64Step:first-child img{opacity:0!important',
     "content:'ACTUAL'!important",
-    "content:'PRÓXIMO'!important",
     '.cv65LeagueProgress',
     '.cv65CompactState'
 ]:
     assert token in css, f'V65 CSS contract missing: {token}'
+
+# Current league must be the sole boxed focus. The next league remains visible but unboxed.
+for token in [
+    '.cv64CompactPath .cv64Step.next::after{content:none!important;display:none!important}',
+    'border-color:transparent!important',
+    'background:transparent!important',
+    'box-shadow:none!important'
+]:
+    assert token in css, f'V65 next-rank focus contract missing: {token}'
+
+# Tutorial stays a non-rank empty slot, but completed initiation must be unmistakable.
+for token in [
+    ".cv64CompactPath .cv64Step:first-child.reached:not(.current)::before{",
+    "content:'✓'",
+    'color:#45d79a',
+    "content:'HECHO'!important;color:#45d79a!important"
+]:
+    assert token in css, f'V65 tutorial completion contract missing: {token}'
+
+assert "content:'PRÓXIMO'!important" not in css, 'next league still receives competing PRÓXIMO badge treatment'
 
 for token in [
     'CVRankRealUIV65',
@@ -50,7 +69,8 @@ if STABLE.exists():
         'cv-rank-real-ui-v65-js',
         'cv-rank-real-ui-v65: uniform-seven-slot-track + empty-tutorial + compact-rank-card',
         'grid-template-columns:repeat(7,minmax(0,1fr))!important',
-        'cv65LeagueProgress'
+        'cv65LeagueProgress',
+        "content:'✓'"
     ]:
         assert token in html, f'stable V65 contract missing: {token}'
     assert 'cv-rank-real-ui-v63-js' not in html, 'V63 runtime still active in stable build'
