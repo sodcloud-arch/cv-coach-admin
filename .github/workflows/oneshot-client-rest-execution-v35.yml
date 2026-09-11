@@ -6,6 +6,7 @@ on:
       - feature/client-rest-timer-execution-button-v1
     paths:
       - '.github/workflows/oneshot-client-rest-execution-v35.yml'
+      - 'scripts/oneshot-client-rest-execution-v35.py'
 
 permissions:
   contents: write
