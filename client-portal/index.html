@@ -1737,4 +1737,179 @@ body.cvFastWorkout .cvExerciseTitleRowV35 h3:after{display:none!important}
 })();
 </script>
 
+
+<style id="cv-client-workout-compact-v40">
+/* CV Coach Client Workout Compact V40
+   Pre-start = clear overview + integrated start CTA.
+   Active session = compact logging-first surface. */
+@media(max-width:767px){
+  body.cvFastWorkout .content{
+    padding-left:10px!important;
+    padding-right:10px!important;
+    padding-bottom:calc(126px + env(safe-area-inset-bottom))!important;
+    scroll-padding-bottom:calc(126px + env(safe-area-inset-bottom));
+  }
+
+  /* PRE-START: no floating top action or zero-value metric strip. */
+  body.cvWorkoutPrestartV40 .workoutTop,
+  body.cvWorkoutPrestartV40 .cvSessionStats{display:none!important}
+  body.cvWorkoutPrestartV40 .cvWorkoutHeroV31{
+    margin:0 0 8px!important;
+    padding:18px 17px 17px!important;
+    min-height:0!important;
+  }
+  body.cvWorkoutPrestartV40 .cvWorkoutLivePill{
+    border-color:rgba(67,184,255,.30)!important;
+    background:rgba(67,184,255,.075)!important;
+    color:#87d7ff!important;
+  }
+  body.cvWorkoutPrestartV40 .cvWorkoutLivePill:before{
+    background:#43b8ff!important;
+    box-shadow:0 0 12px rgba(67,184,255,.45)!important;
+  }
+  .cvWorkoutStartV40{
+    width:100%;min-height:50px;margin-top:14px;padding:0 16px;
+    border:1px solid #55c3ff;border-radius:13px;
+    background:linear-gradient(180deg,#39b6fb,#168fd6);
+    color:#fff;font-size:13px;font-weight:900;letter-spacing:.045em;
+    box-shadow:0 12px 30px rgba(36,159,232,.20);cursor:pointer;
+    touch-action:manipulation;
+  }
+  .cvWorkoutStartV40:active{transform:scale(.985)}
+
+  /* ACTIVE: remove presentation blocks and expose the log immediately. */
+  body.cvWorkoutActiveV40 .cvWorkoutHeroV31,
+  body.cvWorkoutActiveV40 .cvSessionStats{display:none!important}
+  body.cvWorkoutActiveV40 .workoutTop{
+    display:block!important;
+    position:sticky!important;
+    top:calc(72px + env(safe-area-inset-top))!important;
+    z-index:34!important;
+    margin:0 -10px 7px!important;
+    padding:8px 10px!important;
+    background:rgba(3,8,11,.965)!important;
+    border-bottom:1px solid #26343d!important;
+    backdrop-filter:blur(18px)!important;
+    box-shadow:0 10px 26px rgba(0,0,0,.30)!important;
+  }
+  body.cvWorkoutActiveV40 .workoutTop .row{
+    min-height:50px!important;gap:9px!important;align-items:center!important;
+  }
+  body.cvWorkoutActiveV40 .workoutTop .grow{flex:1 1 auto!important;min-width:0!important}
+  .cvWorkoutCompactCopyV40{min-width:0;display:block}
+  .cvWorkoutCompactCopyV40 strong{
+    display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    color:#f7f9fa;font-size:16px;line-height:1.05;font-weight:900;letter-spacing:-.015em;
+  }
+  .cvWorkoutCompactCopyV40 span{
+    display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    color:#8fa0aa;font-size:9.5px;line-height:1.1;font-weight:750;
+  }
+  .cvWorkoutCompactCopyV40 span b{color:#6fceff;font-weight:900}
+  .cvWorkoutCompactCopyV40 span em{color:#f3f7f9;font-style:normal;font-weight:900}
+  .cvWorkoutCompactProgressV40{
+    display:block;height:3px;margin-top:7px;border-radius:999px;background:#18232a;overflow:hidden;
+  }
+  .cvWorkoutCompactProgressV40 i{
+    display:block;height:100%;border-radius:inherit;
+    background:linear-gradient(90deg,#2ba8f3,#4ec7d5 55%,#5ee3a5);
+    box-shadow:0 0 10px rgba(67,184,255,.18);
+  }
+  body.cvWorkoutActiveV40 .workoutTop .btn{
+    flex:0 0 auto!important;height:42px!important;min-height:42px!important;
+    padding:0 12px!important;border-radius:11px!important;font-size:10px!important;
+  }
+
+  /* Logging density: keep type legible, remove non-essential air. */
+  body.cvFastWorkout .section{margin-top:5px!important;padding-top:0!important}
+  body.cvFastWorkout .cvHevyExercise{
+    margin-bottom:8px!important;padding:12px 10px 11px!important;border-radius:14px!important;
+    scroll-margin-top:calc(140px + env(safe-area-inset-top));
+    scroll-margin-bottom:calc(126px + env(safe-area-inset-bottom));
+  }
+  body.cvFastWorkout .exerciseTop{gap:8px!important;margin-bottom:1px!important}
+  body.cvFastWorkout .exerciseTop .num{
+    width:38px!important;height:38px!important;min-width:38px!important;border-radius:11px!important;font-size:19px!important;
+  }
+  body.cvFastWorkout .exerciseTop h3{font-size:24px!important;line-height:1.02!important}
+  .cvExerciseTitleRowV35{gap:6px!important;margin-bottom:3px!important}
+  .cvExecutionBtnV35{min-height:32px!important;padding:0 9px!important;font-size:8px!important;border-radius:9px!important}
+  .cvExerciseStatusV31{min-height:20px!important;padding:0 7px!important;font-size:7px!important}
+  body.cvFastWorkout .cvPrescription{gap:4px!important}
+  .cvPrescriptionChip{min-height:23px!important;padding:0 7px!important;font-size:8px!important}
+  body.cvFastWorkout .cvHevyExercise>.cvRestText{
+    margin:6px 0 8px 46px!important;padding:5px 8px!important;font-size:9px!important;
+  }
+  body.cvFastWorkout .cvSetsHead{padding-bottom:4px!important}
+  body.cvFastWorkout .cvSetsHead span{font-size:9.5px!important}
+  body.cvFastWorkout .cvSetRows{gap:4px!important}
+  body.cvFastWorkout .cvSetRow{min-height:48px!important;padding:0!important;scroll-margin-bottom:132px}
+  body.cvFastWorkout .cvSetNo{height:44px!important;font-size:18px!important}
+  body.cvFastWorkout .cvSetRow input{height:44px!important;font-size:18px!important}
+  body.cvFastWorkout .cvSetCheck{height:44px!important;font-size:19px!important}
+  body.cvFastWorkout .cvPrevMain{font-size:13.5px!important}
+  body.cvFastWorkout .cvPrevMeta{font-size:7.4px!important;margin-top:2px!important}
+  body.cvFastWorkout .cvAddSet{height:42px!important;margin-top:7px!important;font-size:12.5px!important}
+}
+
+@media(max-width:390px){
+  .cvWorkoutCompactCopyV40 strong{font-size:15px}
+  .cvWorkoutCompactCopyV40 span{font-size:9px}
+  body.cvWorkoutActiveV40 .workoutTop .btn{padding:0 9px!important;font-size:9.5px!important}
+  body.cvFastWorkout .exerciseTop h3{font-size:22px!important}
+  .cvExecutionBtnV35{font-size:7.5px!important;padding:0 8px!important}
+}
+</style>
+<script id="cv-client-workout-compact-v40-js">
+(function(){
+  let compactTickV40=null;
+  const cleanDayV40=name=>String(name||'Entrenamiento').replace(/^D[ií]a\s*\d+\s*[—–-]?\s*/i,'').trim()||'Entrenamiento';
+  const workoutExercisesV40=()=>{try{return typeof window.cvExercises==='function'?(window.cvExercises()||[]):[]}catch(_){return []}};
+  function workoutActiveViewV40(){try{return typeof view!=='undefined'&&view==='workout'&&!!workout}catch(_){return false}}
+  function workoutStartedV40(){try{return !!workout?.sessionId}catch(_){return false}}
+  function workoutDayV40(){try{return data?.days?.find(x=>x.id===workout?.dayId)||null}catch(_){return null}}
+  function stateV40(){
+    const exs=workoutExercisesV40();let totalSets=0,doneSets=0,volume=0;
+    exs.forEach(e=>(e.sets||[]).forEach(s=>{totalSets++;if(s.completed){doneSets++;if((e.prescription_unit||'reps')==='reps'){const w=Number(s.weight_kg||0),r=Number(s.reps||0);if(Number.isFinite(w)&&Number.isFinite(r))volume+=w*r}}}));
+    return {totalSets,doneSets,volume,pct:totalSets?Math.round(doneSets/totalSets*100):0};
+  }
+  function elapsedV40(){
+    try{if(!workout?.started)return '00:00';const sec=Math.max(0,Math.floor((Date.now()-Number(workout.started))/1000));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0')}catch(_){return '00:00'}
+  }
+  function ensureStartCtaV40(hero){
+    if(!hero)return;let cta=hero.querySelector('.cvWorkoutStartV40');
+    if(!cta){cta=document.createElement('button');cta.type='button';cta.className='cvWorkoutStartV40';cta.textContent='INICIAR ENTRENAMIENTO';cta.addEventListener('click',()=>{if(typeof window.startWorkout==='function')window.startWorkout()});hero.appendChild(cta)}
+    const live=hero.querySelector('.cvWorkoutLivePill');if(live)live.textContent='LISTO PARA INICIAR';
+  }
+  function removeStartCtaV40(){document.querySelector('.cvWorkoutStartV40')?.remove()}
+  function renderCompactTopV40(){
+    const top=document.querySelector('.workoutTop'),grow=top?.querySelector('.grow');if(!top||!grow)return;
+    const d=workoutDayV40(),s=stateV40(),name=cleanDayV40(d?.name||'Entrenamiento');
+    let copy=grow.querySelector('.cvWorkoutCompactCopyV40');
+    if(!copy){copy=document.createElement('div');copy.className='cvWorkoutCompactCopyV40';grow.replaceChildren(copy)}
+    copy.innerHTML='<strong>'+esc(name)+'</strong><span><b>'+s.doneSets+'/'+s.totalSets+'</b> series · '+Math.round(s.volume).toLocaleString('es-CL')+' kg · <em id="cvCompactTimerV40">'+elapsedV40()+'</em> · '+s.pct+'%</span><span class="cvWorkoutCompactProgressV40"><i style="width:'+s.pct+'%"></i></span>';
+  }
+  function refreshTimerV40(){const el=document.getElementById('cvCompactTimerV40');if(el)el.textContent=elapsedV40()}
+  function applyCompactV40(){
+    const active=workoutActiveViewV40(),started=active&&workoutStartedV40();
+    document.body.classList.toggle('cvWorkoutPrestartV40',active&&!started);
+    document.body.classList.toggle('cvWorkoutActiveV40',started);
+    if(!active){removeStartCtaV40();return}
+    const hero=document.querySelector('.cvWorkoutHeroV31');
+    if(started){removeStartCtaV40();renderCompactTopV40()}else ensureStartCtaV40(hero);
+  }
+  function bootTickV40(){if(compactTickV40)return;compactTickV40=setInterval(()=>{if(document.body.classList.contains('cvWorkoutActiveV40')){refreshTimerV40();const s=stateV40(),copy=document.querySelector('.cvWorkoutCompactCopyV40 span:not(.cvWorkoutCompactProgressV40)');if(copy){const em=copy.querySelector('em'),time=em?.textContent||elapsedV40(),d=workoutDayV40();copy.innerHTML='<b>'+s.doneSets+'/'+s.totalSets+'</b> series · '+Math.round(s.volume).toLocaleString('es-CL')+' kg · <em id="cvCompactTimerV40">'+time+'</em> · '+s.pct+'%'}const fill=document.querySelector('.cvWorkoutCompactProgressV40 i');if(fill)fill.style.width=s.pct+'%'}},1000)}
+  const baseRender=window.render;
+  if(typeof baseRender==='function')window.render=function(){const result=baseRender.apply(this,arguments);requestAnimationFrame(applyCompactV40);return result};
+  if(typeof window.startWorkout==='function'){const baseStart=window.startWorkout;window.startWorkout=async function(){const result=await baseStart.apply(this,arguments);requestAnimationFrame(applyCompactV40);return result}}
+  if(typeof window.cvToggleSet==='function'){const baseToggle=window.cvToggleSet;window.cvToggleSet=async function(){const result=await baseToggle.apply(this,arguments);requestAnimationFrame(applyCompactV40);return result}}
+  document.addEventListener('focusin',event=>{
+    const el=event.target;if(!(el instanceof HTMLInputElement)||!/^cv[wr]_/.test(el.id))return;
+    setTimeout(()=>{const viewport=window.visualViewport?.height||window.innerHeight,rect=el.getBoundingClientRect();if(rect.bottom>viewport-118||rect.top<138)el.scrollIntoView({behavior:'smooth',block:'center'})},180);
+  },true);
+  window.addEventListener('pageshow',applyCompactV40);document.addEventListener('visibilitychange',()=>{if(!document.hidden)applyCompactV40()});
+  bootTickV40();requestAnimationFrame(applyCompactV40);
+})();
+</script>
+
 </body></html>
