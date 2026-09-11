@@ -1,7 +1,8 @@
-const CACHE_NAME='cv-coach-shell-v2';
+const CACHE_NAME='cv-coach-shell-v64';
 const APP_SHELL=[
   './','./index.html','./manifest.webmanifest','./icon.svg',
   './assets/cv-rank-v61.js','./assets/cv-rank-v61.css',
+  './assets/ranks/cv-rank-tutorial-v61.webp',
   './assets/ranks/cv-rank-bronze-v61.webp','./assets/ranks/cv-rank-silver-v61.webp',
   './assets/ranks/cv-rank-gold-v61.webp','./assets/ranks/cv-rank-platinum-v61.webp',
   './assets/ranks/cv-rank-diamond-v61.webp','./assets/ranks/cv-rank-legend-v61.webp'
