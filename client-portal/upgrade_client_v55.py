@@ -5,7 +5,7 @@ import json
 ROOT = Path(__file__).resolve().parent
 HTML = ROOT / "stable" / "index.html"
 BUILD = ROOT / "stable" / "build.json"
-MARKER = "<!-- cv-workout-sound-language-v55: original set confirm + 10-1 countdown + distinct ready -->"
+MARKER = "<!-- cv-workout-sound-language-v55: original set confirm + single 10-1 countdown + distinct ready -->"
 
 text = HTML.read_text(encoding="utf-8")
 
@@ -35,9 +35,9 @@ SOUND_SCRIPT = r'''<script id="cv-workout-sound-v55-js">
   }
   function countdownTick(sec){
     if(sec>=4){tone(780,.042,0,.012,'square');return}
-    if(sec===3){tone(820,.060,0,.024,'square');tone(980,.045,.030,.012,'triangle');return}
-    if(sec===2){tone(880,.065,0,.026,'square');tone(1080,.050,.032,.013,'triangle');return}
-    if(sec===1){tone(960,.075,0,.030,'square');tone(1240,.060,.036,.015,'triangle')}
+    if(sec===3){tone(840,.075,0,.026,'square');return}
+    if(sec===2){tone(920,.085,0,.029,'square');return}
+    if(sec===1){tone(1040,.105,0,.033,'square')}
   }
   function ready(){
     tone(660,.08,0,.025,'triangle');tone(825,.09,.065,.024,'triangle');tone(990,.15,.13,.022,'triangle')
@@ -104,9 +104,9 @@ required = [
     "window.CVSound?.setEnabled(false)",
     "localStorage.getItem('cv_sound_enabled')",
     "tone(780,.042,0,.012,'square')",
-    "sec===3",
-    "sec===2",
-    "sec===1",
+    "tone(840,.075,0,.026,'square')",
+    "tone(920,.085,0,.029,'square')",
+    "tone(1040,.105,0,.033,'square')",
     "tone(660,.08,0,.025,'triangle')",
     "tone(825,.09,.065,.024,'triangle')",
     "tone(990,.15,.13,.022,'triangle')",
@@ -118,9 +118,9 @@ for item in required:
     if item not in text:
         raise SystemExit(f"sound v55 required contract missing: {item}")
 
-# The original set confirmation must remain the single synthesized source after
-# V53 is disabled. These are the exact original CV confirm notes recovered from
-# the canonical pre-V41 runtime.
+# The original set confirmation remains the single set-complete sound after
+# V53 is disabled. 3-2-1 use one stronger note each; they must never be built
+# from two overlapping tones because that sounds like a duplicate beep.
 for original in [
     "tone(c,523,.065,0,.027,'triangle')",
     "tone(c,659,.07,.045,.025,'triangle')",
@@ -143,9 +143,9 @@ metadata["sha256"] = sha
 patches = list(metadata.get("patches") or [])
 for patch in [
     "original set-confirm sound restored v55",
-    "countdown ticks 10-to-4 restored v55",
-    "emphasized 3-2-1 countdown v55",
-    "distinct rest-ready chime restored v55",
+    "single countdown ticks 10-to-4 v55",
+    "single emphasized notes 3-2-1 v55",
+    "distinct rest-ready chime v55",
     "single sound preference cv_sound_enabled v55",
 ]:
     if patch not in patches:
