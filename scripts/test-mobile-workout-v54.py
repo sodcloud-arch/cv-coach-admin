@@ -18,7 +18,6 @@ required = [
     'El inicio del entrenamiento no respondió a tiempo.',
     "document.addEventListener('cv:set-state',()=>queueCompactV44())",
     'requestAnimationFrame(workoutState);',
-    "await cvPersistSetLogV51(ex,s,body,'set log missing','set update was not confirmed')",
     "new CustomEvent('cv:set-state',{detail:{i,j,completed:next}})",
 ]
 for item in required:
@@ -37,19 +36,36 @@ if "sb.functions.invoke('start-workout'" in load_block:
 if 'cvInvokeStartWorkoutV54(dayId)' not in load_block:
     raise SystemExit('V54 loadSession does not use bounded start helper')
 
-# Persistence still has to precede the domain event. This prevents green ✓,
-# sound or progress from reporting success when Supabase did not confirm it.
+# Persistence still has to precede the domain event. V56 supersedes the old
+# V48/V51 toggle, so validate whichever handler is actually final in the built
+# artifact rather than requiring an obsolete implementation detail.
 toggle_anchor = 'window.cvToggleSet=async function(i,j)'
 pos = text.rfind(toggle_anchor)
 if pos < 0:
     raise SystemExit('V54 canonical set toggle missing')
 tail = text[pos:]
-persist = tail.find('await cvPersistSetLogV51')
-success = tail.find('return commitSuccess()', persist)
-commit_decl = tail.find('const commitSuccess=()=>')
-event = tail.find("new CustomEvent('cv:set-state'", commit_decl)
-if min(persist, success, commit_decl, event) < 0 or success < persist or event < commit_decl:
-    raise SystemExit('V54 confirmed set persistence/event ordering broken')
+if 'cv-set-toggle-runtime-v56' in text:
+    persist = tail.find('await persistSet(p.ex,p.s,body)')
+    event = tail.find("new CustomEvent('cv:set-state'", persist)
+    if persist < 0 or event < persist:
+        raise SystemExit('V54/V56 confirmed set persistence/event ordering broken')
+    for fragment in [
+        'function persistSet(ex,s,body)',
+        ".update(body).eq('id',s.set_log_id).select('id').maybeSingle()",
+        "throw new Error('set update was not confirmed')",
+    ]:
+        if fragment not in text:
+            raise SystemExit(f'V54/V56 confirmed persistence owner missing: {fragment}')
+else:
+    legacy_required = "await cvPersistSetLogV51(ex,s,body,'set log missing','set update was not confirmed')"
+    if legacy_required not in text:
+        raise SystemExit(f'V54 legacy persistence contract missing: {legacy_required}')
+    persist = tail.find('await cvPersistSetLogV51')
+    success = tail.find('return commitSuccess()', persist)
+    commit_decl = tail.find('const commitSuccess=()=>')
+    event = tail.find("new CustomEvent('cv:set-state'", commit_decl)
+    if min(persist, success, commit_decl, event) < 0 or success < persist or event < commit_decl:
+        raise SystemExit('V54 confirmed set persistence/event ordering broken')
 
 # The compact top summary must re-read model state after the successful event;
 # click-only synchronization is too early on mobile because persistence is async.
