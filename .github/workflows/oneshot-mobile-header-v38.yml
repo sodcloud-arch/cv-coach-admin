@@ -1,0 +1,50 @@
+name: CV Coach Mobile Header V38
+
+on:
+  push:
+    branches:
+      - feature/mobile-header-v38
+    paths:
+      - '.github/workflows/oneshot-mobile-header-v38.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cv-coach-mobile-header-v38
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/mobile-header-v38
+
+      - name: Apply mobile header V38
+        run: |
+          set -euo pipefail
+          python scripts/oneshot-mobile-header-v38.py
+
+      - name: Validate portal and repository
+        run: |
+          set -euo pipefail
+          python scripts/validate-repo-contracts.py
+          grep -q 'cv-client-header-v38' client-portal/index.html
+          grep -q 'width:144px!important' client-portal/index.html
+          grep -q "b.textContent='RUTINA'" client-portal/index.html
+          grep -q 'workoutTop{top:calc(76px + env(safe-area-inset-top))!important}' client-portal/index.html
+          ! grep -q 'cv-client-header-option3-v37' client-portal/index.html
+          git diff --check
+
+      - name: Commit canonical change and remove temporary files
+        run: |
+          set -euo pipefail
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client-portal/index.html
+          git rm -f scripts/oneshot-mobile-header-v38.py .github/workflows/oneshot-mobile-header-v38.yml
+          git commit -m 'feat(client): optimize mobile header v38'
+          git push origin HEAD:feature/mobile-header-v38
