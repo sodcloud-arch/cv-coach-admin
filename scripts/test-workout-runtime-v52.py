@@ -23,9 +23,44 @@ def extract_braced(source: str, anchor: str) -> str:
     start = source.find(anchor)
     if start < 0:
         raise SystemExit(f"V52 anchor missing: {anchor}")
-    brace = source.find("{", start)
+
+    # Find the function body only after the complete parameter list. This is
+    # intentionally signature-aware because loadSession has a destructured
+    # parameter containing braces before the real function body begins.
+    paren = source.find("(", start)
+    if paren < 0:
+        raise SystemExit(f"V52 parameter list missing: {anchor}")
+    pdepth = 0
+    quote = None
+    escaped = False
+    close_paren = -1
+    i = paren
+    while i < len(source):
+        ch = source[i]
+        if quote:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == quote:
+                quote = None
+        else:
+            if ch in ("'", '"', "`"):
+                quote = ch
+            elif ch == "(":
+                pdepth += 1
+            elif ch == ")":
+                pdepth -= 1
+                if pdepth == 0:
+                    close_paren = i
+                    break
+        i += 1
+    if close_paren < 0:
+        raise SystemExit(f"V52 unbalanced parameter list: {anchor}")
+
+    brace = source.find("{", close_paren + 1)
     if brace < 0:
-        raise SystemExit(f"V52 opening brace missing: {anchor}")
+        raise SystemExit(f"V52 opening body brace missing: {anchor}")
     depth = 0
     quote = None
     escaped = False
