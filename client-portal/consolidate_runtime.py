@@ -66,17 +66,101 @@ new_v40 = """  let compactSyncQueuedV44=false;
 """
 replace_once_or_keep(old_v40, new_v40, "v40 compact wrappers removal")
 
-marker = "<!-- cv-runtime-consolidation-v44: visual wrappers removed; DOM observers own visual sync -->"
-if marker not in text:
+# Phase 2: make the final functional set logger publish explicit domain events.
+# Feedback layers listen to those events instead of wrapping cvToggleSet/cvAddSet.
+# Events are emitted only after a successful persistence path (or demo/local path),
+# so a failed DB save cannot start a false rest timer.
+replace_once_or_keep(
+    "if(mode==='demo'||!s.set_log_id)return;\n    const body=unit==='seconds'?",
+    "if(mode==='demo'||!s.set_log_id){document.dispatchEvent(new CustomEvent('cv:set-state',{detail:{i,j,completed:next}}));return;}\n    const body=unit==='seconds'?",
+    "publish demo/local set-state event",
+)
+
+replace_once_or_keep(
+    "try{const {error}=await sb.from('set_logs').update(body).eq('id',s.set_log_id);if(error)throw error}catch(e){",
+    "try{const {error}=await sb.from('set_logs').update(body).eq('id',s.set_log_id);if(error)throw error;document.dispatchEvent(new CustomEvent('cv:set-state',{detail:{i,j,completed:next}}))}catch(e){",
+    "publish persisted set-state event",
+)
+
+replace_once_or_keep(
+    "ex.sets=ex.sets||[];ex.sets.push(s);render()}",
+    "ex.sets=ex.sets||[];ex.sets.push(s);render();document.dispatchEvent(new CustomEvent('cv:set-added',{detail:{i,j:next-1}}))}",
+    "publish set-added event",
+)
+
+old_v21 = """  const oldToggle=window.cvToggleSet;
+  window.cvToggleSet=async function(i,j){
+    const before=!!(typeof window.cvExercises==='function'&&window.cvExercises()?.[i]?.sets?.[j]?.completed);
+    const r=await oldToggle.apply(this,arguments);
+    const after=!!(typeof window.cvExercises==='function'&&window.cvExercises()?.[i]?.sets?.[j]?.completed);
+    if(!before&&after){
+      try{navigator.vibrate?.(35)}catch(_){}
+      requestAnimationFrame(()=>{const row=document.getElementById('cvw_'+i+'_'+j)?.closest('.cvSetRow');if(row){row.classList.add('cvJustCompleted');setTimeout(()=>row.classList.remove('cvJustCompleted'),380)}})
+    }
+    return r;
+  };
+  const oldAdd=window.cvAddSet;
+  window.cvAddSet=async function(i){
+    const before=(typeof window.cvExercises==='function'?window.cvExercises()?.[i]?.sets?.length:0)||0;
+    const r=await oldAdd.apply(this,arguments);
+    requestAnimationFrame(()=>{const x=document.getElementById('cvw_'+i+'_'+before);if(x){x.focus();setTimeout(()=>{try{x.select()}catch(_){}},25)}});
+    return r;
+  };
+"""
+new_v21 = """  document.addEventListener('cv:set-state',event=>{
+    const detail=event.detail||{};if(!detail.completed)return;
+    try{navigator.vibrate?.(35)}catch(_){}
+    requestAnimationFrame(()=>{const row=document.getElementById('cvw_'+detail.i+'_'+detail.j)?.closest('.cvSetRow');if(row){row.classList.add('cvJustCompleted');setTimeout(()=>row.classList.remove('cvJustCompleted'),380)}})
+  });
+  document.addEventListener('cv:set-added',event=>{
+    const detail=event.detail||{};requestAnimationFrame(()=>{const x=document.getElementById('cvw_'+detail.i+'_'+detail.j);if(x){x.focus();setTimeout(()=>{try{x.select()}catch(_){}},25)}})
+  });
+"""
+replace_once_or_keep(old_v21, new_v21, "v21 toggle/add wrappers to events")
+
+old_v32 = """  /* v25 is the final functional toggle in the current portal. Wrap it here so visual feedback cannot be overwritten. */
+  if(typeof window.cvToggleSet==='function'){
+    const baseToggle=window.cvToggleSet;
+    window.cvToggleSet=async function(i,j){
+      const before=!!exs()?.[i]?.sets?.[j]?.completed;
+      const result=await baseToggle.apply(this,arguments);
+      const e=exs()?.[i],after=!!e?.sets?.[j]?.completed;
+      requestAnimationFrame(workoutState);
+      if(!before&&after)showVisualRest(e?.rest_seconds||90,e?.name||'');
+      if(before&&!after){/* Unchecking a past set must not create a rest countdown. */}
+      return result;
+    };
+  }
+"""
+new_v32 = """  /* Visual feedback subscribes to the canonical set-state event. */
+  document.addEventListener('cv:set-state',event=>{
+    const detail=event.detail||{},e=exs()?.[detail.i];
+    requestAnimationFrame(workoutState);
+    if(detail.completed)showVisualRest(e?.rest_seconds||90,e?.name||'');
+  });
+"""
+replace_once_or_keep(old_v32, new_v32, "v32 toggle wrapper to set-state event")
+
+marker_v44 = "<!-- cv-runtime-consolidation-v44: visual wrappers removed; DOM observers own visual sync -->"
+if marker_v44 not in text:
     if "</body>" not in text:
-        raise SystemExit("runtime consolidation marker: </body> missing")
-    text = text.replace("</body>", marker + "\n</body>", 1)
+        raise SystemExit("runtime consolidation marker v44: </body> missing")
+    text = text.replace("</body>", marker_v44 + "\n</body>", 1)
+
+marker_v45 = "<!-- cv-runtime-consolidation-v45: set feedback moved to canonical domain events -->"
+if marker_v45 not in text:
+    if "</body>" not in text:
+        raise SystemExit("runtime consolidation marker v45: </body> missing")
+    text = text.replace("</body>", marker_v45 + "\n</body>", 1)
 
 required = [
     "cvPremiumDecorObserver",
     "queueAthleteEnhance",
     "compactObserverV44",
-    marker,
+    "cv:set-state",
+    "cv:set-added",
+    marker_v44,
+    marker_v45,
     "duration_seconds:performed",
     "cv-runtime-audit-v43",
 ]
@@ -88,6 +172,9 @@ forbidden = [
     "const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(decorateCards);return r};",
     "if(typeof window.cvToggleSet==='function'){const baseToggle=window.cvToggleSet;window.cvToggleSet=async function(){const r=await baseToggle.apply(this,arguments);requestAnimationFrame(enhance);return r}}",
     "if(typeof window.startWorkout==='function'){const baseStart=window.startWorkout;window.startWorkout=async function(){const result=await baseStart.apply(this,arguments);requestAnimationFrame(applyCompactV40);return result}}",
+    "const oldToggle=window.cvToggleSet;",
+    "const oldAdd=window.cvAddSet;",
+    "Wrap it here so visual feedback cannot be overwritten",
 ]
 for item in forbidden:
     if item in text:
@@ -109,10 +196,13 @@ for patch in [
     "v23 visual wrapper removed",
     "v31 workout visual wrappers removed",
     "v40 compact visual wrappers removed",
-    "runtime consolidation v44",
+    "v21 set feedback wrappers replaced by events",
+    "v32 visual rest wrapper replaced by set-state event",
+    "canonical set-state/set-added event bus",
+    "runtime consolidation v45",
 ]:
     if patch not in patches:
         patches.append(patch)
 metadata["patches"] = patches
 BUILD.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-4:]}, ensure_ascii=False))
+print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-7:]}, ensure_ascii=False))
