@@ -28,6 +28,7 @@ jobs:
           python client-portal/upgrade_feedback_v48.py
           python client-portal/upgrade_client_v49.py
           python client-portal/upgrade_client_v50.py
+          python client-portal/upgrade_client_v51.py
           grep -q 'cv-feedback-simple-v48' client-portal/stable/index.html
           grep -q 'save_workout_feedback_v2' client-portal/stable/index.html
           grep -q 'cvSetToggleLocksV48' client-portal/stable/index.html
@@ -39,6 +40,18 @@ jobs:
           grep -q 'cvDraftSaveLocksV50' client-portal/stable/index.html
           grep -q 'draft update was not confirmed' client-portal/stable/index.html
           grep -q 'kg·reps · <em' client-portal/stable/index.html
+          grep -q 'cv-client-runtime-v51' client-portal/stable/index.html
+          grep -q 'cvPersistSetLogV51' client-portal/stable/index.html
+          grep -q 'cv-render-bus-v51-js' client-portal/stable/index.html
+          grep -q "new CustomEvent('cv:rendered')" client-portal/stable/index.html
+          if grep -q 'baseRender=window.render' client-portal/stable/index.html; then
+            echo 'Historical render wrapper remained in stable artifact' >&2
+            exit 1
+          fi
+          if grep -q 'baseNav=window.nav' client-portal/stable/index.html; then
+            echo 'Historical nav wrapper remained in stable artifact' >&2
+            exit 1
+          fi
           if grep -q 'cvRirInput' client-portal/stable/index.html; then
             echo 'Client-only RIR input remained in stable artifact' >&2
             exit 1
