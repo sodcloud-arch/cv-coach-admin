@@ -1,6 +1,7 @@
 from pathlib import Path
 import hashlib
 import json
+import runpy
 
 ROOT = Path(__file__).resolve().parent
 HTML = ROOT / "stable" / "index.html"
@@ -66,3 +67,8 @@ for patch in [
 metadata["patches"] = patches
 BUILD.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-3:]}, ensure_ascii=False))
+
+# V60 is intentionally chained from the existing production build owner so
+# rank UI cannot be deployed without all V52-V59 regression gates first.
+runpy.run_path(str(ROOT / "upgrade_client_v60.py"), run_name="__main__")
+runpy.run_path(str(ROOT.parent / "scripts" / "test-cv-rank-system-v60.py"), run_name="__main__")
