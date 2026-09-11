@@ -1,5 +1,4 @@
 from pathlib import Path
-import re
 import subprocess
 import tempfile
 
@@ -48,13 +47,45 @@ for fragment in required_sql:
 if 'coach_alerts' not in admin or "status:'resolved'" not in admin:
     raise SystemExit('V59 could not verify the Admin alert-close surface')
 
+
+def extract_braced_function(source: str, signature: str) -> str:
+    start = source.find(signature)
+    if start < 0:
+        raise SystemExit(f'V59 function signature missing: {signature}')
+    brace = source.find('{', start + len(signature))
+    if brace < 0:
+        raise SystemExit(f'V59 function body missing: {signature}')
+    depth = 0
+    quote = None
+    escaped = False
+    i = brace
+    while i < len(source):
+        ch = source[i]
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif ch == '\\':
+                escaped = True
+            elif ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in ("'", '"', '`'):
+            quote = ch
+        elif ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0:
+                return source[start:i + 1]
+        i += 1
+    raise SystemExit(f'V59 unterminated function body: {signature}')
+
+
 # Execute the real client safeNotificationView function in Node. This verifies
 # that program notifications route into the in-app Routine view while external
 # and scheme-relative URLs remain rejected.
-match = re.search(r"function safeNotificationView\(url\)\{.*?\n?\s*\}", html, flags=re.S)
-if not match:
-    raise SystemExit('V59 could not extract safeNotificationView')
-fn = match.group(0)
+fn = extract_braced_function(html, 'function safeNotificationView(url)')
 node = f"""
 const assert=(v,m)=>{{if(!v)throw new Error(m)}};
 const location={{origin:'https://client.test'}};
