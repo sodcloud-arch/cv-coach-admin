@@ -1,0 +1,14 @@
+/* CV Rank V64 iPhone QA hotfix
+   The rank roadmap used the generic class "next", which collided with the legacy
+   home card selector .next and inherited its large min-height, right padding and
+   decorative CV pseudo-element. Scope-reset those legacy properties so Plata
+   remains a compact league step. */
+.cv64CompactPath .cv64Step.next{
+  min-height:0!important;
+  padding-right:1px!important;
+  overflow:visible!important;
+}
+.cv64CompactPath .cv64Step.next:after{
+  content:none!important;
+  display:none!important;
+}
