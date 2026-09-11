@@ -145,6 +145,11 @@ if MARKER not in text:
         "execution-buttons post-render wrapper",
     )
     replace_exact(
+        "  const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(mobileA11y);return r};",
+        "  document.addEventListener('cv:rendered',()=>requestAnimationFrame(mobileA11y));",
+        "mobile accessibility post-render wrapper",
+    )
+    replace_exact(
         "    const baseRender=window.render;\n    if(typeof baseRender==='function')window.render=function(){const result=baseRender.apply(this,arguments);requestAnimationFrame(applyHeaderV39);return result};",
         "    document.addEventListener('cv:rendered',()=>requestAnimationFrame(applyHeaderV39));",
         "header post-render wrapper",
@@ -171,12 +176,10 @@ for item in required:
     if item not in text:
         raise SystemExit(f"runtime v51 required marker missing: {item}")
 
-# V51's central contract: one render function wrapper remains, and no historical
-# baseRender nesting survives in the built client artifact.
+# V51's central contract: the canonical dispatcher is a named function
+# assignment, so anonymous historical render wrappers must be fully gone.
 render_assignments = len(re.findall(r"window\.render\s*=\s*function", text))
 if render_assignments != 0:
-    # The canonical V51 dispatcher is a named function assignment, so anonymous
-    # historical wrappers must be fully gone.
     raise SystemExit(f"runtime v51 anonymous render wrappers remained: {render_assignments}")
 if "baseRender=window.render" in text or "baseRender = window.render" in text:
     raise SystemExit("runtime v51 historical baseRender wrapper remained")
