@@ -5,15 +5,16 @@ ROOT=Path(__file__).resolve().parent
 HTML=ROOT/'stable'/'index.html'
 BUILD=ROOT/'stable'/'build.json'
 V64_CSS_FILE=ROOT/'assets'/'cv-rank-real-ui-v64.css'
+V64_HOTFIX_CSS_FILE=ROOT/'assets'/'cv-rank-real-ui-v64-hotfix.css'
 V64_JS_FILE=ROOT/'assets'/'cv-rank-real-ui-v64.js'
 MARKER='<!-- cv-rank-engine-v61: tutorial-empty + 5-level leagues + legend + global-ranking + challenges -->'
 V64='<!-- cv-rank-real-ui-v64: cache-fresh-transparent-badges + next-rank-visibility + routine-rank-hud -->'
 
-for asset in [V64_CSS_FILE,V64_JS_FILE]:
+for asset in [V64_CSS_FILE,V64_HOTFIX_CSS_FILE,V64_JS_FILE]:
     if not asset.exists() or asset.stat().st_size<200:
         raise SystemExit(f'CV Rank V64 source asset missing: {asset}')
 
-css=V64_CSS_FILE.read_text(encoding='utf-8')
+css=V64_CSS_FILE.read_text(encoding='utf-8')+'\n'+V64_HOTFIX_CSS_FILE.read_text(encoding='utf-8')
 js=V64_JS_FILE.read_text(encoding='utf-8')
 text=HTML.read_text(encoding='utf-8')
 text=re.sub(r'<style id="cv-rank-system-v60-css">.*?</style>','',text,flags=re.S)
@@ -50,7 +51,8 @@ required=[
     'cv-rank-real-ui-v64-js',
     'cv-rank-tutorial-v61.webp',
     'cv64WorkoutRankHud',
-    '?v=64'
+    '?v=64',
+    '.cv64CompactPath .cv64Step.next:after'
 ]
 for item in required:
     if item not in text:
@@ -78,10 +80,11 @@ for patch in [
     'Global/league/season ranking UI v61',
     'Challenges + Trophy Room client UI v61',
     'Approved transparent rank badge assets v63',
-    'Rank UI polish + routine rank HUD v64'
+    'Rank UI polish + routine rank HUD v64',
+    'V64 next-rank CSS collision hotfix'
 ]:
     if patch not in patches:
         patches.append(patch)
 meta['patches']=patches
 BUILD.write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-print(json.dumps({'sha256':sha,'bytes':meta['bytes'],'patches':patches[-7:]},ensure_ascii=False))
+print(json.dumps({'sha256':sha,'bytes':meta['bytes'],'patches':patches[-8:]},ensure_ascii=False))
