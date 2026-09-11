@@ -111,6 +111,13 @@ body.cvFastWorkout .cvSetsHead span:nth-child(5){display:none!important}
     if parser_count != 1:
         raise SystemExit(f"quality v50 set parser replacement expected 1 block, got {parser_count}")
 
+    # Legacy base writers are no longer canonical, but strip their RIR property
+    # too so no client write path can mutate the coach-only metric.
+    legacy_rir_payloads = text.count(",rir:p.rir")
+    if legacy_rir_payloads < 1:
+        raise SystemExit("quality v50 legacy RIR payload markers not found")
+    text = text.replace(",rir:p.rir", "")
+
     # Remove RIR from the generated athlete table and prescription before the DOM exists.
     replace_exact(
         ",rir=e.rir_target!=null?'RIR '+e.rir_target:''",
