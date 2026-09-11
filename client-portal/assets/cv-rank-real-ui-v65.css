@@ -70,23 +70,29 @@
   text-transform:uppercase!important;
   opacity:.92!important;
 }
+
+/* Only the CURRENT league receives a card-like focus treatment. */
 .cv64CompactPath .cv64Step.current{
   border-color:color-mix(in srgb,var(--r) 50%,#26323a)!important;
   background:color-mix(in srgb,var(--r) 7%,#05090c)!important;
 }
 .cv64CompactPath .cv64Step.current::after{content:'ACTUAL'!important;color:var(--r)!important}
+
+/* The NEXT league remains aspirational and visible, but never competes with CURRENT. */
 .cv64CompactPath .cv64Step.next{
   min-height:72px!important;
   height:72px!important;
   padding:4px 1px 3px!important;
-  border-color:rgba(218,227,233,.24)!important;
-  background:linear-gradient(180deg,rgba(218,227,233,.055),rgba(5,9,12,.16))!important;
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
 }
-.cv64CompactPath .cv64Step.next::after{content:'PRÓXIMO'!important;color:#dbe3e8!important}
+.cv64CompactPath .cv64Step.next::after{content:none!important;display:none!important}
 .cv64CompactPath .cv64Step.reached:not(.current){border-color:rgba(120,138,148,.10)!important}
 .cv64CompactPath .cv64Step.locked{border-color:transparent!important;background:transparent!important}
 
-/* Tutorial is a true empty slot: preserve the place in the ladder, but no earned crest. */
+/* Tutorial is not a league badge. It keeps an empty slot while pending and a clear
+   completion check once the initiation has been finished. */
 .cv64CompactPath .cv64Step:first-child img{opacity:0!important;filter:none!important}
 .cv64CompactPath .cv64Step:first-child::before{
   content:'';
@@ -100,9 +106,22 @@
   border-radius:50%;
   background:radial-gradient(circle,rgba(140,158,168,.07),rgba(4,8,10,.04) 58%,transparent 62%);
   box-shadow:inset 0 0 0 5px rgba(117,135,145,.025),0 0 10px rgba(149,168,177,.05);
+  box-sizing:border-box;
 }
 .cv64CompactPath .cv64Step:first-child.current::after{content:'INICIO'!important;color:#aab6bd!important}
-.cv64CompactPath .cv64Step:first-child.reached:not(.current)::after{content:'HECHO'!important;color:#77858d!important}
+.cv64CompactPath .cv64Step:first-child.reached:not(.current)::before{
+  content:'✓';
+  display:grid;
+  place-items:center;
+  color:#45d79a;
+  font-size:16px;
+  font-weight:950;
+  line-height:1;
+  border-color:rgba(69,215,154,.58);
+  background:radial-gradient(circle,rgba(69,215,154,.13),rgba(4,8,10,.04) 62%,transparent 66%);
+  box-shadow:inset 0 0 0 5px rgba(69,215,154,.025),0 0 12px rgba(69,215,154,.10);
+}
+.cv64CompactPath .cv64Step:first-child.reached:not(.current)::after{content:'HECHO'!important;color:#45d79a!important}
 
 /* V65 card hierarchy. */
 .cv65LeagueProgress{
@@ -146,6 +165,7 @@
   .cv64CompactPath .cv64Step b{font-size:5.25px!important}
   .cv64CompactPath .cv64Step::after{font-size:4.1px!important}
   .cv64CompactPath .cv64Step:first-child::before{width:31px;height:31px}
+  .cv64CompactPath .cv64Step:first-child.reached:not(.current)::before{font-size:14px}
   .cv65LeagueProgress{font-size:6.5px;min-height:19px;padding:0 7px}
   .cv61RankCard.cv64Real .cv61Next.cv65Next{gap:3px 6px!important;margin-top:9px!important}
   .cv61RankCard.cv64Real .cv61Next.cv65Next strong{font-size:8.4px!important}
