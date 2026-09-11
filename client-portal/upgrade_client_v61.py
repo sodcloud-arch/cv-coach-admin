@@ -1,5 +1,5 @@
 from pathlib import Path
-import hashlib,json,re
+import hashlib,json,re,subprocess
 
 ROOT=Path(__file__).resolve().parent
 HTML=ROOT/'stable'/'index.html'
@@ -19,6 +19,7 @@ V66='<!-- cv-rank-celebration-v66: one-shot cinematic-level-up + rank-up + legen
 for asset in [V64_CSS_FILE,V64_HOTFIX_CSS_FILE,V64_JS_FILE,V65_CSS_FILE,V65_JS_FILE,V66_CSS_FILE,V66_JS_FILE]:
     if not asset.exists() or asset.stat().st_size<200:
         raise SystemExit(f'CV Rank UI source asset missing: {asset}')
+subprocess.run(['node','--check',str(V66_JS_FILE)],check=True)
 
 css64=V64_CSS_FILE.read_text(encoding='utf-8')+'\n'+V64_HOTFIX_CSS_FILE.read_text(encoding='utf-8')
 js64=V64_JS_FILE.read_text(encoding='utf-8')
