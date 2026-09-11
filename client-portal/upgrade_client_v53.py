@@ -97,11 +97,16 @@ metadata["patches"] = patches
 BUILD.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-4:]}, ensure_ascii=False))
 
-# Current production chain: V54 hardens mobile start/persistence UX, V55 owns
-# the audible countdown, and V56 owns the final set-completion click path.
+# Current production chain. V58 is deliberately executed from this already
+# deployment-gated entrypoint so every repository/build/deploy path that builds
+# V53 also exercises the final client module layer and its executable E2E.
 runpy.run_path(str(ROOT / "upgrade_client_v54.py"), run_name="__main__")
 runpy.run_path(str(ROOT.parent / "scripts" / "test-mobile-workout-v54.py"), run_name="__main__")
 runpy.run_path(str(ROOT / "upgrade_client_v55.py"), run_name="__main__")
 runpy.run_path(str(ROOT.parent / "scripts" / "test-workout-sound-v55.py"), run_name="__main__")
 runpy.run_path(str(ROOT / "upgrade_client_v56.py"), run_name="__main__")
 runpy.run_path(str(ROOT.parent / "scripts" / "test-set-toggle-runtime-v56.py"), run_name="__main__")
+runpy.run_path(str(ROOT / "upgrade_client_v57.py"), run_name="__main__")
+runpy.run_path(str(ROOT.parent / "scripts" / "test-client-modules-v57.py"), run_name="__main__")
+runpy.run_path(str(ROOT / "upgrade_client_v58.py"), run_name="__main__")
+runpy.run_path(str(ROOT.parent / "scripts" / "test-client-module-e2e-v58.py"), run_name="__main__")
