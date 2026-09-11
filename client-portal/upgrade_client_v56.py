@@ -38,6 +38,15 @@ SCRIPT = r'''<script id="cv-set-toggle-runtime-v56-js">
     if(saved.error)throw saved.error;if(!saved.data?.id)throw new Error('set update was not confirmed');
     return saved.data
   }
+  function primeDemoSession(){
+    if(mode!=='demo'||!workout||workout.sessionId)return false;
+    const seed=typeof window.cvExercises==='function'?(window.cvExercises()||[]):[];
+    workout.liveExercises=seed;
+    workout.sessionId='demo';
+    workout.started=Date.now();
+    seed.forEach((ex,ei)=>(ex.sets||[]).forEach((s,si)=>{if(!s.set_log_id)s.set_log_id='demo_'+ei+'_'+si}));
+    return true
+  }
   function refreshStats(){
     try{
       const exs=typeof window.cvExercises==='function'?(window.cvExercises()||[]):[],sets=exs.flatMap(e=>e.sets||[]),done=sets.filter(s=>s.completed);
@@ -58,9 +67,10 @@ SCRIPT = r'''<script id="cv-set-toggle-runtime-v56-js">
   window.cvToggleSet=async function(i,j){
     const dayAtTap=workout?.dayId,locks=window.cvSetToggleLocksV56||(window.cvSetToggleLocksV56=new Set()),lockKey=String(dayAtTap||'none')+'|'+i+'|'+j;
     if(locks.has(lockKey))return false;locks.add(lockKey);
-    let row=rowFor(i,j),button=row?.querySelector('.cvSetCheck'),snapshot=null,p=null;
+    let row=rowFor(i,j),button=row?.querySelector('.cvSetCheck'),snapshot=null,p=null,demoPrimed=false;
     try{
       button?.classList.add('cvSetCheckPendingV48');
+      demoPrimed=primeDemoSession();
       if(!workout?.sessionId){
         const started=await window.startWorkout();
         if(!started||!workout?.sessionId)throw new Error('No pude iniciar la rutina. Reintenta en unos segundos.');
@@ -82,6 +92,7 @@ SCRIPT = r'''<script id="cv-set-toggle-runtime-v56-js">
       if(!next)stopVisibleRest();
       document.dispatchEvent(new CustomEvent('cv:set-state',{detail:{i,j,completed:next}}));
       refreshStats();
+      if(demoPrimed&&typeof window.render==='function')window.render();
       return true
     }catch(error){
       if(p?.s&&snapshot){p.s.weight_kg=snapshot.w;p.s.reps=snapshot.r;p.s.duration_seconds=snapshot.d;p.s.completed=snapshot.c;rollbackVisual(row,button,snapshot.c);refreshStats()}
@@ -92,7 +103,7 @@ SCRIPT = r'''<script id="cv-set-toggle-runtime-v56-js">
     }finally{locks.delete(lockKey)}
   };
 
-  window.CVSetToggleRuntimeV56={version:'v56',parseSet,persistSet,refreshStats};
+  window.CVSetToggleRuntimeV56={version:'v56',parseSet,persistSet,primeDemoSession,refreshStats};
 })();
 </script>'''
 
@@ -119,6 +130,9 @@ required = [
     "const started=await window.startWorkout()",
     "function parseSet(i,j)",
     "function persistSet(ex,s,body)",
+    "function primeDemoSession()",
+    "workout.liveExercises=seed",
+    "if(demoPrimed&&typeof window.render==='function')window.render()",
     ".update(body).eq('id',s.set_log_id).select('id').maybeSingle()",
     "throw new Error('set update was not confirmed')",
     "document.dispatchEvent(new CustomEvent('cv:set-state'",
@@ -157,9 +171,10 @@ for patch in [
     "demo set completion repaired v56",
     "real client set completion repaired v56",
     "cross-IIFE runtime dependency removed v56",
+    "atomic demo prestart promotion v56",
 ]:
     if patch not in patches:
         patches.append(patch)
 metadata["patches"] = patches
 BUILD.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-5:]}, ensure_ascii=False))
+print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-6:]}, ensure_ascii=False))
