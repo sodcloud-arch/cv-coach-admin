@@ -1,0 +1,42 @@
+name: CV Coach Library Dynamic Count
+
+on:
+  push:
+    branches:
+      - chore/library-plan-and-cleanup
+    paths:
+      - '.github/workflows/oneshot-library-dynamic-count.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chore/library-plan-and-cleanup
+      - name: Apply patch
+        run: python scripts/oneshot-library-dynamic-count.py
+      - name: Validate
+        run: |
+          python scripts/validate-repo-contracts.py
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('index.html').read_text(encoding='utf-8')
+          a=html.rfind('<script>'); b=html.rfind('</script>')
+          Path('/tmp/admin.js').write_text(html[a+8:b],encoding='utf-8')
+          PY
+          node --check /tmp/admin.js
+          grep -Fq '${all.length} ejercicios' index.html
+          git diff --check
+      - name: Commit canonical change
+        run: |
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git rm -f scripts/oneshot-library-dynamic-count.py .github/workflows/oneshot-library-dynamic-count.yml
+          git commit -m 'fix(library): derive active exercise count dynamically'
+          git push origin HEAD:chore/library-plan-and-cleanup
