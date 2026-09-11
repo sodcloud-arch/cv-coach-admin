@@ -8,9 +8,10 @@
     diamond:{name:'DIAMANTE',asset:'./assets/ranks/cv-rank-diamond-v61.webp',c1:'#5596FF',c2:'#173F9C'},
     legend:{name:'LEYENDA',asset:'./assets/ranks/cv-rank-legend-v61.webp',c1:'#F5F7FA',c2:'#FF2037'}
   };
-  let overlay=null,pending=null,checking=false,audioCtx=null,primed=false;
-  const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let overlay=null,pending=null,checking=false,audioCtx=null,primed=false,previewTimer=null;
+  const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
   function real(){try{return mode==='real'&&!!user?.id&&!!sb}catch(_){return false}}
+  function demo(){try{return mode!=='real'}catch(_){return true}}
   function enabled(){try{return localStorage.getItem('cv_sound_enabled')!=='0'}catch(_){return true}}
   function ctx(){try{if(!audioCtx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;audioCtx=new C()}if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});return audioCtx}catch(_){return null}}
   function tone(f,d,delay=0,vol=.02,type='triangle'){if(!enabled())return;const c=ctx();if(!c)return;try{const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.001,vol),t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.03)}catch(_){}}
@@ -53,7 +54,7 @@
       </div>
     </div>`
   }
-  function close(){if(!overlay)return;overlay.remove();overlay=null;pending=null;document.body.classList.remove('cv66NoScroll')}
+  function close(){if(!overlay)return;overlay.remove();overlay=null;pending=null;document.body.classList.remove('cv66NoScroll');setTimeout(decorateDemoPreview,80)}
   async function acknowledge(){
     const e=pending;if(!e)return close();
     if(e.__preview)return close();
@@ -75,10 +76,23 @@
     if(kind==='level_up')return show({pending:true,direction:kind,from_level:1,to_level:2,from_rank:{rank_key:'bronze'},to_rank:{rank_key:'bronze'},metadata:{discipline_score:86,rating_change:240}},{preview:true});
     return show({pending:true,direction:'rank_up',from_level:5,to_level:6,from_rank:{rank_key:'bronze'},to_rank:{rank_key:'silver'},metadata:{discipline_score:91,rating_change:310}},{preview:true});
   }
+  function decorateDemoPreview(){
+    if(!demo()||overlay)return;
+    const card=document.querySelector('#content .cv61RankCard.cv64Real');
+    if(!card||card.querySelector('.cv66DemoPreview'))return;
+    const box=document.createElement('div');box.className='cv66DemoPreview';
+    box.style.cssText='grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;padding-top:8px;border-top:1px solid rgba(255,255,255,.055)';
+    const note=document.createElement('span');note.textContent='Vista demo · no cambia datos';note.style.cssText='color:#69757c;font-size:7px;font-weight:800;letter-spacing:.04em';
+    const btn=document.createElement('button');btn.type='button';btn.textContent='PROBAR ASCENSO';btn.style.cssText='min-height:28px;padding:0 10px;border:1px solid rgba(196,122,58,.38);border-radius:9px;background:rgba(196,122,58,.07);color:#d99a63;font:900 7px/1 inherit;letter-spacing:.09em';
+    btn.addEventListener('click',()=>preview('rank_up'));
+    box.append(note,btn);card.append(box)
+  }
+  function schedulePreview(){clearTimeout(previewTimer);previewTimer=setTimeout(decorateDemoPreview,80)}
   document.addEventListener('pointerdown',()=>{if(!primed){primed=true;ctx()}},{capture:true});
-  document.addEventListener('cv:rendered',()=>setTimeout(check,160));
-  window.addEventListener('pageshow',()=>setTimeout(check,450));
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(check,400)});
-  setTimeout(check,900);
-  window.CVRankCelebrationV66={version:'v66',check,show,preview,close};
+  document.addEventListener('cv:rendered',()=>{setTimeout(check,160);schedulePreview()});
+  window.addEventListener('pageshow',()=>{setTimeout(check,450);schedulePreview()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){setTimeout(check,400);schedulePreview()}});
+  new MutationObserver(schedulePreview).observe(document.documentElement,{childList:true,subtree:true});
+  setTimeout(check,900);schedulePreview();
+  window.CVRankCelebrationV66={version:'v66',check,show,preview,close,decorateDemoPreview};
 })();
