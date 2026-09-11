@@ -1,0 +1,49 @@
+name: CV Coach Mobile Premium V36
+
+on:
+  push:
+    branches:
+      - feature/mobile-premium-pass-v36
+    paths:
+      - '.github/workflows/oneshot-mobile-premium-pass-v36.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cv-coach-mobile-premium-v36
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/mobile-premium-pass-v36
+
+      - name: Apply mobile premium pass
+        run: |
+          set -euo pipefail
+          python scripts/oneshot-mobile-premium-pass-v36.py
+
+      - name: Validate repository contracts and client syntax
+        run: |
+          set -euo pipefail
+          python scripts/validate-repo-contracts.py
+          grep -q 'cv-mobile-premium-v36' client-portal/index.html
+          grep -q 'font-size:36px' client-portal/index.html
+          grep -q 'width:27px' client-portal/index.html
+          node scripts/validate-client-portal-js.mjs
+          git diff --check
+
+      - name: Commit canonical changes and remove temporary files
+        run: |
+          set -euo pipefail
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client-portal/index.html scripts/validate-repo-contracts.py
+          git rm -f scripts/oneshot-mobile-premium-pass-v36.py .github/workflows/oneshot-mobile-premium-pass-v36.yml
+          git commit -m 'feat(client): premium mobile readability pass'
+          git push origin HEAD:feature/mobile-premium-pass-v36
