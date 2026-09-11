@@ -92,3 +92,7 @@ for path in obsolete:
         raise SystemExit(f"obsolete repair artifact still present: {path}")
 
 print("CV_COACH_REPO_CONTRACTS_OK")
+
+# CV Coach client workout v32
+require(client, "cv-client-workout-v32", "client workout semantic colors")
+require(client, "cvRestVisualV32", "client visible rest timer")
