@@ -1,5 +1,4 @@
 name: CV Coach Admin Production Deploy
-# Deployment contract verified for Advanced Reports V1 on 2026-09-09.
 
 on:
   push:
@@ -7,16 +6,18 @@ on:
     paths:
       - "index.html"
       - "vercel.json"
+      - "admin-assets/**"
+      - "scripts/upgrade_admin_rank_v62.py"
+      - "scripts/test-cv-rank-admin-v62.py"
+      - "supabase/migrations/**"
       - ".github/workflows/deploy-cv-coach-admin-production.yml"
   workflow_dispatch:
 
 concurrency:
   group: cv-coach-admin-production
   cancel-in-progress: false
-
 permissions:
   contents: read
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -29,42 +30,36 @@ jobs:
     steps:
       - name: Checkout canonical main
         uses: actions/checkout@v4
-
+      - name: Build and test Admin Rank V62
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/upgrade_admin_rank_v62.py
+          python scripts/test-cv-rank-admin-v62.py
+          grep -q 'cv-admin-rank-v62' index.html
+          grep -q 'data-v="ranking"' index.html
+          node --check admin-assets/cv-rank-admin-v62.js
       - name: Check Vercel credential
         id: auth
         shell: bash
         run: |
-          if [[ -z "${VERCEL_TOKEN:-}" ]]; then
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "VERCEL_TOKEN_MISSING"
-          else
-            echo "available=true" >> "$GITHUB_OUTPUT"
-            echo "VERCEL_TOKEN_AVAILABLE"
-          fi
-
+          if [[ -z "${VERCEL_TOKEN:-}" ]]; then echo "available=false" >> "$GITHUB_OUTPUT"; echo "VERCEL_TOKEN_MISSING"; else echo "available=true" >> "$GITHUB_OUTPUT"; echo "VERCEL_TOKEN_AVAILABLE"; fi
       - name: Link canonical Vercel project
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
           mkdir -p .vercel
           printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
-
       - name: Pull production settings
         if: steps.auth.outputs.available == 'true'
-        shell: bash
         run: npx --yes vercel@${VERCEL_CLI_VERSION} pull --yes --environment=production --token="$VERCEL_TOKEN"
-
       - name: Build production bundle
         if: steps.auth.outputs.available == 'true'
-        shell: bash
         run: npx --yes vercel@${VERCEL_CLI_VERSION} build --prod --token="$VERCEL_TOKEN"
-
       - name: Deploy canonical production
         if: steps.auth.outputs.available == 'true'
-        shell: bash
         run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-
-      - name: Verify public Admin alias
+      - name: Verify public Admin Rank V62
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
@@ -72,23 +67,21 @@ jobs:
           for attempt in 1 2 3 4 5 6 7 8; do
             headers="$(mktemp)"
             body="$(curl --fail --silent --show-error --location --max-time 20 -D "$headers" https://cv-coach-admin.vercel.app || true)"
-            if [[ "$body" == *"CV Coach"* && "$body" == *"COACH ADMIN"* ]]; then
+            js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-rank-admin-v62.js || true)"
+            css_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-rank-admin-v62.css || true)"
+            if [[ "$body" == *"CV Coach"* && "$body" == *"COACH ADMIN"* && "$body" == *"cv-admin-rank-v62"* && "$body" == *"data-v=\"ranking\""* && "$js_status" == "200" && "$css_status" == "200" ]]; then
               grep -qi '^content-security-policy:' "$headers"
               grep -qi '^x-content-type-options: nosniff' "$headers"
               grep -qi '^x-frame-options: DENY' "$headers"
-              echo 'PUBLIC_ADMIN_OK'
+              echo 'PUBLIC_ADMIN_RANK_V62_OK'
               rm -f "$headers"
               exit 0
             fi
-            rm -f "$headers"
-            sleep 3
+            rm -f "$headers"; sleep 3
           done
-          echo 'Public Admin alias verification failed' >&2
-          exit 1
-
+          echo 'Public Admin Rank V62 verification failed' >&2; exit 1
       - name: Credential blocker marker
         if: steps.auth.outputs.available != 'true'
-        shell: bash
         run: |
           echo "Production deployment was not attempted because VERCEL_TOKEN is not configured in GitHub Actions Secrets."
           exit 1

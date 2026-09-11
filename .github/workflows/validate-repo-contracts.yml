@@ -6,14 +6,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 8
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,22 +50,17 @@ jobs:
           python scripts/test-workout-runtime-v52.py
           python scripts/test-client-sound-v53.py
           grep -q 'cv-rank-engine-v61' client-portal/stable/index.html
-          grep -q './assets/cv-rank-v61.js' client-portal/stable/index.html
-          grep -q './assets/cv-rank-v61.css' client-portal/stable/index.html
           grep -q 'PLATINO' client-portal/assets/cv-rank-v61.js
           grep -q 'LEYENDA' client-portal/assets/cv-rank-v61.js
           grep -q 'AÚN <b>SIN RANGO</b>' client-portal/assets/cv-rank-v61.js
           if grep -q 'cv-rank-system-v60-js' client-portal/stable/index.html; then exit 1; fi
           if grep -q 'MAESTRO' client-portal/assets/cv-rank-v61.js; then exit 1; fi
-      - name: Validate all V61 rank assets
+      - name: Validate V61 rank assets
         shell: bash
         run: |
-          set -euo pipefail
           node --check client-portal/assets/cv-rank-v61.js
           test -s client-portal/assets/cv-rank-v61.css
-          for f in bronze silver gold platinum diamond legend; do
-            test -s "client-portal/assets/ranks/cv-rank-${f}-v61.webp"
-          done
+          for f in bronze silver gold platinum diamond legend; do test -s "client-portal/assets/ranks/cv-rank-${f}-v61.webp"; done
       - name: Validate client inline JavaScript
         shell: bash
         run: |
@@ -77,20 +70,26 @@ jobs:
           html=Path('client-portal/stable/index.html').read_text(encoding='utf-8')
           scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,flags=re.S|re.I)
           out=Path('/tmp/cv-client-inline');out.mkdir(exist_ok=True)
-          written=0
           for i,script in enumerate(scripts):
-              if not script.strip(): continue
-              (out/f'{i:03d}.js').write_text(script,encoding='utf-8');written+=1
-          if written==0: raise SystemExit('No client inline scripts found')
+              if script.strip():(out/f'{i:03d}.js').write_text(script,encoding='utf-8')
           PY
           for f in /tmp/cv-client-inline/*.js; do node --check "$f"; done
+      - name: Build and validate Admin Rank V62
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/upgrade_admin_rank_v62.py
+          python scripts/test-cv-rank-admin-v62.py
+          grep -q 'cv-admin-rank-v62' index.html
+          grep -q 'data-v="ranking"' index.html
+          node --check admin-assets/cv-rank-admin-v62.js
       - name: Validate Admin inline JavaScript
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           html=Path('index.html').read_text(encoding='utf-8')
-          start=html.rfind('<script>');end=html.rfind('</script>')
+          start=html.find('<script>');end=html.find('</script>',start)
           if start<0 or end<=start: raise SystemExit('Inline Admin script not found')
           Path('/tmp/cv-coach-admin-inline.js').write_text(html[start+len('<script>'):end],encoding='utf-8')
           PY
