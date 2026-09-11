@@ -24,11 +24,17 @@ SOUND_SCRIPT = r'''<script id="cv-sound-manager-v53-js">
     if(players[name])return players[name];
     const audio=new Audio(sources[name]);audio.preload='auto';audio.volume=volumes[name]??.35;players[name]=audio;return audio
   }
-  async function unlock(){
+  function unlock(){
+    const pending=[];
     for(const name of Object.keys(sources)){
       const audio=player(name);
-      try{audio.muted=true;await audio.play();audio.pause();audio.currentTime=0}catch(e){}finally{audio.muted=false}
+      try{
+        audio.muted=true;
+        const attempt=audio.play();
+        pending.push(Promise.resolve(attempt).catch(()=>{}).then(()=>{try{audio.pause();audio.currentTime=0}catch(e){}audio.muted=false}));
+      }catch(e){audio.muted=false}
     }
+    return Promise.allSettled(pending)
   }
   function play(name){
     if(!enabled||!sources[name])return false;
@@ -59,6 +65,7 @@ required = [
     "play('set_confirmed')",
     "play('workout_complete')",
     "cvSoundEnabledV53",
+    "Promise.allSettled(pending)",
     "./assets/sounds/cv-set-confirmed-v1.mp3",
     "./assets/sounds/cv-workout-complete-v1.mp3",
 ]
