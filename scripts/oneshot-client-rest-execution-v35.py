@@ -118,22 +118,14 @@ if html.count(marker) != 1:
     raise SystemExit(f"expected one body marker, found {html.count(marker)}")
 html = html.replace(marker, "\n" + style + "\n" + script + marker, 1)
 
-# Add lightweight regression markers to repository contracts.
-anchor = 'require(client_portal, "cv-client-semantic-v34", "client semantic palette cleanup")\n'
-if anchor in contracts:
-    contracts = contracts.replace(anchor, anchor +
-        'require(client_portal, "cv-client-workout-v35", "large red rest countdown and execution CTA styles")\n'
-        'require(client_portal, "cvExecutionBtnV35", "explicit client exercise execution button")\n'
-        'require(client_portal, "VER EJECUCIÓN", "client execution CTA copy")\n', 1)
-else:
-    # Contracts evolve; append checks next to other client portal checks without making the patch brittle.
-    needle = 'print("Repository contracts OK")'
-    if needle not in contracts:
-        raise SystemExit("contracts success anchor not found")
-    contracts = contracts.replace(needle,
-        'require(client_portal, "cv-client-workout-v35", "large red rest countdown and execution CTA styles")\n'
-        'require(client_portal, "cvExecutionBtnV35", "explicit client exercise execution button")\n'
-        'require(client_portal, "VER EJECUCIÓN", "client execution CTA copy")\n\n' + needle, 1)
+anchor = 'require(client, "cv-client-semantic-v34", "client final semantic cleanup")'
+if anchor not in contracts:
+    raise SystemExit("current client semantic contract anchor not found")
+contracts = contracts.replace(
+    anchor,
+    anchor + '\nrequire(client, "cv-client-workout-v35", "large red rest countdown and execution CTA styles")\nrequire(client, "cvExecutionBtnV35", "explicit client exercise execution button")\nrequire(client, "VER EJECUCIÓN", "client execution CTA copy")',
+    1,
+)
 
 PORTAL.write_text(html, encoding="utf-8")
 CONTRACTS.write_text(contracts, encoding="utf-8")
