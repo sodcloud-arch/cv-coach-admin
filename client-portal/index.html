@@ -840,6 +840,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
     }})
   }
   function cvExercises(){return workout?.liveExercises||cvPrestartExercises()}
+  window.cvExercises=cvExercises;
   function cvRefText(s,e){const unit=e?.prescription_unit||'reps';if(unit==='seconds'){const v=s.previous_duration_seconds??s.reference_duration_seconds??s.suggested_duration_seconds;if(v==null)return '—';return String(v)+' s'}const w=s.suggested_weight_kg,r=s.suggested_reps;if(w==null&&r==null)return '—';return (w==null?'—':Number(w).toLocaleString('es-CL',{maximumFractionDigits:2})+' kg')+' × '+(r??'—')}
   function cvInputValue(v,sug){return v??sug??''}
   function cvRestDock(){let d=document.getElementById('cvRestDock');if(!d){d=document.createElement('div');d.id='cvRestDock';d.className='cvRestDock hidden';d.innerHTML='<div class="cvRestText"><small>DESCANSO</small><b id="cvRestTime">00:00</b><span id="cvRestExercise"></span></div><div class="cvRestActions"><button onclick="cvAddRest(15)">+15 s</button><button onclick="cvSkipRest()">OMITIR</button></div>';document.body.appendChild(d)}return d}
@@ -914,7 +915,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
 
   function key(i,j){return i+'_'+j}
   function readDraft(i,j){const k=key(i,j);drafts[k]=drafts[k]||{};const w=document.getElementById('cvw_'+i+'_'+j),r=document.getElementById('cvr_'+i+'_'+j);if(w)drafts[k].weight=w.value;if(r)drafts[k].reps=r.value;return drafts[k]}
-  function applyDraftsDOM(){document.querySelectorAll('input[id^="cvw_"],input[id^="cvr_"]').forEach(inp=>{const m=inp.id.match(/^cv([wr])_(\d+)_(\d+)$/);if(!m)return;const i=Number(m[2]),ex=typeof cvExercises==='function'?cvExercises()?.[i]:null;if(m[1]==='w'&&ex?.prescription_unit==='seconds'){inp.setAttribute('disabled','');inp.value='';return}inp.removeAttribute('disabled');const d=drafts[key(i,Number(m[3]))];if(!d)return;const v=m[1]==='w'?d.weight:d.reps;if(v!==undefined&&v!==null&&v!=='')inp.value=v});document.querySelectorAll('.cvSetCheck').forEach(b=>b.removeAttribute('disabled'))}
+  function applyDraftsDOM(){document.querySelectorAll('input[id^="cvw_"],input[id^="cvr_"]').forEach(inp=>{const m=inp.id.match(/^cv([wr])_(\d+)_(\d+)$/);if(!m)return;const i=Number(m[2]),ex=typeof window.cvExercises==='function'?window.cvExercises()?.[i]:null;if(m[1]==='w'&&ex?.prescription_unit==='seconds'){inp.setAttribute('disabled','');inp.value='';return}inp.removeAttribute('disabled');const d=drafts[key(i,Number(m[3]))];if(!d)return;const v=m[1]==='w'?d.weight:d.reps;if(v!==undefined&&v!==null&&v!=='')inp.value=v});document.querySelectorAll('.cvSetCheck').forEach(b=>b.removeAttribute('disabled'))}
   function applyDraftsModel(){if(!workout?.liveExercises)return;for(const [k,d] of Object.entries(drafts)){const [i,j]=k.split('_').map(Number),ex=workout.liveExercises?.[i],s=ex?.sets?.[j];if(!s)continue;const unit=ex?.prescription_unit||'reps';if(unit==='reps'&&d.weight!==undefined&&d.weight!=='')s.weight_kg=Number(d.weight);if(d.reps!==undefined&&d.reps!==''){if(unit==='seconds'){s.duration_seconds=Math.round(Number(d.reps));s.reps=null;s.weight_kg=null}else{s.reps=Math.round(Number(d.reps));s.duration_seconds=null}}}}
 
   function fmt(v){if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?n.toLocaleString('es-CL',{maximumFractionDigits:2}):String(v)}
@@ -922,9 +923,9 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   function suggestedText(s,ex){if((ex?.prescription_unit||'reps')==='seconds'){const d=s?.suggested_duration_seconds;return d==null?'':fmt(d)+' s'}const w=s?.suggested_weight_kg,r=s?.suggested_reps;if(w==null&&r==null)return '';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}
 
   async function hydrateHistory(){try{if(mode==='demo'||!workout?.liveExercises)return;const all=workout.liveExercises.flatMap(e=>Array.isArray(e.sets)?e.sets:[]),ids=[...new Set(all.map(s=>s.reference_set_log_id).filter(Boolean))];if(ids.length){const {data:rows,error}=await sb.from('set_logs').select('id,weight_kg,reps,duration_seconds,completed_at').in('id',ids);if(!error){const map=new Map((rows||[]).map(x=>[x.id,x]));for(const s of all){const ref=map.get(s.reference_set_log_id);if(ref){s.reference_weight_kg=ref.weight_kg;s.reference_reps=ref.reps;s.reference_duration_seconds=ref.duration_seconds;s.reference_completed_at=ref.completed_at}}}}workout.cvHistoryHydrated=true;render()}catch(e){console.warn('CV history',e)}}
-  function historyDecorate(){try{document.querySelectorAll('.cvSetsHead').forEach(h=>{if(h.children?.[1])h.children[1].textContent='ANTERIOR'});const exs=typeof cvExercises==='function'?cvExercises():[];document.querySelectorAll('.cvHevyExercise').forEach((card,i)=>{const ex=exs[i];if(!ex)return;card.querySelectorAll('.cvSetRow').forEach((row,j)=>{const s=ex.sets?.[j],cell=row.querySelector('.cvPrevious');if(!s||!cell)return;const prev=historyText(s,ex),sug=suggestedText(s,ex),src=String(s.suggestion_source||'');let meta='SESIÓN ANTERIOR',cls=' previous';if(prev==='—'){if(src==='coach_progression'){meta=sug?'COACH SUGIERE '+sug:'SUGERENCIA DEL COACH';cls=' coach'}else if(src==='program_prescription'){meta='PRIMERA SESIÓN';cls=' program'}else{meta='SIN HISTORIAL';cls=''}}else if(src==='coach_progression'&&sug&&sug!==prev){meta='COACH SUGIERE '+sug;cls=' coach'}cell.innerHTML='<span class="cvPrevMain">'+prev+'</span><small class="cvPrevMeta'+cls+'">'+meta+'</small>'});const progress=card.querySelector('.cvExerciseProgress');if(progress){const done=ex.sets?.filter(s=>s.completed).length||0;progress.classList.toggle('hasProgress',done>0)}});const content=document.querySelector('#content');if(workout?.cvResumed&&content&&!content.querySelector('.cvResumeBadge')){const top=content.querySelector('.workoutTop');if(top)top.insertAdjacentHTML('afterend','<div class="cvResumeBadge">Sesión recuperada · datos guardados</div>')}}catch(e){}}
+  function historyDecorate(){try{document.querySelectorAll('.cvSetsHead').forEach(h=>{if(h.children?.[1])h.children[1].textContent='ANTERIOR'});const exs=typeof window.cvExercises==='function'?window.cvExercises():[];document.querySelectorAll('.cvHevyExercise').forEach((card,i)=>{const ex=exs[i];if(!ex)return;card.querySelectorAll('.cvSetRow').forEach((row,j)=>{const s=ex.sets?.[j],cell=row.querySelector('.cvPrevious');if(!s||!cell)return;const prev=historyText(s,ex),sug=suggestedText(s,ex),src=String(s.suggestion_source||'');let meta='SESIÓN ANTERIOR',cls=' previous';if(prev==='—'){if(src==='coach_progression'){meta=sug?'COACH SUGIERE '+sug:'SUGERENCIA DEL COACH';cls=' coach'}else if(src==='program_prescription'){meta='PRIMERA SESIÓN';cls=' program'}else{meta='SIN HISTORIAL';cls=''}}else if(src==='coach_progression'&&sug&&sug!==prev){meta='COACH SUGIERE '+sug;cls=' coach'}cell.innerHTML='<span class="cvPrevMain">'+prev+'</span><small class="cvPrevMeta'+cls+'">'+meta+'</small>'});const progress=card.querySelector('.cvExerciseProgress');if(progress){const done=ex.sets?.filter(s=>s.completed).length||0;progress.classList.toggle('hasProgress',done>0)}});const content=document.querySelector('#content');if(workout?.cvResumed&&content&&!content.querySelector('.cvResumeBadge')){const top=content.querySelector('.workoutTop');if(top)top.insertAdjacentHTML('afterend','<div class="cvResumeBadge">Sesión recuperada · datos guardados</div>')}}catch(e){}}
 
-  function restMeta(){const exs=typeof cvExercises==='function'?cvExercises():[];document.querySelectorAll('.cvRestPill').forEach((b,i)=>{b.classList.add('cvRestMeta');b.removeAttribute('onclick');b.disabled=false;b.textContent=String(exs[i]?.rest_seconds||0)+' s'})}
+  function restMeta(){const exs=typeof window.cvExercises==='function'?window.cvExercises():[];document.querySelectorAll('.cvRestPill').forEach((b,i)=>{b.classList.add('cvRestMeta');b.removeAttribute('onclick');b.disabled=false;b.textContent=String(exs[i]?.rest_seconds||0)+' s'})}
   function bindRestObserver(){const dock=document.getElementById('cvRestDock');if(!dock||dock===restObservedEl)return;if(restObserverHandle&&typeof restObserverHandle.disconnect==='function')restObserverHandle.disconnect();restObservedEl=dock;restObserverHandle=new MutationObserver(()=>{if(dock.classList.contains('done')){dock.classList.add('hidden');sfx('ready');try{navigator.vibrate?.([90,55,130])}catch(e){}}});restObserverHandle.observe(dock,{attributes:true,attributeFilter:['class']})}
 
   function afterRender(){brand();document.querySelectorAll('.workoutTop .ey').forEach(x=>x.remove());document.querySelectorAll('.cvTempo').forEach(tempoHuman);restMeta();applyDraftsDOM();historyDecorate();bindRestObserver()}
@@ -934,7 +935,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
 
   const baseSave=window.cvSaveDraftSet;window.cvSaveDraftSet=async function(i,j){readDraft(i,j);if(!workout?.sessionId)return true;const row=document.getElementById('cvw_'+i+'_'+j)?.closest('.cvSetRow');row?.classList.add('cvSaving');row?.classList.remove('cvSaved','cvSaveError');const ok=await baseSave.apply(this,arguments);row?.classList.remove('cvSaving');if(ok===false){row?.classList.add('cvSaveError');return false}row?.classList.add('cvSaved');sfx('save');setTimeout(()=>row?.classList.remove('cvSaved'),700);return true};
 
-  const baseToggle=window.cvToggleSet;window.cvToggleSet=async function(i,j){readDraft(i,j);if(!workout?.sessionId){await window.startWorkout();applyDraftsModel();render();await new Promise(r=>requestAnimationFrame(()=>r()))}const ex=typeof cvExercises==='function'?cvExercises()?.[i]:null,s=ex?.sets?.[j],was=!!s?.completed;const result=await baseToggle.apply(this,arguments);const now=typeof cvExercises==='function'?!!cvExercises()?.[i]?.sets?.[j]?.completed:false;if(!was&&now){sfx('confirm');setTimeout(()=>sfx('rest'),120)}return result};
+  const baseToggle=window.cvToggleSet;window.cvToggleSet=async function(i,j){readDraft(i,j);if(!workout?.sessionId){await window.startWorkout();applyDraftsModel();render();await new Promise(r=>requestAnimationFrame(()=>r()))}const ex=typeof window.cvExercises==='function'?window.cvExercises()?.[i]:null,s=ex?.sets?.[j],was=!!s?.completed;const result=await baseToggle.apply(this,arguments);const now=typeof window.cvExercises==='function'?!!window.cvExercises()?.[i]?.sets?.[j]?.completed:false;if(!was&&now){sfx('confirm');setTimeout(()=>sfx('rest'),120)}return result};
 
   const baseOpen=window.openDay;window.openDay=function(id){Object.keys(drafts).forEach(k=>delete drafts[k]);const r=baseOpen.apply(this,arguments);if(mode!=='demo')setTimeout(()=>tryResume(id),70);return r};
   async function tryResume(dayId){try{if(!user?.id||!workout||workout.dayId!==dayId||workout.sessionId)return;const {data:open,error}=await sb.from('workout_sessions').select('id,started_at,status').eq('client_id',user.id).eq('program_day_id',dayId).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();if(error||!open||workout.sessionId)return;const {data:r,error:e}=await sb.functions.invoke('start-workout',{body:{program_day_id:dayId}});if(e||r?.error)return;workout.sessionId=r?.session_id||open.id;workout.liveExercises=Array.isArray(r?.exercises)?r.exercises:null;workout.started=r?.started_at?new Date(r.started_at).getTime():new Date(open.started_at).getTime();workout.cvResumed=true;workout.cvHistoryHydrated=false;await hydrateHistory();if(typeof startTimer==='function')startTimer();toast?.('Sesión recuperada · continuamos donde quedaste')}catch(e){console.warn('CV resume',e)}}
@@ -966,9 +967,9 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   },true);
   const oldToggle=window.cvToggleSet;
   window.cvToggleSet=async function(i,j){
-    const before=!!(typeof cvExercises==='function'&&cvExercises()?.[i]?.sets?.[j]?.completed);
+    const before=!!(typeof window.cvExercises==='function'&&window.cvExercises()?.[i]?.sets?.[j]?.completed);
     const r=await oldToggle.apply(this,arguments);
-    const after=!!(typeof cvExercises==='function'&&cvExercises()?.[i]?.sets?.[j]?.completed);
+    const after=!!(typeof window.cvExercises==='function'&&window.cvExercises()?.[i]?.sets?.[j]?.completed);
     if(!before&&after){
       try{navigator.vibrate?.(35)}catch(_){}
       requestAnimationFrame(()=>{const row=document.getElementById('cvw_'+i+'_'+j)?.closest('.cvSetRow');if(row){row.classList.add('cvJustCompleted');setTimeout(()=>row.classList.remove('cvJustCompleted'),380)}})
@@ -977,7 +978,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   };
   const oldAdd=window.cvAddSet;
   window.cvAddSet=async function(i){
-    const before=(typeof cvExercises==='function'?cvExercises()?.[i]?.sets?.length:0)||0;
+    const before=(typeof window.cvExercises==='function'?window.cvExercises()?.[i]?.sets?.length:0)||0;
     const r=await oldAdd.apply(this,arguments);
     requestAnimationFrame(()=>{const x=document.getElementById('cvw_'+i+'_'+before);if(x){x.focus();setTimeout(()=>{try{x.select()}catch(_){}},25)}});
     return r;
@@ -1002,7 +1003,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   function tone(f,d,delay=0,vol=.018,type='triangle'){if(!soundOn())return;const c=ctx();if(!c)return;try{const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.02)}catch(_){}}
   function tick(){tone(780,.042,0,.012,'square')}
   function ready(){tone(660,.08,0,.025);tone(825,.09,.065,.024);tone(990,.15,.13,.022)}
-  function decorateCards(){if(typeof cvExercises!=='function')return;const exs=cvExercises();document.querySelectorAll('.cvHevyExercise').forEach((c,i)=>{const e=exs[i],sets=e?.sets||[],done=sets.filter(s=>s.completed).length;c.classList.toggle('cvExerciseHasProgress',done>0);c.classList.toggle('cvExerciseComplete',sets.length>0&&done===sets.length)})}
+  function decorateCards(){if(typeof window.cvExercises!=='function')return;const exs=window.cvExercises();document.querySelectorAll('.cvHevyExercise').forEach((c,i)=>{const e=exs[i],sets=e?.sets||[],done=sets.filter(s=>s.completed).length;c.classList.toggle('cvExerciseHasProgress',done>0);c.classList.toggle('cvExerciseComplete',sets.length>0&&done===sets.length)})}
   function restWatch(){const d=document.getElementById('cvRestDock'),t=document.getElementById('cvRestTime');if(!d||!t)return;const parts=(t.textContent||'').split(':').map(Number);if(parts.length!==2||parts.some(n=>!Number.isFinite(n)))return;const sec=parts[0]*60+parts[1],active=!d.classList.contains('hidden')&&!d.classList.contains('done');d.classList.toggle('cvLastTen',active&&sec>0&&sec<=10);if(active&&sec>0&&sec<=10&&sec!==lastSecond){lastSecond=sec;tick();try{navigator.vibrate?.(18)}catch(_){}}if(active&&sec===0&&!lastFinished){lastFinished=true;ready();try{navigator.vibrate?.([90,55,120])}catch(_){}}if(!active){lastSecond=null;lastFinished=false;d.classList.remove('cvLastTen')}}
   const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(()=>{decorateCards();restWatch()});return r};
   setInterval(restWatch,250);
@@ -1082,8 +1083,8 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   function setNav(){document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',view==='workout'?b.dataset.view==='routine':b.dataset.view===view))}
   function fixHeader(){const sub=document.querySelector('.cvHeaderIdentity small');if(sub&&view==='workout'&&workout?.dayId){const d=data?.days?.find(x=>x.id===workout.dayId);if(d)sub.textContent='DÍA '+d.day_number+' · '+cleanDay(d.name).toUpperCase()}}
   function prevText(s,ex){if((ex?.prescription_unit||'reps')==='seconds'){const d=s?.previous_duration_seconds??s?.reference_duration_seconds??ex?.previous_best_duration_seconds??null;return d==null?'—':fmt(d)+' s'}let w=s?.previous_weight_kg,r=s?.previous_reps;if(w==null&&r==null){w=s?.reference_weight_kg;r=s?.reference_reps}if(w==null&&r==null){w=ex?.previous_best_weight_kg;r=ex?.previous_best_reps}if(w==null&&r==null)return '—';return (w==null?'—':fmt(w)+' kg')+' × '+(r??'—')}
-  function decorateHistory(){try{const exs=typeof cvExercises==='function'?cvExercises():[];document.querySelectorAll('.cvHevyExercise').forEach((card,i)=>{const ex=exs[i];if(!ex)return;card.querySelectorAll('.cvSetRow').forEach((row,j)=>{const s=ex.sets?.[j],cell=row.querySelector('.cvPrevious');if(!s||!cell)return;const prev=prevText(s,ex),sug=(ex?.prescription_unit||'reps')==='seconds'?(s.suggested_duration_seconds==null?'':fmt(s.suggested_duration_seconds)+' s'):((s.suggested_weight_kg!=null||s.suggested_reps!=null)?((s.suggested_weight_kg==null?'—':fmt(s.suggested_weight_kg)+' kg')+' × '+(s.suggested_reps??'—')):'');let meta=prev==='—'?'SIN HISTORIAL':'SESIÓN ANTERIOR',cls=prev==='—'?' program':' previous';if(prev==='—'&&s.suggestion_source==='coach_program'){meta=sug?'COACH DEFINE '+sug:'VALOR DEL COACH';cls=' coach'}else if(s.suggestion_source==='coach_progression'&&sug&&sug!==prev){meta='COACH SUGIERE '+sug;cls=' coach'}cell.innerHTML='<span class="cvPrevMain">'+prev+'</span><small class="cvPrevMeta'+cls+'">'+meta+'</small>'})})}catch(e){console.warn('v25 history',e)}}
-  function updateStats(){try{const exs=cvExercises(),sets=exs.flatMap(e=>e.sets||[]),done=sets.filter(s=>s.completed),vol=exs.reduce((a,e)=>a+((e.prescription_unit||'reps')==='reps'?(e.sets||[]).filter(s=>s.completed).reduce((v,s)=>v+(Number(s.weight_kg)||0)*(Number(s.reps)||0),0):0),0),stats=document.querySelectorAll('.cvSessionStat');if(stats[1]?.querySelector('b'))stats[1].querySelector('b').textContent=Math.round(vol).toLocaleString('es-CL')+' kg';if(stats[2]?.querySelector('b'))stats[2].querySelector('b').textContent=done.length+' / '+sets.length}catch(_){}}
+  function decorateHistory(){try{const exs=typeof window.cvExercises==='function'?window.cvExercises():[];document.querySelectorAll('.cvHevyExercise').forEach((card,i)=>{const ex=exs[i];if(!ex)return;card.querySelectorAll('.cvSetRow').forEach((row,j)=>{const s=ex.sets?.[j],cell=row.querySelector('.cvPrevious');if(!s||!cell)return;const prev=prevText(s,ex),sug=(ex?.prescription_unit||'reps')==='seconds'?(s.suggested_duration_seconds==null?'':fmt(s.suggested_duration_seconds)+' s'):((s.suggested_weight_kg!=null||s.suggested_reps!=null)?((s.suggested_weight_kg==null?'—':fmt(s.suggested_weight_kg)+' kg')+' × '+(s.suggested_reps??'—')):'');let meta=prev==='—'?'SIN HISTORIAL':'SESIÓN ANTERIOR',cls=prev==='—'?' program':' previous';if(prev==='—'&&s.suggestion_source==='coach_program'){meta=sug?'COACH DEFINE '+sug:'VALOR DEL COACH';cls=' coach'}else if(s.suggestion_source==='coach_progression'&&sug&&sug!==prev){meta='COACH SUGIERE '+sug;cls=' coach'}cell.innerHTML='<span class="cvPrevMain">'+prev+'</span><small class="cvPrevMeta'+cls+'">'+meta+'</small>'})})}catch(e){console.warn('v25 history',e)}}
+  function updateStats(){try{const exs=window.cvExercises(),sets=exs.flatMap(e=>e.sets||[]),done=sets.filter(s=>s.completed),vol=exs.reduce((a,e)=>a+((e.prescription_unit||'reps')==='reps'?(e.sets||[]).filter(s=>s.completed).reduce((v,s)=>v+(Number(s.weight_kg)||0)*(Number(s.reps)||0),0):0),0),stats=document.querySelectorAll('.cvSessionStat');if(stats[1]?.querySelector('b'))stats[1].querySelector('b').textContent=Math.round(vol).toLocaleString('es-CL')+' kg';if(stats[2]?.querySelector('b'))stats[2].querySelector('b').textContent=done.length+' / '+sets.length}catch(_){}}
   function ensureDock(){let d=document.getElementById('cvRestDock');if(!d){d=document.createElement('div');d.id='cvRestDock';d.className='cvRestDock hidden';d.innerHTML='<div class="cvRestText"><small>DESCANSO</small><b id="cvRestTime">00:00</b><span id="cvRestExercise"></span></div><div class="cvRestActions"><button class="cvRestMin" type="button">—</button><button type="button" class="cvRestPlus">+15 s</button><button type="button" class="cvRestSkip">OMITIR</button></div>';document.body.appendChild(d)}let m=d.querySelector('.cvRestMin');if(!m){m=document.createElement('button');m.type='button';m.className='cvRestMin';m.textContent='—';d.querySelector('.cvRestActions')?.prepend(m)}m.onclick=()=>{d.classList.toggle('cvMinimized');m.textContent=d.classList.contains('cvMinimized')?'↗':'—';persistRest()};const plus=d.querySelector('.cvRestPlus')||[...d.querySelectorAll('.cvRestActions button')].find(x=>x.textContent.includes('+15'));if(plus)plus.onclick=()=>{restEnd+=15000;tickRest();persistRest()};const skip=d.querySelector('.cvRestSkip')||[...d.querySelectorAll('.cvRestActions button')].find(x=>/OMITIR/i.test(x.textContent));if(skip)skip.onclick=stopRest;return d}
   function persistRest(){try{if(!restEnd){sessionStorage.removeItem(REST_KEY);return}sessionStorage.setItem(REST_KEY,JSON.stringify({end:restEnd,name:restName,min:ensureDock().classList.contains('cvMinimized')}))}catch(_){}}
   function tickRest(){if(!restEnd)return;const d=ensureDock(),left=Math.max(0,Math.ceil((restEnd-Date.now())/1000)),t=document.getElementById('cvRestTime'),n=document.getElementById('cvRestExercise');if(t)t.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0');if(n)n.textContent=restName;if(left<=0){clearInterval(restHandle);restHandle=null;restEnd=0;d.classList.add('done');setTimeout(()=>d.classList.add('hidden'),1700);persistRest();try{navigator.vibrate?.([90,55,120])}catch(_){}}}
@@ -1093,7 +1094,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   const oldOpen=window.openDay;window.openDay=async function(id){try{if(mode==='real'&&user?.id){const q=await sb.from('workout_sessions').select('program_day_id,started_at').eq('client_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();if(q.data?.program_day_id&&q.data.program_day_id!==id){id=q.data.program_day_id;toast?.('Ya tenías una sesión activa · la recuperé')}}}catch(e){console.warn('v25 active workout',e)}return oldOpen.call(this,id)};
   window.cvToggleSet=async function(i,j){
     if(!workout?.sessionId){await window.startWorkout();if(!workout?.sessionId)return}
-    const ex=typeof cvExercises==='function'?cvExercises()?.[i]:null,s=ex?.sets?.[j];if(!ex||!s)return;
+    const ex=typeof window.cvExercises==='function'?window.cvExercises()?.[i]:null,s=ex?.sets?.[j];if(!ex||!s)return;
     const wi=document.getElementById('cvw_'+i+'_'+j),ri=document.getElementById('cvr_'+i+'_'+j),riri=document.getElementById('cvri_'+i+'_'+j),w=wi&&wi.value!==''?Number(wi.value):null,r=ri&&ri.value!==''?Math.round(Number(ri.value)):null,rir=riri&&riri.value!==''?Number(riri.value):null;if(w!=null&&!Number.isFinite(w))return toast?.('Revisa el peso.');if(r==null||!Number.isFinite(r)||r<=0)return toast?.('Ingresa las repeticiones realizadas.');if(rir!=null&&(!Number.isFinite(rir)||rir<0||rir>10))return toast?.('RIR debe estar entre 0 y 10.');
     const next=!s.completed,old={w:s.weight_kg,r:s.reps,rir:s.rir,c:s.completed};s.weight_kg=w;s.reps=r;s.rir=rir;s.completed=next;
     const row=wi?.closest('.cvSetRow'),btn=row?.querySelector('.cvSetCheck');row?.classList.toggle('done',next);btn?.classList.toggle('done',next);updateStats();const card=row?.closest('.cvHevyExercise'),all=ex.sets||[],done=all.filter(x=>x.completed).length;card?.classList.toggle('cvExerciseHasProgress',done>0);card?.classList.toggle('cvExerciseComplete',all.length>0&&done===all.length);if(next)startRest(ex.rest_seconds||90,ex.name);
@@ -1126,7 +1127,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
 </script><script id="cv-client-workout-v31-js">
 (function(){
   function cleanDayName(name){return String(name||'Entrenamiento').replace(/^D[ií]a\s*\d+\s*[—–-]?\s*/i,'').trim()||'Entrenamiento'}
-  function athleteExercises(){try{return typeof cvExercises==='function'?(cvExercises()||[]):[]}catch(_){return []}}
+  function athleteExercises(){try{return typeof window.cvExercises==='function'?(window.cvExercises()||[]):[]}catch(_){return []}}
   function stripRirPrescription(el){
     if(!el)return;const raw=(el.textContent||'').split('·').map(x=>x.trim()).filter(Boolean).filter(x=>!/^RIR\b/i.test(x));
     el.replaceChildren(...raw.map(text=>{const s=document.createElement('span');s.className='cvPrescriptionChip';s.textContent=text;return s}));
@@ -1149,9 +1150,9 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
     return {cards,exs,totalSets,doneSets,doneExercises,totalExercises:cards.length};
   }
   function hero(){
-    if(!document.body.classList.contains('cvFastWorkout')||!window.workout?.dayId)return;
+    if(!document.body.classList.contains('cvFastWorkout')||!workout?.dayId)return;
     const content=document.getElementById('content'),stats=content?.querySelector('.cvSessionStats');if(!content||!stats)return;
-    const d=window.data?.days?.find(x=>x.id===window.workout.dayId),state=exerciseState(),pct=state.totalSets?Math.round(state.doneSets/state.totalSets*100):0;
+    const d=data?.days?.find(x=>x.id===workout.dayId),state=exerciseState(),pct=state.totalSets?Math.round(state.doneSets/state.totalSets*100):0;
     let h=content.querySelector('.cvWorkoutHeroV31');if(!h){h=document.createElement('section');h.className='cvWorkoutHeroV31';stats.parentNode.insertBefore(h,stats)}
     const estimated=d?.estimated_minutes??null;
     h.innerHTML='<div class="cvWorkoutHeroTop"><span class="cvWorkoutHeroEy">ENTRENAMIENTO DE HOY</span><span class="cvWorkoutLivePill">EN CURSO</span></div>'+
@@ -1247,7 +1248,7 @@ body.cvFastWorkout .cvSetCheck.done{font-size:0!important}
 <script id="cv-client-workout-v32-js">
 (function(){
   let visualRestEnd=0,visualRestTimer=null,visualRestName='',readyHideTimer=null;
-  const exs=()=>{try{return typeof cvExercises==='function'?(cvExercises()||[]):[]}catch(_){return []}};
+  const exs=()=>{try{return typeof window.cvExercises==='function'?(window.cvExercises()||[]):[]}catch(_){return []}};
   const fmtRest=s=>{s=Math.max(0,Math.ceil(Number(s)||0));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 
   function ensureVisualRest(){
@@ -1305,5 +1306,49 @@ body.cvFastWorkout .cvSetCheck.done{font-size:0!important}
   requestAnimationFrame(workoutState);
 })();
 </script>
+
+
+<style id="cv-client-semantic-v33">
+/* CV Coach Client Semantic V33
+   Blue = information/active/time, green = success/progress, red = error/danger/destructive only. */
+:root{--cv-info:#43b8ff;--cv-info-2:#249fe8;--cv-info-soft:rgba(67,184,255,.10);--cv-positive:#5ee3a5}
+
+/* Informational text and active navigation. */
+.ey{color:var(--cv-info)!important}
+.hero h1 b{color:var(--cv-info)!important}
+.nav button.active .ico{color:var(--cv-info)!important;filter:drop-shadow(0 0 9px rgba(67,184,255,.28))!important}
+.nav button.active:after{background:linear-gradient(90deg,var(--cv-info-2),#69cbff)!important;box-shadow:0 0 12px rgba(67,184,255,.28)!important}
+.cvDesktopSide .cvSideNav button.active{background:linear-gradient(90deg,rgba(67,184,255,.17),rgba(67,184,255,.045))!important;border-color:rgba(67,184,255,.20)!important;box-shadow:inset 3px 0 0 var(--cv-info),0 0 18px rgba(67,184,255,.04)!important}
+.day .num,.workoutExercise .num{background:linear-gradient(145deg,rgba(67,184,255,.16),rgba(24,88,128,.18))!important;border-color:rgba(67,184,255,.34)!important;color:#78d1ff!important}
+body.cvFastWorkout .exerciseTop h3:after{color:var(--cv-info)!important}
+
+/* Technique modal is instructional, not an alert. */
+.cvTechniqueTitle,.cvTechBlock h4,.cvTempoHumanTitle{color:#70cdff!important}
+.cvTempoStep .n{background:rgba(67,184,255,.09)!important;border-color:rgba(67,184,255,.26)!important;color:#79d1ff!important}
+.cvTempoSingle .ico{border-color:rgba(67,184,255,.24)!important;background:rgba(67,184,255,.07)!important;color:#8bd8ff!important}
+.cvPrevMeta.coach{color:#72cfff!important}
+
+/* Positive progress uses green/blue, never warning red. */
+.progress i,.onboardingProgress i{background:linear-gradient(90deg,#2caaf2,#4ec7d5 52%,var(--cv-positive))!important;box-shadow:0 0 14px rgba(67,184,255,.20)!important}
+.stat:after{background:var(--cv-info)!important;box-shadow:0 0 12px rgba(67,184,255,.24)!important}
+.cvWorkoutProgressFill{background:linear-gradient(90deg,#2caaf2,#4ec7d5 52%,var(--cv-positive))!important}
+
+/* Selection/focus is informational. */
+.onboardingChoice.selected{border-color:var(--cv-info)!important;background:rgba(67,184,255,.10)!important;box-shadow:0 0 0 2px rgba(67,184,255,.08)!important}
+.onboardingChoice:focus-visible,.cvNotificationButton:focus-visible{outline-color:var(--cv-info)!important}
+.input:focus,input:focus,.cvSetRow input:focus,.cvFeedbackCard select:focus,.cvFeedbackCard textarea:focus,.cvWeeklyModal select:focus,.cvWeeklyModal textarea:focus,.cvWeeklyModal input:focus{border-color:rgba(67,184,255,.78)!important;box-shadow:0 0 0 3px rgba(67,184,255,.08)!important}
+
+/* Notifications are informational; errors keep their existing red classes. */
+.cvNotificationBadge{background:var(--cv-info-2)!important}
+.cvNotificationItem.unread{border-left-color:var(--cv-info)!important;background:linear-gradient(145deg,rgba(67,184,255,.08),#0b1115)!important}
+.cvNotificationItem.unread .cvNotificationType{border-color:rgba(67,184,255,.38)!important;color:#86d8ff!important}
+
+/* Ordinary primary actions are blue. Destructive/finalize actions remain red below. */
+.btn.primary{background:linear-gradient(180deg,#39b6fb,#168fd6)!important;border-color:#55c3ff!important;box-shadow:0 10px 28px rgba(36,159,232,.20)!important}
+button[onclick="finishWorkout()"],#cvFeedbackFinish{background:linear-gradient(180deg,#f1283c,#d91831)!important;border-color:#f13b4d!important;box-shadow:0 10px 28px rgba(225,29,46,.22)!important}
+
+/* Weekly recovery card is neutral/informational until a real warning is produced. */
+.cvWeeklyCard{border-color:rgba(67,184,255,.26)!important;background:radial-gradient(circle at 100% 0,rgba(67,184,255,.07),transparent 36%),linear-gradient(155deg,#0e151b,#080d11)!important}
+</style>
 
 </body></html>
