@@ -35,7 +35,18 @@ jobs:
           grep -q 'cv-mobile-premium-v36' client-portal/index.html
           grep -q 'font-size:36px' client-portal/index.html
           grep -q 'width:27px' client-portal/index.html
-          node scripts/validate-client-portal-js.mjs
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          html=Path('client-portal/index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',html,re.S|re.I)
+          for i,code in enumerate(scripts):
+              with tempfile.NamedTemporaryFile('w',suffix='.js',delete=False,encoding='utf-8') as f:
+                  f.write(code)
+                  name=f.name
+              subprocess.run(['node','--check',name],check=True)
+          print(f'CLIENT_INLINE_JS_PARSE_OK {len(scripts)}')
+          PY
           git diff --check
 
       - name: Commit canonical changes and remove temporary files
