@@ -37,8 +37,6 @@ for item in required:
     if item not in text:
         raise SystemExit(f'V53 sound contract missing: {item}')
 
-# iOS/Safari: both play() attempts must be issued before the first await so
-# the same user activation can unlock both sounds.
 unlock_match = re.search(r"function unlock\(\)\{(.*?)return Promise\.allSettled\(pending\)\s*\}", text, flags=re.S)
 if not unlock_match:
     raise SystemExit('V53 iOS unlock contract missing')
@@ -55,21 +53,32 @@ if not (0 < set_volume <= 0.35):
 if not (set_volume < workout_volume <= 0.55):
     raise SystemExit(f'V53 workout sound hierarchy unsafe: {workout_volume}')
 
-# Real-mode set sound is downstream of V51 confirmed persistence: V51 emits
-# cv:set-state only through commitSuccess(), and the confirmed update precedes
-# return commitSuccess().
+# V55 owns the final workout sound language. The older V53 set MP3 manager is
+# kept as a historical asset/unlock layer but must be disabled so it cannot
+# overlap with the original synthesized set-confirm sound.
+if 'cv-workout-sound-language-v55' in text and "window.CVSound?.setEnabled(false)" not in text:
+    raise SystemExit('V53 duplicate set sound manager is not neutralized by V55')
+
+# The set-confirm sound must be downstream of confirmed persistence. V56 is the
+# current canonical click handler; older artifacts use the V51 helper directly.
 toggle_anchor = 'window.cvToggleSet=async function(i,j)'
 pos = text.rfind(toggle_anchor)
 if pos < 0:
     raise SystemExit('V53 canonical toggle missing')
 tail = text[pos:]
-persist = tail.find('await cvPersistSetLogV51')
-success = tail.find('return commitSuccess()', persist)
-commit_decl = tail.find('const commitSuccess=()=>')
-event = tail.find("new CustomEvent('cv:set-state'", commit_decl)
-if persist < 0 or success < persist:
-    raise SystemExit('V53 set confirmation ordering broken')
-if commit_decl < 0 or event < commit_decl:
-    raise SystemExit('V53 set-state success event missing')
+if 'cv-set-toggle-runtime-v56' in text:
+    persist = tail.find('await persistSet(p.ex,p.s,body)')
+    event = tail.find("new CustomEvent('cv:set-state'", persist)
+    if persist < 0 or event < persist:
+        raise SystemExit('V53/V56 set confirmation ordering broken')
+else:
+    persist = tail.find('await cvPersistSetLogV51')
+    success = tail.find('return commitSuccess()', persist)
+    commit_decl = tail.find('const commitSuccess=()=>')
+    event = tail.find("new CustomEvent('cv:set-state'", commit_decl)
+    if persist < 0 or success < persist:
+        raise SystemExit('V53 set confirmation ordering broken')
+    if commit_decl < 0 or event < commit_decl:
+        raise SystemExit('V53 set-state success event missing')
 
 print('CV_CLIENT_SOUND_V53_OK')
