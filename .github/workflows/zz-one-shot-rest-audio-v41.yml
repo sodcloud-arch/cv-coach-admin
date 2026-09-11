@@ -1,0 +1,78 @@
+name: One-shot CV Coach Rest Audio V41
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zz-one-shot-rest-audio-v41.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Disable automatic rest countdown audio
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('client-portal/index.html')
+          text = path.read_text(encoding='utf-8')
+          marker = 'cv-rest-audio-v41'
+          if marker in text:
+              raise SystemExit('V41 marker already exists; refusing duplicate patch')
+
+          old_ready = "if(dock.classList.contains('done')){dock.classList.add('hidden');sfx('ready');try{navigator.vibrate?.([90,55,130])}catch(e){}}"
+          new_ready = "if(dock.classList.contains('done')){dock.classList.add('hidden');try{navigator.vibrate?.([90,55,130])}catch(e){}}"
+          if old_ready not in text:
+              raise SystemExit('Expected night-v12 rest completion sound hook not found')
+          text = text.replace(old_ready, new_ready, 1)
+
+          old_tick = "if(active&&sec>0&&sec<=10&&sec!==lastSecond){lastSecond=sec;tick();try{navigator.vibrate?.(18)}catch(_){}}"
+          new_tick = "if(active&&sec>0&&sec<=10&&sec!==lastSecond){lastSecond=sec;try{navigator.vibrate?.(18)}catch(_){}}"
+          if old_tick not in text:
+              raise SystemExit('Expected v23 countdown tick sound hook not found')
+          text = text.replace(old_tick, new_tick, 1)
+
+          old_end = "if(active&&sec===0&&!lastFinished){lastFinished=true;ready();try{navigator.vibrate?.([90,55,120])}catch(_){}}"
+          new_end = "if(active&&sec===0&&!lastFinished){lastFinished=true;try{navigator.vibrate?.([90,55,120])}catch(_){}}"
+          if old_end not in text:
+              raise SystemExit('Expected v23 rest completion chime hook not found')
+          text = text.replace(old_end, new_end, 1)
+
+          closing = '</body></html>'
+          if closing not in text:
+              raise SystemExit('Expected closing body/html marker not found')
+          text = text.replace(closing, '<!-- cv-rest-audio-v41: automated rest countdown audio disabled; haptics preserved -->\n' + closing, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          grep -q 'cv-rest-audio-v41' client-portal/index.html
+          if grep -q "sfx('ready')" client-portal/index.html; then
+            echo 'Unexpected ready sound hook remains' >&2
+            exit 1
+          fi
+          python scripts/validate-repo-contracts.py
+          git diff --check
+
+      - name: Commit canonical change and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/zz-one-shot-rest-audio-v41.yml
+          git add client-portal/index.html
+          git commit -m 'fix(client): silence automatic rest timer audio v41'
+          git push origin main
