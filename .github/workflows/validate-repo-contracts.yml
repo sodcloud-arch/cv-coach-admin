@@ -25,6 +25,10 @@ jobs:
           python client-portal/consolidate_runtime.py
           python client-portal/consolidate_session_runtime.py
           python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
+          grep -q 'cv-feedback-simple-v48' client-portal/stable/index.html
+          grep -q 'save_workout_feedback_v2' client-portal/stable/index.html
+          grep -q 'cvSetToggleLocksV48' client-portal/stable/index.html
       - name: Validate client inline JavaScript
         run: |
           python - <<'PY'
