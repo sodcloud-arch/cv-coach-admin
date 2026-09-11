@@ -20,7 +20,29 @@ jobs:
       - name: Validate repository contracts
         run: python scripts/validate-repo-contracts.py
       - name: Build client stabilized artifact
-        run: python client-portal/stabilize.py
+        run: |
+          python client-portal/stabilize.py
+          python client-portal/consolidate_runtime.py
+      - name: Validate client inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('client-portal/stable/index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, flags=re.S | re.I)
+          out = Path('/tmp/cv-client-inline')
+          out.mkdir(exist_ok=True)
+          written = 0
+          for i, script in enumerate(scripts):
+              if not script.strip():
+                  continue
+              (out / f'{i:03d}.js').write_text(script, encoding='utf-8')
+              written += 1
+          if written == 0:
+              raise SystemExit('No client inline scripts found')
+          print(written)
+          PY
+          for f in /tmp/cv-client-inline/*.js; do node --check "$f"; done
       - name: Validate Admin inline JavaScript
         run: |
           python - <<'PY'
