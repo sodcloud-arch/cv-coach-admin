@@ -1,0 +1,65 @@
+name: CV Coach Client Rest + Execution V35
+
+on:
+  push:
+    branches:
+      - feature/client-rest-timer-execution-button-v1
+    paths:
+      - '.github/workflows/oneshot-client-rest-execution-v35.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cv-coach-client-rest-execution-v35
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/client-rest-timer-execution-button-v1
+
+      - name: Apply V35 patch
+        run: |
+          set -euo pipefail
+          python scripts/oneshot-client-rest-execution-v35.py
+
+      - name: Validate repository contracts
+        run: |
+          set -euo pipefail
+          python scripts/validate-repo-contracts.py
+          grep -q 'cv-client-workout-v35' client-portal/index.html
+          grep -q 'cvExecutionBtnV35' client-portal/index.html
+          grep -q 'VER EJECUCIÓN' client-portal/index.html
+          grep -q 'font-size:46px' client-portal/index.html
+          grep -q 'rgba(255,59,79,.70)' client-portal/index.html
+          git diff --check
+
+      - name: Validate inline JavaScript parses
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          html=Path('client-portal/index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,re.S)
+          with tempfile.TemporaryDirectory() as d:
+              for i,src in enumerate(scripts):
+                  p=Path(d)/f'{i}.js';p.write_text(src,encoding='utf-8')
+                  subprocess.run(['node','--check',str(p)],check=True)
+          print('CLIENT_PORTAL_INLINE_JS_OK')
+          PY
+
+      - name: Commit canonical change and remove temporary files
+        run: |
+          set -euo pipefail
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client-portal/index.html scripts/validate-repo-contracts.py
+          git rm -f scripts/oneshot-client-rest-execution-v35.py .github/workflows/oneshot-client-rest-execution-v35.yml
+          git commit -m 'feat(client): emphasize rest and expose execution guide'
+          git push origin HEAD:feature/client-rest-timer-execution-button-v1
