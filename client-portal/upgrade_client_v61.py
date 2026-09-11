@@ -4,25 +4,28 @@ import hashlib,json,re
 ROOT=Path(__file__).resolve().parent
 HTML=ROOT/'stable'/'index.html'
 BUILD=ROOT/'stable'/'build.json'
-V63_CSS_FILE=ROOT/'assets'/'cv-rank-real-ui-v63.css'
-V63_JS_FILE=ROOT/'assets'/'cv-rank-real-ui-v63.js'
+V64_CSS_FILE=ROOT/'assets'/'cv-rank-real-ui-v64.css'
+V64_JS_FILE=ROOT/'assets'/'cv-rank-real-ui-v64.js'
 MARKER='<!-- cv-rank-engine-v61: tutorial-empty + 5-level leagues + legend + global-ranking + challenges -->'
-V63='<!-- cv-rank-real-ui-v63: approved-transparent-badges + premium-home + rank-state + challenge-teaser -->'
+V64='<!-- cv-rank-real-ui-v64: cache-fresh-transparent-badges + next-rank-visibility + routine-rank-hud -->'
 
-for asset in [V63_CSS_FILE,V63_JS_FILE]:
+for asset in [V64_CSS_FILE,V64_JS_FILE]:
     if not asset.exists() or asset.stat().st_size<200:
-        raise SystemExit(f'CV Rank V63 source asset missing: {asset}')
+        raise SystemExit(f'CV Rank V64 source asset missing: {asset}')
 
-css=V63_CSS_FILE.read_text(encoding='utf-8')
-js=V63_JS_FILE.read_text(encoding='utf-8')
+css=V64_CSS_FILE.read_text(encoding='utf-8')
+js=V64_JS_FILE.read_text(encoding='utf-8')
 text=HTML.read_text(encoding='utf-8')
 text=re.sub(r'<style id="cv-rank-system-v60-css">.*?</style>','',text,flags=re.S)
 text=re.sub(r'<script id="cv-rank-system-v60-js">.*?</script>','',text,flags=re.S)
 text=re.sub(r'<style id="cv-rank-real-ui-v63-css">.*?</style>','',text,flags=re.S)
 text=re.sub(r'<script id="cv-rank-real-ui-v63-js">.*?</script>','',text,flags=re.S)
-text=re.sub(r'<link[^>]+cv-rank-real-ui-v63\.css[^>]*>','',text,flags=re.I)
-text=re.sub(r'<script[^>]+cv-rank-real-ui-v63\.js[^>]*></script>','',text,flags=re.I)
-text=text.replace(V63,'')
+text=re.sub(r'<style id="cv-rank-real-ui-v64-css">.*?</style>','',text,flags=re.S)
+text=re.sub(r'<script id="cv-rank-real-ui-v64-js">.*?</script>','',text,flags=re.S)
+text=re.sub(r'<link[^>]+cv-rank-real-ui-v(?:63|64)\.css[^>]*>','',text,flags=re.I)
+text=re.sub(r'<script[^>]+cv-rank-real-ui-v(?:63|64)\.js[^>]*></script>','',text,flags=re.I)
+text=text.replace('<!-- cv-rank-real-ui-v63: approved-transparent-badges + premium-home + rank-state + challenge-teaser -->','')
+text=text.replace(V64,'')
 
 if MARKER not in text:
     for prerequisite in ['cv-rank-system-v60','cv-client-e2e-v58','cv-coach-client-loop-v59']:
@@ -34,24 +37,28 @@ if MARKER not in text:
     text=text.replace('</body>','<script src="./assets/cv-rank-v61.js"></script>\n'+MARKER+'\n</body>',1)
 
 if '</head>' not in text or '</body>' not in text:
-    raise SystemExit('CV Rank V63 HTML anchors missing')
-text=text.replace('</head>',f'<style id="cv-rank-real-ui-v63-css">\n{css}\n</style>\n</head>',1)
-text=text.replace('</body>',f'<script id="cv-rank-real-ui-v63-js">\n{js}\n</script>\n{V63}\n</body>',1)
+    raise SystemExit('CV Rank V64 HTML anchors missing')
+text=text.replace('</head>',f'<style id="cv-rank-real-ui-v64-css">\n{css}\n</style>\n</head>',1)
+text=text.replace('</body>',f'<script id="cv-rank-real-ui-v64-js">\n{js}\n</script>\n{V64}\n</body>',1)
 
 required=[
     MARKER,
     './assets/cv-rank-v61.css',
     './assets/cv-rank-v61.js',
-    V63,
-    'cv-rank-real-ui-v63-css',
-    'cv-rank-real-ui-v63-js',
-    'cv-rank-tutorial-v61.webp'
+    V64,
+    'cv-rank-real-ui-v64-css',
+    'cv-rank-real-ui-v64-js',
+    'cv-rank-tutorial-v61.webp',
+    'cv64WorkoutRankHud',
+    '?v=64'
 ]
 for item in required:
     if item not in text:
         raise SystemExit(f'CV Rank contract missing: {item}')
 if 'cv-rank-system-v60-js' in text or 'cv-rank-system-v60-css' in text:
     raise SystemExit('CV Rank V61 failed to retire active V60 runtime')
+if 'cv-rank-real-ui-v63-js' in text or 'cv-rank-real-ui-v63-css' in text:
+    raise SystemExit('CV Rank V64 failed to retire active V63 UI layer')
 
 HTML.write_text(text,encoding='utf-8')
 sha=hashlib.sha256(text.encode()).hexdigest()
@@ -71,7 +78,7 @@ for patch in [
     'Global/league/season ranking UI v61',
     'Challenges + Trophy Room client UI v61',
     'Approved transparent rank badge assets v63',
-    'Premium real rank UI v63'
+    'Rank UI polish + routine rank HUD v64'
 ]:
     if patch not in patches:
         patches.append(patch)
