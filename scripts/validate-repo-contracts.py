@@ -100,3 +100,6 @@ require(client, "window.cvExercises=cvExercises", "client workout canonical exer
 require(client, "cv-client-semantic-v33", "client semantic palette v33")
 
 require(client, "cv-client-semantic-v34", "client final semantic cleanup")
+require(client, "cv-client-workout-v35", "large red rest countdown and execution CTA styles")
+require(client, "cvExecutionBtnV35", "explicit client exercise execution button")
+require(client, "VER EJECUCIÓN", "client execution CTA copy")
