@@ -14,7 +14,9 @@ on:
       - 'client-portal/upgrade_client_v50.py'
       - 'client-portal/upgrade_client_v51.py'
       - 'client-portal/upgrade_client_v52.py'
+      - 'client-portal/upgrade_client_v53.py'
       - 'scripts/test-workout-runtime-v52.py'
+      - 'scripts/test-client-sound-v53.py'
       - 'client-portal/manifest.webmanifest'
       - 'client-portal/sw.js'
       - 'client-portal/icon.svg'
@@ -55,7 +57,9 @@ jobs:
           python client-portal/upgrade_client_v50.py
           python client-portal/upgrade_client_v51.py
           python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
           python scripts/test-workout-runtime-v52.py
+          python scripts/test-client-sound-v53.py
           test "$(wc -c < client-portal/stable/index.html)" -gt 50000
           grep -qi 'CV Coach' client-portal/stable/index.html
           grep -q "America/Santiago" client-portal/stable/index.html
@@ -83,6 +87,12 @@ jobs:
           grep -q 'cv-render-bus-v51-js' client-portal/stable/index.html
           grep -q "new CustomEvent('cv:rendered')" client-portal/stable/index.html
           grep -q 'cv-workout-regression-guard-v52' client-portal/stable/index.html
+          grep -q 'cv-client-sound-v53' client-portal/stable/index.html
+          grep -q 'cv-sound-manager-v53-js' client-portal/stable/index.html
+          grep -q './assets/sounds/cv-set-confirmed-v1.mp3' client-portal/stable/index.html
+          grep -q './assets/sounds/cv-workout-complete-v1.mp3' client-portal/stable/index.html
+          test -s client-portal/assets/sounds/cv-set-confirmed-v1.mp3
+          test -s client-portal/assets/sounds/cv-workout-complete-v1.mp3
           if grep -q 'baseRender=window.render' client-portal/stable/index.html; then
             echo 'Historical render wrapper remained in stable artifact' >&2
             exit 1
@@ -126,13 +136,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p .vercel/output/static/assets
+          mkdir -p .vercel/output/static/assets/sounds
           printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
           cp index.html .vercel/output/static/index.html
           cp ../manifest.webmanifest .vercel/output/static/manifest.webmanifest
           cp ../sw.js .vercel/output/static/sw.js
           cp ../icon.svg .vercel/output/static/icon.svg
           cp ../assets/cv-isotipo-header-v1.webp .vercel/output/static/assets/cv-isotipo-header-v1.webp
+          cp ../assets/sounds/cv-set-confirmed-v1.mp3 .vercel/output/static/assets/sounds/cv-set-confirmed-v1.mp3
+          cp ../assets/sounds/cv-workout-complete-v1.mp3 .vercel/output/static/assets/sounds/cv-workout-complete-v1.mp3
           cat > .vercel/output/config.json <<'JSON'
           {
             "version": 3,
@@ -207,6 +219,8 @@ jobs:
           test -s .vercel/output/static/sw.js
           test -s .vercel/output/static/icon.svg
           test -s .vercel/output/static/assets/cv-isotipo-header-v1.webp
+          test -s .vercel/output/static/assets/sounds/cv-set-confirmed-v1.mp3
+          test -s .vercel/output/static/assets/sounds/cv-workout-complete-v1.mp3
           test -s .vercel/output/config.json
 
       - name: Deploy CV Coach client production
@@ -231,14 +245,16 @@ jobs:
             sw_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$sw_headers" https://cv-coach-roan.vercel.app/sw.js || true)"
             icon_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$icon_headers" https://cv-coach-roan.vercel.app/icon.svg || true)"
             asset_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 -D "$asset_headers" https://cv-coach-roan.vercel.app/assets/cv-isotipo-header-v1.webp || true)"
-            if [[ "$root_body" == *"CV Coach"* && "$root_body" != *"Cliente Premium Preview"* && "$root_body" == *"America/Santiago"* && "$root_body" == *"manifest.webmanifest"* && "$root_body" == *"cv-client-header-v39"* && "$root_body" == *"cv-isotipo-header-v1.webp"* && "$root_body" == *"cv-runtime-consolidation-v44"* && "$root_body" == *"compactObserverV44"* && "$root_body" == *"cv-session-runtime-v46"* && "$root_body" == *"async function loadSession"* && "$root_body" == *"cv-workout-feedback-v47"* && "$root_body" == *"cv-workout-readability-v47"* && "$root_body" == *"cv-feedback-simple-v48"* && "$root_body" == *"save_workout_feedback_v2"* && "$root_body" == *"cvSetToggleLocksV48"* && "$root_body" == *"cv-client-quality-v49"* && "$root_body" == *"set update was not confirmed"* && "$root_body" == *"Finalización promedio"* && "$root_body" == *"Mejor duración"* && "$root_body" == *"cv-client-quality-v50"* && "$root_body" == *"cvDraftSaveLocksV50"* && "$root_body" == *"draft update was not confirmed"* && "$root_body" == *"kg·reps · <em"* && "$root_body" == *"cv-client-runtime-v51"* && "$root_body" == *"cvPersistSetLogV51"* && "$root_body" == *"cv-render-bus-v51-js"* && "$root_body" == *"new CustomEvent('cv:rendered')"* && "$root_body" == *"cv-workout-regression-guard-v52"* && "$root_body" != *"baseRender=window.render"* && "$root_body" != *"baseNav=window.nav"* && "$root_body" != *"cvRirInput"* && "$root_body" != *"getElementById('cvri_'"* && "$manifest_body" == *'"name": "CV Coach"'* && "$manifest_body" == *'"src": "./icon.svg"'* && "$sw_body" == *"cv-coach-shell"* && "$icon_body" == *"<svg"* && "$asset_status" == "200" ]]; then
+            set_sound_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/sounds/cv-set-confirmed-v1.mp3 || true)"
+            workout_sound_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/sounds/cv-workout-complete-v1.mp3 || true)"
+            if [[ "$root_body" == *"CV Coach"* && "$root_body" != *"Cliente Premium Preview"* && "$root_body" == *"America/Santiago"* && "$root_body" == *"manifest.webmanifest"* && "$root_body" == *"cv-client-header-v39"* && "$root_body" == *"cv-isotipo-header-v1.webp"* && "$root_body" == *"cv-runtime-consolidation-v44"* && "$root_body" == *"compactObserverV44"* && "$root_body" == *"cv-session-runtime-v46"* && "$root_body" == *"async function loadSession"* && "$root_body" == *"cv-workout-feedback-v47"* && "$root_body" == *"cv-workout-readability-v47"* && "$root_body" == *"cv-feedback-simple-v48"* && "$root_body" == *"save_workout_feedback_v2"* && "$root_body" == *"cvSetToggleLocksV48"* && "$root_body" == *"cv-client-quality-v49"* && "$root_body" == *"set update was not confirmed"* && "$root_body" == *"Finalización promedio"* && "$root_body" == *"Mejor duración"* && "$root_body" == *"cv-client-quality-v50"* && "$root_body" == *"cvDraftSaveLocksV50"* && "$root_body" == *"draft update was not confirmed"* && "$root_body" == *"kg·reps · <em"* && "$root_body" == *"cv-client-runtime-v51"* && "$root_body" == *"cvPersistSetLogV51"* && "$root_body" == *"cv-render-bus-v51-js"* && "$root_body" == *"new CustomEvent('cv:rendered')"* && "$root_body" == *"cv-workout-regression-guard-v52"* && "$root_body" == *"cv-client-sound-v53"* && "$root_body" == *"cv-sound-manager-v53-js"* && "$root_body" == *"./assets/sounds/cv-set-confirmed-v1.mp3"* && "$root_body" == *"./assets/sounds/cv-workout-complete-v1.mp3"* && "$root_body" != *"baseRender=window.render"* && "$root_body" != *"baseNav=window.nav"* && "$root_body" != *"cvRirInput"* && "$root_body" != *"getElementById('cvri_'"* && "$manifest_body" == *'"name": "CV Coach"'* && "$manifest_body" == *'"src": "./icon.svg"'* && "$sw_body" == *"cv-coach-shell"* && "$icon_body" == *"<svg"* && "$asset_status" == "200" && "$set_sound_status" == "200" && "$workout_sound_status" == "200" ]]; then
               grep -qi '^x-content-type-options: nosniff' "$root_headers"
               grep -qi '^x-frame-options: DENY' "$root_headers"
               grep -qi '^content-security-policy:' "$root_headers"
               grep -qi '^cache-control:.*no-store' "$sw_headers"
               grep -qi '^content-type:.*application/manifest' "$manifest_headers"
               grep -qi '^content-type:.*image/svg' "$icon_headers"
-              echo 'PUBLIC_PORTAL_PWA_OK'
+              echo 'PUBLIC_PORTAL_PWA_SOUND_V53_OK'
               rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers" "$asset_headers"
               exit 0
             fi
