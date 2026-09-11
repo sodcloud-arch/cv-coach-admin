@@ -39,6 +39,9 @@ jobs:
           python scripts/test-set-toggle-runtime-v56.py
           python client-portal/upgrade_client_v57.py
           python scripts/test-client-modules-v57.py
+          python scripts/test-client-module-e2e-v58.py
+          python client-portal/upgrade_client_v59.py
+          python scripts/test-coach-client-loop-v59.py
           grep -q 'cv-feedback-simple-v48' client-portal/stable/index.html
           grep -q 'save_workout_feedback_v2' client-portal/stable/index.html
           grep -q 'cvSetToggleLocksV48' client-portal/stable/index.html
@@ -64,6 +67,10 @@ jobs:
           grep -q 'cv-client-modules-v57-js' client-portal/stable/index.html
           grep -q 'Check-in semanal pendiente' client-portal/stable/index.html
           grep -q 'cvLogNutritionMealsV57' client-portal/stable/index.html
+          grep -q 'cv-client-e2e-v58' client-portal/stable/index.html
+          grep -q 'cv-coach-client-loop-v59' client-portal/stable/index.html
+          grep -q "program_published:'Rutina actualizada'" client-portal/stable/index.html
+          grep -q "'/routine':'routine'" client-portal/stable/index.html
           grep -q './assets/sounds/cv-set-confirmed-v1.mp3' client-portal/stable/index.html
           grep -q './assets/sounds/cv-workout-complete-v1.mp3' client-portal/stable/index.html
           test -s client-portal/assets/sounds/cv-set-confirmed-v1.mp3
@@ -90,6 +97,10 @@ jobs:
         run: python scripts/test-client-sound-v53.py
       - name: Run client modules regression guard V57
         run: python scripts/test-client-modules-v57.py
+      - name: Run client module E2E guard V58
+        run: python scripts/test-client-module-e2e-v58.py
+      - name: Run coach-client loop guard V59
+        run: python scripts/test-coach-client-loop-v59.py
       - name: Validate client inline JavaScript
         run: |
           python - <<'PY'
