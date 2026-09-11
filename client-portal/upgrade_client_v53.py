@@ -97,8 +97,9 @@ metadata["patches"] = patches
 BUILD.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-4:]}, ensure_ascii=False))
 
-# V54 is chained from the existing V53 build gate so current repository and
-# production workflows cannot produce a client artifact without the mobile
-# workout reliability fix and its regression contract.
+# Current production chain: V54 hardens mobile start/persistence UX, then V55
+# restores the approved workout sound language and guards it as one runtime.
 runpy.run_path(str(ROOT / "upgrade_client_v54.py"), run_name="__main__")
 runpy.run_path(str(ROOT.parent / "scripts" / "test-mobile-workout-v54.py"), run_name="__main__")
+runpy.run_path(str(ROOT / "upgrade_client_v55.py"), run_name="__main__")
+runpy.run_path(str(ROOT.parent / "scripts" / "test-workout-sound-v55.py"), run_name="__main__")
