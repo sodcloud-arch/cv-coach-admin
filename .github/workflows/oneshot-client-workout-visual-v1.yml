@@ -23,19 +23,23 @@ jobs:
         with:
           ref: feature/client-workout-visual-v1
 
-      - name: Apply client workout visual patch
+      - name: Apply client workout visual patch to canonical portal
         run: |
           set -euo pipefail
+          mkdir -p client-portal/stable
+          cp client-portal/index.html client-portal/stable/index.html
           python scripts/oneshot-client-workout-visual-v1.py
+          cp client-portal/stable/index.html client-portal/index.html
+          rm -rf client-portal/stable
 
       - name: Validate portal
         run: |
           set -euo pipefail
-          grep -q 'cv-client-workout-v31' client-portal/stable/index.html
-          grep -q 'ENTRENAMIENTO DE HOY' client-portal/stable/index.html
-          grep -q 'cvExerciseCurrent' client-portal/stable/index.html
-          grep -q 'cvRirInput' client-portal/stable/index.html
-          grep -q 'RIR stays in data/model but is intentionally hidden' client-portal/stable/index.html
+          grep -q 'cv-client-workout-v31' client-portal/index.html
+          grep -q 'ENTRENAMIENTO DE HOY' client-portal/index.html
+          grep -q 'cvExerciseCurrent' client-portal/index.html
+          grep -q 'cvRirInput' client-portal/index.html
+          grep -q 'RIR stays in data/model but is intentionally hidden' client-portal/index.html
           python scripts/validate-repo-contracts.py
           git diff --check
 
@@ -44,7 +48,7 @@ jobs:
           set -euo pipefail
           git config user.name 'CV Coach Release Bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add client-portal/stable/index.html
+          git add client-portal/index.html
           git rm -f scripts/oneshot-client-workout-visual-v1.py .github/workflows/oneshot-client-workout-visual-v1.yml
           git commit -m 'feat(client): refresh workout visual hierarchy'
           git push origin HEAD:feature/client-workout-visual-v1
