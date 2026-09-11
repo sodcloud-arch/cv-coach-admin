@@ -9,6 +9,7 @@ on:
       - 'client-portal/consolidate_runtime.py'
       - 'client-portal/consolidate_session_runtime.py'
       - 'client-portal/workout_feedback.py'
+      - 'client-portal/upgrade_feedback_v48.py'
       - 'client-portal/manifest.webmanifest'
       - 'client-portal/sw.js'
       - 'client-portal/icon.svg'
@@ -44,6 +45,7 @@ jobs:
           python client-portal/consolidate_runtime.py
           python client-portal/consolidate_session_runtime.py
           python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
           test "$(wc -c < client-portal/stable/index.html)" -gt 50000
           grep -qi 'CV Coach' client-portal/stable/index.html
           grep -q "America/Santiago" client-portal/stable/index.html
@@ -55,6 +57,9 @@ jobs:
           grep -q 'async function loadSession' client-portal/stable/index.html
           grep -q 'cv-workout-feedback-v47' client-portal/stable/index.html
           grep -q 'cv-workout-readability-v47' client-portal/stable/index.html
+          grep -q 'cv-feedback-simple-v48' client-portal/stable/index.html
+          grep -q 'save_workout_feedback_v2' client-portal/stable/index.html
+          grep -q 'cvSetToggleLocksV48' client-portal/stable/index.html
           if grep -q 'Cliente Premium Preview' client-portal/stable/index.html; then
             echo 'Preview title remained in stable artifact' >&2
             exit 1
@@ -187,7 +192,7 @@ jobs:
             sw_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$sw_headers" https://cv-coach-roan.vercel.app/sw.js || true)"
             icon_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$icon_headers" https://cv-coach-roan.vercel.app/icon.svg || true)"
             asset_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 -D "$asset_headers" https://cv-coach-roan.vercel.app/assets/cv-isotipo-header-v1.webp || true)"
-            if [[ "$root_body" == *"CV Coach"* && "$root_body" != *"Cliente Premium Preview"* && "$root_body" == *"America/Santiago"* && "$root_body" == *"manifest.webmanifest"* && "$root_body" == *"cv-client-header-v39"* && "$root_body" == *"cv-isotipo-header-v1.webp"* && "$root_body" == *"cv-runtime-consolidation-v44"* && "$root_body" == *"compactObserverV44"* && "$root_body" == *"cv-session-runtime-v46"* && "$root_body" == *"async function loadSession"* && "$root_body" == *"cv-workout-feedback-v47"* && "$root_body" == *"cv-workout-readability-v47"* && "$manifest_body" == *'"name": "CV Coach"'* && "$manifest_body" == *'"src": "./icon.svg"'* && "$sw_body" == *"cv-coach-shell"* && "$icon_body" == *"<svg"* && "$asset_status" == "200" ]]; then
+            if [[ "$root_body" == *"CV Coach"* && "$root_body" != *"Cliente Premium Preview"* && "$root_body" == *"America/Santiago"* && "$root_body" == *"manifest.webmanifest"* && "$root_body" == *"cv-client-header-v39"* && "$root_body" == *"cv-isotipo-header-v1.webp"* && "$root_body" == *"cv-runtime-consolidation-v44"* && "$root_body" == *"compactObserverV44"* && "$root_body" == *"cv-session-runtime-v46"* && "$root_body" == *"async function loadSession"* && "$root_body" == *"cv-workout-feedback-v47"* && "$root_body" == *"cv-workout-readability-v47"* && "$root_body" == *"cv-feedback-simple-v48"* && "$root_body" == *"save_workout_feedback_v2"* && "$root_body" == *"cvSetToggleLocksV48"* && "$manifest_body" == *'"name": "CV Coach"'* && "$manifest_body" == *'"src": "./icon.svg"'* && "$sw_body" == *"cv-coach-shell"* && "$icon_body" == *"<svg"* && "$asset_status" == "200" ]]; then
               grep -qi '^x-content-type-options: nosniff' "$root_headers"
               grep -qi '^x-frame-options: DENY' "$root_headers"
               grep -qi '^content-security-policy:' "$root_headers"
