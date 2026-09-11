@@ -21,6 +21,18 @@ jobs:
         run: python scripts/validate-repo-contracts.py
       - name: Build client stabilized artifact
         run: python client-portal/stabilize.py
+      - name: Validate Admin inline JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path('index.html').read_text(encoding='utf-8')
+          start = html.rfind('<script>')
+          end = html.rfind('</script>')
+          if start < 0 or end <= start:
+              raise SystemExit('Inline Admin script not found')
+          Path('/tmp/cv-coach-admin-inline.js').write_text(html[start + len('<script>'):end], encoding='utf-8')
+          PY
+          node --check /tmp/cv-coach-admin-inline.js
       - name: Validate JSON and shell syntax
         run: |
           python -m json.tool vercel.json >/dev/null

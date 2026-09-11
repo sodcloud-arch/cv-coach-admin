@@ -140,9 +140,23 @@ function sanitizeContext(context: unknown, scope: string, targetDayNumber: numbe
     program: compactRecord(draftRoot.program, ["goal", "version", "start_date", "end_date"]),
     days: draftDays,
   };
+  const trainingConstraints = (Array.isArray(root.training_constraints) ? root.training_constraints : [])
+    .filter(isObject)
+    .map((item) => compactRecord(item, ["constraint_code", "label", "region", "action", "note"]));
+  const timeLearning = compactRecord(root.time_learning, ["sample_count", "median_ratio", "applied_factor"]);
+  const rawExposures = Array.isArray(root.exercise_mechanical_exposures) ? root.exercise_mechanical_exposures : [];
+  const exposuresByExercise = new Map<string, JsonObject[]>();
+  for (const raw of rawExposures) {
+    if (!isObject(raw) || typeof raw.exercise_id !== "string" || typeof raw.constraint_code !== "string") continue;
+    const list = exposuresByExercise.get(raw.exercise_id) ?? [];
+    list.push(compactRecord(raw, ["constraint_code", "exposure_level"]));
+    exposuresByExercise.set(raw.exercise_id, list);
+  }
+  const avoidCodes = new Set(trainingConstraints.filter((x) => x.action === "avoid").map((x) => String(x.constraint_code)));
   const rawCatalog = Array.isArray(root.exercise_catalog) ? root.exercise_catalog : [];
-  const catalog = rawCatalog.slice(0, maxCatalogExercises).map((exercise) =>
-    compactRecord(exercise, [
+  const excludedExerciseIds: string[] = [];
+  const catalog = rawCatalog.slice(0, maxCatalogExercises).flatMap((exercise) => {
+    const base = compactRecord(exercise, [
       "id",
       "name",
       "primary_muscle",
@@ -152,8 +166,15 @@ function sanitizeContext(context: unknown, scope: string, targetDayNumber: numbe
       "default_tempo",
       "default_rest_sec",
       "prescription_unit",
-    ])
-  );
+    ]);
+    const exerciseId = typeof base.id === "string" ? base.id : "";
+    const exposures = exposuresByExercise.get(exerciseId) ?? [];
+    if (exposures.some((x) => avoidCodes.has(String(x.constraint_code)))) {
+      if (exerciseId) excludedExerciseIds.push(exerciseId);
+      return [];
+    }
+    return [{ ...base, mechanical_exposures: exposures }];
+  });
 
   return {
     generation_request: {
@@ -166,7 +187,14 @@ function sanitizeContext(context: unknown, scope: string, targetDayNumber: numbe
       onboarding,
       training_preferences: trainingPreferences,
       schedule_preferences: schedulePreferences,
+      training_constraints: trainingConstraints,
+      time_learning: timeLearning,
       latest_weekly_checkin: weekly,
+    },
+    safety_filter: {
+      excluded_exercise_ids: excludedExerciseIds,
+      excluded_count: excludedExerciseIds.length,
+      avoid_constraint_codes: [...avoidCodes],
     },
     current_draft: draft,
     exercise_catalog: catalog,
@@ -195,6 +223,17 @@ function deterministicWarnings(context: unknown): JsonObject[] {
       severity: painScore >= 7 ? "high" : "warning",
       message:
         `El último check-in registra dolor ${painScore}/10. Revisar tolerancia antes de publicar.`,
+    });
+  }
+
+  const constraints = Array.isArray(root.training_constraints) ? root.training_constraints.filter(isObject) : [];
+  const avoidCount = constraints.filter((x) => x.action === "avoid").length;
+  const cautionCount = constraints.filter((x) => x.action === "caution").length;
+  if (avoidCount || cautionCount) {
+    warnings.push({
+      code: "STRUCTURED_TRAINING_CONSTRAINTS",
+      severity: avoidCount ? "high" : "warning",
+      message: `Restricciones mecánicas vigentes: ${avoidCount} EVITAR y ${cautionCount} PRECAUCIÓN. CV Coach filtrará y auditará la selección de ejercicios.`,
     });
   }
 
@@ -418,6 +457,9 @@ function buildScheduleAudit(
   const onboarding = isObject(trainingContext.onboarding) ? trainingContext.onboarding : {};
   const schedulePreferences = isObject(trainingContext.schedule_preferences) ? trainingContext.schedule_preferences : {};
   const weekly = isObject(trainingContext.latest_weekly_checkin) ? trainingContext.latest_weekly_checkin : {};
+  const timeLearning = isObject(trainingContext.time_learning) ? trainingContext.time_learning : {};
+  const learnedFactorRaw = finiteNumber(timeLearning.applied_factor);
+  const learnedFactor = learnedFactorRaw !== null ? Math.min(1.5, Math.max(1, learnedFactorRaw)) : 1;
   const generatedPlan = isObject(plan) ? plan : {};
   const days = Array.isArray(generatedPlan.days) ? generatedPlan.days : [];
 
@@ -442,7 +484,8 @@ function buildScheduleAudit(
     const day = isObject(rawDay) ? rawDay : {};
     const dayNumber = strictInteger(day.day_number) ?? index + 1;
     const modelMinutes = strictInteger(day.estimated_minutes);
-    const deterministicMinutes = estimateDayMinutes(day);
+    const baseDeterministicMinutes = estimateDayMinutes(day);
+    const deterministicMinutes = baseDeterministicMinutes === null ? null : Math.ceil(baseDeterministicMinutes * learnedFactor);
     const candidates = [modelMinutes, deterministicMinutes].filter((v): v is number => v !== null);
     const effectiveMinutes = candidates.length ? Math.max(...candidates) : null;
     let status = "not_available";
@@ -459,6 +502,8 @@ function buildScheduleAudit(
     return {
       day_number: dayNumber,
       model_minutes: modelMinutes,
+      base_deterministic_minutes: baseDeterministicMinutes,
+      learned_factor: learnedFactor,
       deterministic_minutes: deterministicMinutes,
       effective_minutes: effectiveMinutes,
       max_minutes: maxSessionMinutes,
@@ -475,15 +520,93 @@ function buildScheduleAudit(
       frequency_status: frequencyStatus,
       max_session_minutes: maxSessionMinutes,
       available_days_next_week: availableDaysNextWeek,
+      time_learning_sample_count: strictInteger(timeLearning.sample_count) ?? 0,
+      time_learning_factor: learnedFactor,
       overall_status: blockingErrors.length ? "blocked" : "ok",
       blocking_count: blockingErrors.length,
       methodology:
-        "CV Coach usa el mayor valor entre estimated_minutes informado por la IA y una estimación determinística basada en series, rango medio de reps/segundos, tempo, descansos, calentamiento mínimo, transiciones y un margen operacional del 10%.",
+        "CV Coach usa el mayor valor entre estimated_minutes informado por la IA y una estimación determinística basada en series, rango medio de reps/segundos, tempo, descansos, calentamiento mínimo y transiciones. Con 3+ sesiones válidas puede ampliar la estimación usando el ritmo real del cliente; nunca la reduce y limita el ajuste a 1.50x.",
       rule:
         "La frecuencia declarada y el tiempo máximo por sesión son restricciones duras: una rutina que no cabe en la disponibilidad del cliente no se aplica al borrador.",
       days: dayAudits,
     },
     blockingErrors,
+  };
+}
+
+
+function buildSafetyAudit(
+  context: unknown,
+  plan: unknown,
+): { audit: JsonObject; blockingErrors: string[]; cautionWarnings: JsonObject[] } {
+  const root = isObject(context) ? context : {};
+  const trainingContext = isObject(root.client_training_context) ? root.client_training_context : {};
+  const constraints = Array.isArray(trainingContext.training_constraints)
+    ? trainingContext.training_constraints.filter(isObject)
+    : [];
+  const constraintByCode = new Map<string, JsonObject>();
+  for (const item of constraints) {
+    if (typeof item.constraint_code === "string") constraintByCode.set(item.constraint_code, item);
+  }
+  const catalog = Array.isArray(root.exercise_catalog) ? root.exercise_catalog : [];
+  const catalogById = new Map<string, JsonObject>();
+  for (const item of catalog) if (isObject(item) && typeof item.id === "string") catalogById.set(item.id, item);
+  const days = isObject(plan) && Array.isArray(plan.days) ? plan.days : [];
+  const matches: JsonObject[] = [];
+  const blockingErrors: string[] = [];
+  const cautionWarnings: JsonObject[] = [];
+
+  for (const rawDay of days) {
+    if (!isObject(rawDay) || !Array.isArray(rawDay.exercises)) continue;
+    const dayNumber = integer(rawDay.day_number) ?? null;
+    for (const rawExercise of rawDay.exercises) {
+      if (!isObject(rawExercise) || typeof rawExercise.exercise_id !== "string") continue;
+      const meta = catalogById.get(rawExercise.exercise_id);
+      if (!meta) continue;
+      const exposures = Array.isArray(meta.mechanical_exposures) ? meta.mechanical_exposures.filter(isObject) : [];
+      for (const exposure of exposures) {
+        const code = typeof exposure.constraint_code === "string" ? exposure.constraint_code : "";
+        const constraint = constraintByCode.get(code);
+        if (!constraint) continue;
+        const action = String(constraint.action ?? "");
+        const label = cleanText(constraint.label, 120) ?? code;
+        const exerciseName = cleanText(meta.name, 120) ?? "Ejercicio";
+        matches.push({
+          day_number: dayNumber,
+          exercise_id: rawExercise.exercise_id,
+          exercise_name: exerciseName,
+          constraint_code: code,
+          label,
+          action,
+          exposure_level: exposure.exposure_level ?? null,
+        });
+        if (action === "avoid") {
+          blockingErrors.push(`Día ${dayNumber ?? "?"}: ${exerciseName} coincide con una restricción EVITAR (${label}).`);
+        } else if (action === "caution") {
+          cautionWarnings.push({
+            code: "MECHANICAL_CAUTION_MATCH",
+            severity: "warning",
+            message: `Día ${dayNumber ?? "?"}: ${exerciseName} coincide con PRECAUCIÓN (${label}); revisar tolerancia individual antes de publicar.`,
+          });
+        }
+      }
+    }
+  }
+
+  const safetyFilter = isObject(root.safety_filter) ? root.safety_filter : {};
+  return {
+    audit: {
+      version: "cv-safety-audit-v1",
+      active_constraints: constraints.length,
+      avoid_constraints: constraints.filter((x) => x.action === "avoid").length,
+      caution_constraints: constraints.filter((x) => x.action === "caution").length,
+      excluded_from_ai_catalog: integer(safetyFilter.excluded_count) ?? 0,
+      generated_matches: matches,
+      overall_status: blockingErrors.length ? "blocked" : cautionWarnings.length ? "review" : "ok",
+      rule: "EVITAR se excluye antes de llamar a la IA y bloquea cualquier coincidencia defensiva. PRECAUCIÓN no diagnostica ni prohíbe: exige revisión del coach.",
+    },
+    blockingErrors,
+    cautionWarnings,
   };
 }
 
@@ -633,6 +756,7 @@ REGLAS OBLIGATORIAS:
 3. Respeta equipamiento, disponibilidad, duración de sesión, experiencia y objetivo cuando estén presentes. client_training_context.schedule_preferences representa la disponibilidad VIGENTE y tiene prioridad sobre el onboarding histórico. training_days_per_week es la frecuencia semanal objetivo y session_minutes es el MÁXIMO de minutos disponibles por sesión, no una sugerencia.
 3A. Si client_training_context.training_preferences.muscle_focus contiene grupos específicos, trátalos como la prioridad muscular VIGENTE: dales énfasis razonable en selección de ejercicios, distribución semanal y volumen, manteniendo equilibrio general, patrones básicos y todas las restricciones. Si contiene full_body, programa un desarrollo equilibrado sin priorizar una región concreta. La prioridad muscular no autoriza ignorar dolor, lesiones, limitaciones, equipamiento ni disponibilidad.
 4. Considera dolor/lesiones/limitaciones de forma conservadora. Si no puedes satisfacer una restricción con seguridad suficiente, registra un conflicto blocking=true; no ocultes incertidumbre.
+4A. client_training_context.training_constraints contiene restricciones mecánicas explícitas del coach. Los ejercicios que coinciden con EVITAR ya fueron eliminados de exercise_catalog: nunca intentes recuperarlos ni inventar equivalentes fuera del catálogo. Las coincidencias PRECAUCIÓN pueden usarse solo si la propuesta es razonable y deben explicarse para revisión humana.
 5. No inventes peso inicial. initial_weight_kg debe ser null salvo que el borrador actual entregue una referencia clara para ese mismo ejercicio.
 6. scope="day": devuelve exactamente un día y su day_number debe coincidir con target_day_number. No alteres otros días.
 7. scope="program": devuelve una rutina completa. Si training_days_per_week está presente (1-7), devuelve EXACTAMENTE esa cantidad de días. Si falta, conserva la estructura existente y, si tampoco existe, usa 3 días. Cada día debe caber dentro de session_minutes cuando esté informado.
@@ -1185,12 +1309,15 @@ Deno.serve(async (req: Request) => {
   }
 
   const scheduleCheck = buildScheduleAudit(modelContext, generated?.plan, scope);
+  const safetyCheck = buildSafetyAudit(modelContext, generated?.plan);
   const validationErrors = [
-    ...validateGeneratedOutput(generated, context, scope, targetDayNumber),
+    ...validateGeneratedOutput(generated, modelContext, scope, targetDayNumber),
     ...scheduleCheck.blockingErrors,
+    ...safetyCheck.blockingErrors,
   ];
   const warnings = [
     ...requestWarnings,
+    ...safetyCheck.cautionWarnings,
     ...(Array.isArray(generated?.warnings) ? generated.warnings : []),
   ];
   const conflicts = Array.isArray(generated?.conflicts) ? generated.conflicts : [];
@@ -1198,6 +1325,7 @@ Deno.serve(async (req: Request) => {
   explanations = {
     ...explanations,
     schedule_audit: scheduleCheck.audit,
+    safety_audit: safetyCheck.audit,
     volume_audit: buildVolumeAudit(modelContext, generated?.plan, scope, targetDayNumber),
   };
 
