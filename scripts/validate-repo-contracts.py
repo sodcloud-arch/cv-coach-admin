@@ -98,3 +98,5 @@ require(client, "cv-client-workout-v32", "client workout semantic colors")
 require(client, "cvRestVisualV32", "client visible rest timer")
 require(client, "window.cvExercises=cvExercises", "client workout canonical exercise accessor")
 require(client, "cv-client-semantic-v33", "client semantic palette v33")
+
+require(client, "cv-client-semantic-v34", "client final semantic cleanup")
