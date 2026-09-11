@@ -1,0 +1,230 @@
+from pathlib import Path
+import re
+
+path = Path('client-portal/index.html')
+text = path.read_text(encoding='utf-8')
+
+legacy_pattern = re.compile(
+    r"\n  /\* Two-level mobile header: brand/actions first, identity second\. \*/.*?"
+    r"\n  /\* General mobile text scale: eliminate microcopy that requires squinting\. \*/",
+    re.S,
+)
+text, legacy_count = legacy_pattern.subn(
+    "\n  /* General mobile text scale: eliminate microcopy that requires squinting. */",
+    text,
+    count=1,
+)
+if legacy_count != 1:
+    raise SystemExit(f'Expected one V36 legacy header subsection, found {legacy_count}')
+
+canonical = r'''<style id="cv-client-header-v39">
+/* CV Coach · Mobile Header V39 · canonical consolidated header */
+@media(max-width:767px){
+  .top{
+    height:calc(72px + env(safe-area-inset-top))!important;
+    min-height:calc(72px + env(safe-area-inset-top))!important;
+    padding:max(env(safe-area-inset-top),4px) 10px 4px!important;
+    display:grid!important;
+    grid-template-columns:92px minmax(0,1fr) 92px!important;
+    grid-template-rows:1fr!important;
+    gap:0!important;
+    align-items:center!important;
+    background:linear-gradient(180deg,rgba(2,6,8,.995),rgba(4,9,12,.985))!important;
+    border-bottom:1px solid #25333b!important;
+    box-shadow:0 10px 28px rgba(0,0,0,.42)!important;
+    overflow:hidden!important;
+  }
+  .top .cvOfficialHeaderImg{
+    display:block!important;
+    grid-column:1!important;
+    grid-row:1!important;
+    justify-self:start!important;
+    width:62px!important;
+    height:62px!important;
+    max-width:62px!important;
+    max-height:62px!important;
+    margin:0!important;
+    object-fit:contain!important;
+    object-position:left center!important;
+    filter:drop-shadow(0 5px 12px rgba(0,0,0,.58)) drop-shadow(0 0 12px rgba(225,29,46,.20))!important;
+  }
+  .top .topTitle,.top .cvHeaderIdentity{
+    grid-column:2!important;
+    grid-row:1!important;
+    justify-self:stretch!important;
+    align-self:center!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0 4px!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+  }
+  .top .cvHeaderIdentity b,.top .topTitle b{
+    display:block!important;
+    max-width:100%!important;
+    margin:0!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    font:800 19px 'Barlow Condensed',sans-serif!important;
+    line-height:1!important;
+    letter-spacing:.055em!important;
+    color:#fff!important;
+    white-space:nowrap!important;
+  }
+  .top .cvHeaderIdentity small,.top .topTitle small{display:none!important}
+  .topRight{
+    grid-column:3!important;
+    grid-row:1!important;
+    justify-self:end!important;
+    align-self:center!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    width:92px!important;
+    min-width:92px!important;
+    gap:4px!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  .demoBadge,.cvNotificationButton,#cvNotificationButton{display:none!important}
+  #cvSoundToggle,.cvSoundToggle{
+    width:36px!important;
+    min-width:36px!important;
+    height:36px!important;
+    min-height:36px!important;
+    padding:0!important;
+    display:grid!important;
+    place-items:center!important;
+    border-radius:11px!important;
+  }
+  #cvSoundToggle svg,.cvSoundToggle svg{width:19px!important;height:19px!important;display:block!important;stroke:currentColor!important;fill:none!important}
+  .logout{
+    height:36px!important;
+    min-height:36px!important;
+    min-width:48px!important;
+    padding:0 7px!important;
+    border:1px solid #2b3942!important;
+    border-radius:11px!important;
+    background:#0a1116!important;
+    color:#d8dfe3!important;
+    font-size:10px!important;
+    font-weight:800!important;
+    white-space:nowrap!important;
+  }
+  .workoutTop{top:calc(72px + env(safe-area-inset-top))!important}
+
+  .cvMobileNotificationsShortcutV39{
+    width:100%;min-height:46px;margin:10px 0 0;padding:0 13px;
+    display:flex;align-items:center;gap:10px;
+    border:1px solid #2c3c46;border-radius:13px;
+    background:linear-gradient(145deg,#0d151b,#080d11);
+    color:#dce6eb;box-shadow:0 10px 26px rgba(0,0,0,.20);
+    font-size:11px;font-weight:850;letter-spacing:.02em;text-align:left;cursor:pointer;
+  }
+  .cvMobileNotificationsShortcutV39 svg{width:19px;height:19px;stroke:#66caff;fill:none;flex:0 0 auto}
+  .cvMobileNotificationsShortcutV39 .cvMobileNotifCopyV39{flex:1;min-width:0}
+  .cvMobileNotificationsShortcutV39 .cvMobileNotifCopyV39 small{display:block;margin-top:2px;color:#8798a2;font-size:9px;font-weight:700;letter-spacing:0}
+  .cvMobileNotificationsShortcutV39 .cvMobileNotifCountV39{
+    min-width:22px;height:22px;padding:0 6px;border-radius:999px;display:grid;place-items:center;
+    background:#168fd6;color:white;font-size:9px;font-weight:900;
+  }
+  .cvMobileNotificationsShortcutV39 .cvMobileNotifCountV39.hidden{display:none!important}
+}
+@media(max-width:390px){
+  .top{grid-template-columns:88px minmax(0,1fr) 88px!important;padding-left:8px!important;padding-right:8px!important}
+  .top .cvOfficialHeaderImg{width:60px!important;height:60px!important;max-width:60px!important;max-height:60px!important}
+  .top .cvHeaderIdentity b,.top .topTitle b{font-size:18px!important;letter-spacing:.045em!important}
+  .topRight{width:88px!important;min-width:88px!important}
+}
+</style>
+<script id="cv-client-header-v39-js">
+(function(){
+  const ASSET='./assets/cv-isotipo-header-v1.webp';
+  const MOBILE='(max-width:767px)';
+  const SOUND_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Z" stroke-width="1.8" stroke-linejoin="round"/><path d="M17 9.2c1 .8 1.5 1.7 1.5 2.8S18 14 17 14.8M19 6.8c1.8 1.5 2.7 3.2 2.7 5.2S20.8 15.7 19 17.2" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const SOUND_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h4l5 4V5L9 9H5Z" stroke-width="1.8" stroke-linejoin="round"/><path d="m17 9 5 5M22 9l-5 5" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const LABELS={home:'INICIO',routine:'RUTINA',workout:'RUTINA',habits:'HÁBITOS',missions:'MISIONES',progress:'PROGRESO',achievements:'LOGROS',notifications:'NOTIFICACIONES',onboarding:'PERFIL'};
+
+  function currentView(){
+    try{if(typeof view!=='undefined'&&view)return String(view)}catch(_){ }
+    return String(document.body.dataset.cvView||'home');
+  }
+  function sectionLabel(){return LABELS[currentView()]||'CV COACH'}
+  function notificationShortcut(){
+    const content=document.getElementById('content');if(!content)return;
+    const home=currentView()==='home';
+    let shortcut=document.getElementById('cvMobileNotificationsShortcutV39');
+    let isReal=false;try{isReal=typeof mode!=='undefined'&&mode==='real'}catch(_){ }
+    if(!window.matchMedia(MOBILE).matches||!home||!isReal){shortcut?.remove();return}
+    if(!shortcut){
+      shortcut=document.createElement('button');shortcut.id='cvMobileNotificationsShortcutV39';shortcut.type='button';shortcut.className='cvMobileNotificationsShortcutV39';
+      shortcut.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 20h4" stroke-width="1.7" stroke-linecap="round"/></svg><span class="cvMobileNotifCopyV39">NOTIFICACIONES<small>Revisa novedades importantes de tu proceso</small></span><span class="cvMobileNotifCountV39 hidden"></span>';
+      shortcut.addEventListener('click',()=>{if(typeof window.openNotifications==='function')window.openNotifications()});
+      const stats=content.querySelector('.stats');if(stats)stats.insertAdjacentElement('afterend',shortcut);else content.prepend(shortcut);
+    }
+    const source=document.getElementById('cvNotificationBadge'),count=(source?.textContent||'').trim(),badge=shortcut.querySelector('.cvMobileNotifCountV39');
+    if(badge){badge.textContent=count;badge.classList.toggle('hidden',!count||count==='0')}
+  }
+  function applyHeaderV39(){
+    const top=document.querySelector('.top');if(!top)return;
+    const mobile=window.matchMedia&&window.matchMedia(MOBILE).matches;
+    const img=top.querySelector('.cvOfficialHeaderImg');
+    if(img&&!img.dataset.cvFullLogoSrc)img.dataset.cvFullLogoSrc=img.getAttribute('src')||'';
+    if(!mobile){
+      if(img&&img.dataset.cvFullLogoSrc&&img.getAttribute('src')!==img.dataset.cvFullLogoSrc)img.src=img.dataset.cvFullLogoSrc;
+      document.getElementById('cvMobileNotificationsShortcutV39')?.remove();
+      return;
+    }
+    if(img&&img.getAttribute('src')!==ASSET){img.src=ASSET;img.alt='CV Coach';img.setAttribute('aria-label','CV Coach')}
+    const title=top.querySelector('.topTitle,.cvHeaderIdentity'),label=sectionLabel();
+    if(title&&(title.textContent.trim()!==label||title.querySelector('small'))){title.classList.add('cvHeaderIdentity');title.innerHTML='<b>'+label+'</b>'}
+    const sound=top.querySelector('#cvSoundToggle,.cvSoundToggle');
+    if(sound){
+      const enabled=!sound.classList.contains('off'),state=enabled?'on':'off';
+      if(sound.dataset.cvSoundState!==state){sound.dataset.cvSoundState=state;sound.innerHTML=enabled?SOUND_ON:SOUND_OFF}
+      sound.setAttribute('aria-label',enabled?'Desactivar sonido':'Activar sonido');sound.title=enabled?'Sonido activado':'Sonido desactivado';
+    }
+    notificationShortcut();
+  }
+  function boot(){
+    applyHeaderV39();
+    const top=document.querySelector('.top');
+    if(top){
+      let queued=false;
+      new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;applyHeaderV39()})}).observe(top,{childList:true,subtree:true,attributes:true,characterData:true,attributeFilter:['src','class']});
+    }
+    const baseRender=window.render;
+    if(typeof baseRender==='function')window.render=function(){const result=baseRender.apply(this,arguments);requestAnimationFrame(applyHeaderV39);return result};
+    window.addEventListener('resize',applyHeaderV39,{passive:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
+</script>'''
+
+canonical_pattern = re.compile(
+    r'<style id="cv-client-header-v39">.*?</style>\s*<script id="cv-client-header-v39-js">.*?</script>',
+    re.S,
+)
+text, canonical_count = canonical_pattern.subn(lambda _: canonical, text, count=1)
+if canonical_count != 1:
+    raise SystemExit(f'Expected one V39 block, found {canonical_count}')
+
+required = [
+    '@media(max-width:767px)',
+    'grid-template-columns:92px minmax(0,1fr) 92px',
+    "const LABELS={home:'INICIO'",
+    'cvMobileNotificationsShortcutV39',
+    "const SOUND_ON='<svg",
+    "const ASSET='./assets/cv-isotipo-header-v1.webp'",
+]
+for marker in required:
+    if marker not in text:
+        raise SystemExit(f'Missing marker: {marker}')
+if '/* Two-level mobile header: brand/actions first, identity second. */' in text:
+    raise SystemExit('Legacy V36 two-level header still present')
+
+path.write_text(text, encoding='utf-8')
