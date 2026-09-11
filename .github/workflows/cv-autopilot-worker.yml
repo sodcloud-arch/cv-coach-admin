@@ -1,24 +1,241 @@
-name: CV Coach Autopilot Worker (PAUSED)
-
-# AUTOPILOT PAUSED BY OWNER DECISION.
-# Keep this workflow as a reversible control point, but do not run autonomously.
-# Restoring the previous workflow from Git history re-enables the worker when desired.
+name: CV Coach Autopilot Worker
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cv-autopilot-worker.yml"
+      - "scripts/autopilot-worker.sh"
+      - "scripts/autopilot-external-executor.sh"
+      - "scripts/autopilot-self-review.sh"
+  schedule:
+    - cron: "*/5 * * * *"
+  issues:
+    types: [closed]
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [closed]
 
 permissions:
   contents: read
+  id-token: write
+  issues: write
 
 concurrency:
   group: cv-coach-autopilot
   cancel-in-progress: false
 
 jobs:
-  paused:
+  worker:
+    if: >-
+      github.event_name != 'issues' &&
+      github.event_name != 'pull_request' &&
+      (github.event_name != 'issue_comment' ||
+       (github.event.issue.number == 2 && startsWith(github.event.comment.body, 'AUTOPILOT_WAKE')))
     runs-on: ubuntu-latest
     steps:
-      - name: Autopilot is paused
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run deterministic Autopilot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+          MAX_CYCLES: "20"
+          WAKE_SOURCE: ${{ github.event_name }}
+        run: bash scripts/autopilot-worker.sh
+
+  external-executor:
+    needs: worker
+    if: >-
+      always() &&
+      needs.worker.result == 'success' &&
+      github.event_name != 'issues' &&
+      github.event_name != 'pull_request' &&
+      (github.event_name != 'issue_comment' ||
+       (github.event.issue.number == 2 && startsWith(github.event.comment.body, 'AUTOPILOT_WAKE')))
+    permissions:
+      contents: write
+      actions: write
+      id-token: write
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run intelligent external executor
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-5.6-luna
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+          MAX_CYCLES: "20"
+        run: bash scripts/autopilot-external-executor.sh
+
+      - name: Run AI self-review and self-improvement
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          REVIEW_EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-review-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+        run: bash scripts/autopilot-self-review.sh
+
+  resume-after-human-blocker:
+    if: >-
+      github.event_name == 'issues' &&
+      github.event.action == 'closed' &&
+      github.actor != 'github-actions[bot]' &&
+      startsWith(github.event.issue.title, '🔴 CV Coach Autopilot —')
+    permissions:
+      contents: write
+      actions: write
+      id-token: write
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract blocker ID
+        id: blocker
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        shell: bash
         run: |
-          echo "CV Coach Autopilot is paused."
-          echo "No autonomous worker, external executor, self-review, or OpenAI API call is executed by this workflow."
+          set -euo pipefail
+          BLOCKER_ID="$(printf '%s\n' "${ISSUE_BODY}" | sed -n 's/^AUTOPILOT_BLOCKER_ID: //p' | head -n 1)"
+          if [[ -z "${BLOCKER_ID}" ]]; then
+            echo "No Autopilot blocker marker found; skipping."
+            exit 1
+          fi
+          echo "blocker_id=${BLOCKER_ID}" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve blocker and continue deterministic work
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+          MAX_CYCLES: "20"
+          RESOLVE_BLOCKER_ID: ${{ steps.blocker.outputs.blocker_id }}
+          RESOLUTION_NOTE: GitHub Issue #${{ github.event.issue.number }} closed by ${{ github.actor }}
+        run: bash scripts/autopilot-worker.sh
+
+      - name: Continue external work immediately
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-5.6-luna
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+          MAX_CYCLES: "20"
+        run: bash scripts/autopilot-external-executor.sh
+
+      - name: Self-review resumed external work
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          REVIEW_EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-review-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+        run: bash scripts/autopilot-self-review.sh
+
+  resume-after-pull-request-review:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.base.ref == 'main' &&
+      startsWith(github.event.pull_request.head.ref, 'autopilot/')
+    permissions:
+      contents: write
+      actions: write
+      id-token: write
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract external request ID
+        id: request
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          REQUEST_ID="$(printf '%s\n' "${PR_BODY}" | sed -n 's/^AUTOPILOT_EXTERNAL_REQUEST_ID: //p' | head -n 1)"
+          if [[ -z "${REQUEST_ID}" ]]; then
+            echo "No Autopilot request marker found."
+            exit 1
+          fi
+          echo "request_id=${REQUEST_ID}" >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve external review
+        env:
+          REQUEST_ID: ${{ steps.request.outputs.request_id }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN="$(curl -fsSL \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${OIDC_AUDIENCE}" | jq -r '.value')"
+          if [[ "${PR_MERGED}" == "true" ]]; then APPROVED=true; else APPROVED=false; fi
+          PAYLOAD="$(jq -nc \
+            --arg request_id "${REQUEST_ID}" \
+            --arg pr_url "${PR_URL}" \
+            --arg pr_number "${PR_NUMBER}" \
+            --arg merge_commit_sha "${MERGE_COMMIT_SHA}" \
+            --argjson approved "${APPROVED}" \
+            '{op:"review_resolved",request_id:$request_id,approved:$approved,result:{pr_url:$pr_url,pr_number:$pr_number,merge_commit_sha:$merge_commit_sha,review_source:"github_pull_request_closed"}}')"
+          curl -fsSL \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "${PAYLOAD}" \
+            "${EDGE_URL}"
+
+      - name: Continue Autopilot after review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+          MAX_CYCLES: "20"
+        run: bash scripts/autopilot-worker.sh
+
+      - name: Continue external work after review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-5.6-luna
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+          MAX_CYCLES: "20"
+        run: bash scripts/autopilot-external-executor.sh
+
+      - name: Self-review continued external work
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-worker-gateway
+          REVIEW_EDGE_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/autopilot-review-gateway
+          OIDC_AUDIENCE: cv-coach-autopilot
+        run: bash scripts/autopilot-self-review.sh
