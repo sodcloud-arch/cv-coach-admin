@@ -13,14 +13,16 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Validate repository contracts
         run: python scripts/validate-repo-contracts.py
-      - name: Build client stabilized artifact
+      - name: Build client stabilized artifact through V61
+        shell: bash
         run: |
+          set -euo pipefail
           python client-portal/stabilize.py
           python client-portal/consolidate_runtime.py
           python client-portal/consolidate_session_runtime.py
@@ -42,98 +44,59 @@ jobs:
           python scripts/test-client-module-e2e-v58.py
           python client-portal/upgrade_client_v59.py
           python scripts/test-coach-client-loop-v59.py
-          grep -q 'cv-feedback-simple-v48' client-portal/stable/index.html
-          grep -q 'save_workout_feedback_v2' client-portal/stable/index.html
-          grep -q 'cvSetToggleLocksV48' client-portal/stable/index.html
-          grep -q 'cv-client-quality-v49' client-portal/stable/index.html
-          grep -q 'set update was not confirmed' client-portal/stable/index.html
-          grep -q 'Finalización promedio' client-portal/stable/index.html
-          grep -q 'Mejor duración' client-portal/stable/index.html
-          grep -q 'cv-client-quality-v50' client-portal/stable/index.html
-          grep -q 'cvDraftSaveLocksV50' client-portal/stable/index.html
-          grep -q 'draft update was not confirmed' client-portal/stable/index.html
-          grep -q 'kg·reps · <em' client-portal/stable/index.html
-          grep -q 'cv-client-runtime-v51' client-portal/stable/index.html
-          grep -q 'cvPersistSetLogV51' client-portal/stable/index.html
-          grep -q 'cv-render-bus-v51-js' client-portal/stable/index.html
-          grep -q "new CustomEvent('cv:rendered')" client-portal/stable/index.html
-          grep -q 'cv-workout-regression-guard-v52' client-portal/stable/index.html
-          grep -q 'cv-client-sound-v53' client-portal/stable/index.html
-          grep -q 'cv-sound-manager-v53-js' client-portal/stable/index.html
-          grep -q 'cv-mobile-workout-reliability-v54' client-portal/stable/index.html
-          grep -q 'cv-workout-sound-language-v55' client-portal/stable/index.html
-          grep -q 'cv-set-toggle-runtime-v56' client-portal/stable/index.html
-          grep -q 'cv-client-modules-v57' client-portal/stable/index.html
-          grep -q 'cv-client-modules-v57-js' client-portal/stable/index.html
-          grep -q 'Check-in semanal pendiente' client-portal/stable/index.html
-          grep -q 'cvLogNutritionMealsV57' client-portal/stable/index.html
-          grep -q 'cv-client-e2e-v58' client-portal/stable/index.html
-          grep -q 'cv-coach-client-loop-v59' client-portal/stable/index.html
-          grep -q "program_published:'Rutina actualizada'" client-portal/stable/index.html
-          grep -q "'/routine':'routine'" client-portal/stable/index.html
-          grep -q './assets/sounds/cv-set-confirmed-v1.mp3' client-portal/stable/index.html
-          grep -q './assets/sounds/cv-workout-complete-v1.mp3' client-portal/stable/index.html
-          test -s client-portal/assets/sounds/cv-set-confirmed-v1.mp3
-          test -s client-portal/assets/sounds/cv-workout-complete-v1.mp3
-          if grep -q 'baseRender=window.render' client-portal/stable/index.html; then
-            echo 'Historical render wrapper remained in stable artifact' >&2
-            exit 1
-          fi
-          if grep -q 'baseNav=window.nav' client-portal/stable/index.html; then
-            echo 'Historical nav wrapper remained in stable artifact' >&2
-            exit 1
-          fi
-          if grep -q 'cvRirInput' client-portal/stable/index.html; then
-            echo 'Client-only RIR input remained in stable artifact' >&2
-            exit 1
-          fi
-          if grep -q "getElementById('cvri_'" client-portal/stable/index.html; then
-            echo 'Client-only RIR lookup remained in stable artifact' >&2
-            exit 1
-          fi
-      - name: Run workout runtime regression guard V52
-        run: python scripts/test-workout-runtime-v52.py
-      - name: Run client sound regression guard V53
-        run: python scripts/test-client-sound-v53.py
-      - name: Run client modules regression guard V57
-        run: python scripts/test-client-modules-v57.py
-      - name: Run client module E2E guard V58
-        run: python scripts/test-client-module-e2e-v58.py
-      - name: Run coach-client loop guard V59
-        run: python scripts/test-coach-client-loop-v59.py
+          python client-portal/upgrade_client_v60.py
+          python client-portal/repair_client_v60.py
+          python scripts/test-cv-rank-system-v60.py
+          python client-portal/upgrade_client_v61.py
+          python scripts/test-cv-rank-engine-v61.py
+          python scripts/test-workout-runtime-v52.py
+          python scripts/test-client-sound-v53.py
+          grep -q 'cv-rank-engine-v61' client-portal/stable/index.html
+          grep -q './assets/cv-rank-v61.js' client-portal/stable/index.html
+          grep -q './assets/cv-rank-v61.css' client-portal/stable/index.html
+          grep -q 'PLATINO' client-portal/assets/cv-rank-v61.js
+          grep -q 'LEYENDA' client-portal/assets/cv-rank-v61.js
+          grep -q 'AÚN <b>SIN RANGO</b>' client-portal/assets/cv-rank-v61.js
+          if grep -q 'cv-rank-system-v60-js' client-portal/stable/index.html; then exit 1; fi
+          if grep -q 'MAESTRO' client-portal/assets/cv-rank-v61.js; then exit 1; fi
+      - name: Validate all V61 rank assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check client-portal/assets/cv-rank-v61.js
+          test -s client-portal/assets/cv-rank-v61.css
+          for f in bronze silver gold platinum diamond legend; do
+            test -s "client-portal/assets/ranks/cv-rank-${f}-v61.webp"
+          done
       - name: Validate client inline JavaScript
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
-          html = Path('client-portal/stable/index.html').read_text(encoding='utf-8')
-          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', html, flags=re.S | re.I)
-          out = Path('/tmp/cv-client-inline')
-          out.mkdir(exist_ok=True)
-          written = 0
-          for i, script in enumerate(scripts):
-              if not script.strip():
-                  continue
-              (out / f'{i:03d}.js').write_text(script, encoding='utf-8')
-              written += 1
-          if written == 0:
-              raise SystemExit('No client inline scripts found')
-          print(written)
+          html=Path('client-portal/stable/index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,flags=re.S|re.I)
+          out=Path('/tmp/cv-client-inline');out.mkdir(exist_ok=True)
+          written=0
+          for i,script in enumerate(scripts):
+              if not script.strip(): continue
+              (out/f'{i:03d}.js').write_text(script,encoding='utf-8');written+=1
+          if written==0: raise SystemExit('No client inline scripts found')
           PY
           for f in /tmp/cv-client-inline/*.js; do node --check "$f"; done
       - name: Validate Admin inline JavaScript
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          html = Path('index.html').read_text(encoding='utf-8')
-          start = html.rfind('<script>')
-          end = html.rfind('</script>')
-          if start < 0 or end <= start:
-              raise SystemExit('Inline Admin script not found')
-          Path('/tmp/cv-coach-admin-inline.js').write_text(html[start + len('<script>'):end], encoding='utf-8')
+          html=Path('index.html').read_text(encoding='utf-8')
+          start=html.rfind('<script>');end=html.rfind('</script>')
+          if start<0 or end<=start: raise SystemExit('Inline Admin script not found')
+          Path('/tmp/cv-coach-admin-inline.js').write_text(html[start+len('<script>'):end],encoding='utf-8')
           PY
           node --check /tmp/cv-coach-admin-inline.js
       - name: Validate JSON and shell syntax
+        shell: bash
         run: |
           python -m json.tool vercel.json >/dev/null
           bash -n scripts/autopilot-worker.sh

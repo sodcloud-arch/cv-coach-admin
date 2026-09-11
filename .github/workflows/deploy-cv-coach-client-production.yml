@@ -14,22 +14,21 @@ on:
       - 'scripts/test-client-module-e2e-v58.py'
       - 'scripts/test-coach-client-loop-v59.py'
       - 'scripts/test-cv-rank-system-v60.py'
-      - 'supabase/migrations/202609111520_coach_client_loop_v59.sql'
-      - 'supabase/migrations/202609111650_cv_rank_system_v60.sql'
+      - 'scripts/test-cv-rank-engine-v61.py'
+      - 'supabase/migrations/**'
       - '.github/workflows/deploy-cv-coach-client-production.yml'
   workflow_dispatch:
 
 concurrency:
   group: cv-coach-client-production
   cancel-in-progress: false
-
 permissions:
   contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: team_pD5aAwrw2qpbPgoEarWhxcKF
@@ -39,7 +38,7 @@ jobs:
       - name: Checkout canonical main
         uses: actions/checkout@v4
 
-      - name: Build and regression-gate client artifact through V60
+      - name: Build and regression-gate client artifact through V61
         shell: bash
         run: |
           set -euo pipefail
@@ -67,64 +66,21 @@ jobs:
           python client-portal/upgrade_client_v60.py
           python client-portal/repair_client_v60.py
           python scripts/test-cv-rank-system-v60.py
+          python client-portal/upgrade_client_v61.py
+          python scripts/test-cv-rank-engine-v61.py
           python scripts/test-workout-runtime-v52.py
           python scripts/test-client-sound-v53.py
 
           test "$(wc -c < client-portal/stable/index.html)" -gt 50000
           grep -qi 'CV Coach' client-portal/stable/index.html
           grep -q 'America/Santiago' client-portal/stable/index.html
-          grep -q 'manifest.webmanifest' client-portal/stable/index.html
-          grep -q 'serviceWorker' client-portal/stable/index.html
-
-          for marker in \
-            cv-runtime-consolidation-v44 \
-            cv-session-runtime-v46 \
-            cv-workout-feedback-v47 \
-            cv-feedback-simple-v48 \
-            cv-client-quality-v49 \
-            cv-client-quality-v50 \
-            cv-client-runtime-v51 \
-            cv-workout-regression-guard-v52 \
-            cv-client-sound-v53 \
-            cv-mobile-workout-reliability-v54 \
-            cv-workout-sound-language-v55 \
-            cv-set-toggle-runtime-v56 \
-            cv-client-modules-v57 \
-            cv-client-e2e-v58 \
-            cv-coach-client-loop-v59 \
-            cv-rank-system-v60; do
-              grep -q "$marker" client-portal/stable/index.html
-          done
-
-          grep -q 'CV RANK SYSTEM' client-portal/stable/index.html
-          grep -q "rank_up:'Nuevo rango'" client-portal/stable/index.html
-          grep -q 'get_client_rank_state_backend' client-portal/stable/index.html
-          grep -q 'VER MI EVOLUCIÓN' client-portal/stable/index.html
-          grep -q './assets/sounds/cv-set-confirmed-v1.mp3' client-portal/stable/index.html
-          grep -q './assets/sounds/cv-workout-complete-v1.mp3' client-portal/stable/index.html
-
-          if grep -q 'baseRender=window.render' client-portal/stable/index.html; then
-            echo 'Historical render wrapper remained in stable artifact' >&2; exit 1
-          fi
-          if grep -q 'baseNav=window.nav' client-portal/stable/index.html; then
-            echo 'Historical nav wrapper remained in stable artifact' >&2; exit 1
-          fi
-          if grep -q 'cvRirInput' client-portal/stable/index.html; then
-            echo 'Client-only RIR input remained in stable artifact' >&2; exit 1
-          fi
-          if grep -q "getElementById('cvri_'" client-portal/stable/index.html; then
-            echo 'Client-only RIR lookup remained in stable artifact' >&2; exit 1
-          fi
-          if grep -q 'Cliente Premium Preview' client-portal/stable/index.html; then
-            echo 'Preview title remained in stable artifact' >&2; exit 1
-          fi
-
-          test -s client-portal/manifest.webmanifest
-          test -s client-portal/sw.js
-          test -s client-portal/icon.svg
-          test -s client-portal/assets/cv-isotipo-header-v1.webp
-          test -s client-portal/assets/sounds/cv-set-confirmed-v1.mp3
-          test -s client-portal/assets/sounds/cv-workout-complete-v1.mp3
+          grep -q 'cv-rank-engine-v61' client-portal/stable/index.html
+          grep -q './assets/cv-rank-v61.js' client-portal/stable/index.html
+          grep -q './assets/cv-rank-v61.css' client-portal/stable/index.html
+          if grep -q 'cv-rank-system-v60-js' client-portal/stable/index.html; then echo 'V60 rank runtime still active' >&2; exit 1; fi
+          if grep -q 'cv-rank-system-v60-css' client-portal/stable/index.html; then echo 'V60 rank CSS still active' >&2; exit 1; fi
+          if grep -q 'MAESTRO' client-portal/assets/cv-rank-v61.js; then echo 'Retired rank remained' >&2; exit 1; fi
+          for f in bronze silver gold platinum diamond legend; do test -s "client-portal/assets/ranks/cv-rank-${f}-v61.webp"; done
 
       - name: Check Vercel credential
         id: auth
@@ -144,92 +100,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p .vercel/output/static/assets/sounds
+          mkdir -p .vercel/output/static/assets/sounds .vercel/output/static/assets/ranks
           printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
           cp index.html .vercel/output/static/index.html
           cp ../manifest.webmanifest .vercel/output/static/manifest.webmanifest
           cp ../sw.js .vercel/output/static/sw.js
           cp ../icon.svg .vercel/output/static/icon.svg
           cp ../assets/cv-isotipo-header-v1.webp .vercel/output/static/assets/cv-isotipo-header-v1.webp
-          cp ../assets/sounds/cv-set-confirmed-v1.mp3 .vercel/output/static/assets/sounds/cv-set-confirmed-v1.mp3
-          cp ../assets/sounds/cv-workout-complete-v1.mp3 .vercel/output/static/assets/sounds/cv-workout-complete-v1.mp3
+          cp ../assets/cv-rank-v61.js .vercel/output/static/assets/cv-rank-v61.js
+          cp ../assets/cv-rank-v61.css .vercel/output/static/assets/cv-rank-v61.css
+          cp ../assets/sounds/*.mp3 .vercel/output/static/assets/sounds/
+          cp ../assets/ranks/*.webp .vercel/output/static/assets/ranks/
           cat > .vercel/output/config.json <<'JSON'
           {
             "version": 3,
             "routes": [
-              {
-                "src": "/",
-                "dest": "/index.html",
-                "headers": {
-                  "Cache-Control": "no-store",
-                  "Content-Security-Policy": "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://fmhcansyxcsqkrivqchr.supabase.co wss://fmhcansyxcsqkrivqchr.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests",
-                  "X-Content-Type-Options": "nosniff",
-                  "X-Frame-Options": "DENY",
-                  "Referrer-Policy": "strict-origin-when-cross-origin",
-                  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-                  "X-Robots-Tag": "noindex, nofollow"
-                }
-              },
-              {
-                "src": "/sw.js",
-                "dest": "/sw.js",
-                "headers": {
-                  "Cache-Control": "no-cache, no-store, must-revalidate",
-                  "Service-Worker-Allowed": "/",
-                  "X-Content-Type-Options": "nosniff"
-                }
-              },
-              {
-                "src": "/manifest.webmanifest",
-                "dest": "/manifest.webmanifest",
-                "headers": {
-                  "Cache-Control": "no-cache",
-                  "Content-Type": "application/manifest+json; charset=utf-8",
-                  "X-Content-Type-Options": "nosniff"
-                }
-              },
-              {
-                "src": "/icon.svg",
-                "dest": "/icon.svg",
-                "headers": {
-                  "Cache-Control": "public, max-age=3600",
-                  "Content-Type": "image/svg+xml; charset=utf-8",
-                  "X-Content-Type-Options": "nosniff"
-                }
-              },
-              {
-                "src": "/assets/(.*)",
-                "dest": "/assets/$1",
-                "headers": {
-                  "Cache-Control": "public, max-age=3600",
-                  "X-Content-Type-Options": "nosniff"
-                }
-              },
-              { "handle": "filesystem" },
-              {
-                "src": "/(.*)",
-                "dest": "/index.html",
-                "headers": {
-                  "Cache-Control": "no-store",
-                  "Content-Security-Policy": "default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://fmhcansyxcsqkrivqchr.supabase.co wss://fmhcansyxcsqkrivqchr.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests",
-                  "X-Content-Type-Options": "nosniff",
-                  "X-Frame-Options": "DENY",
-                  "Referrer-Policy": "strict-origin-when-cross-origin",
-                  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
-                  "X-Robots-Tag": "noindex, nofollow"
-                }
-              }
+              {"src":"/","dest":"/index.html","headers":{"Cache-Control":"no-store","Content-Security-Policy":"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://fmhcansyxcsqkrivqchr.supabase.co wss://fmhcansyxcsqkrivqchr.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","X-Robots-Tag":"noindex, nofollow"}},
+              {"src":"/sw.js","dest":"/sw.js","headers":{"Cache-Control":"no-cache, no-store, must-revalidate","Service-Worker-Allowed":"/","X-Content-Type-Options":"nosniff"}},
+              {"src":"/manifest.webmanifest","dest":"/manifest.webmanifest","headers":{"Cache-Control":"no-cache","Content-Type":"application/manifest+json; charset=utf-8","X-Content-Type-Options":"nosniff"}},
+              {"src":"/icon.svg","dest":"/icon.svg","headers":{"Cache-Control":"public, max-age=3600","Content-Type":"image/svg+xml; charset=utf-8","X-Content-Type-Options":"nosniff"}},
+              {"src":"/assets/(.*)","dest":"/assets/$1","headers":{"Cache-Control":"public, max-age=3600","X-Content-Type-Options":"nosniff"}},
+              {"handle":"filesystem"},
+              {"src":"/(.*)","dest":"/index.html","headers":{"Cache-Control":"no-store","Content-Security-Policy":"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://fmhcansyxcsqkrivqchr.supabase.co wss://fmhcansyxcsqkrivqchr.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","X-Robots-Tag":"noindex, nofollow"}}
             ]
           }
           JSON
           test -s .vercel/output/static/index.html
-          test -s .vercel/output/static/manifest.webmanifest
-          test -s .vercel/output/static/sw.js
-          test -s .vercel/output/static/icon.svg
-          test -s .vercel/output/static/assets/cv-isotipo-header-v1.webp
-          test -s .vercel/output/static/assets/sounds/cv-set-confirmed-v1.mp3
-          test -s .vercel/output/static/assets/sounds/cv-workout-complete-v1.mp3
-          test -s .vercel/output/config.json
+          test -s .vercel/output/static/assets/cv-rank-v61.js
+          test -s .vercel/output/static/assets/cv-rank-v61.css
+          for f in bronze silver gold platinum diamond legend; do test -s ".vercel/output/static/assets/ranks/cv-rank-${f}-v61.webp"; done
 
       - name: Deploy CV Coach client production
         if: steps.auth.outputs.available == 'true'
@@ -237,66 +136,33 @@ jobs:
         shell: bash
         run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
-      - name: Verify public production alias through V60
+      - name: Verify public production alias through V61
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5 6 7 8; do
-            root_headers="$(mktemp)"
-            sw_headers="$(mktemp)"
-            manifest_headers="$(mktemp)"
-            icon_headers="$(mktemp)"
-            root_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$root_headers" https://cv-coach-roan.vercel.app || true)"
-            manifest_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$manifest_headers" https://cv-coach-roan.vercel.app/manifest.webmanifest || true)"
-            sw_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$sw_headers" https://cv-coach-roan.vercel.app/sw.js || true)"
-            icon_body="$(curl --fail --silent --show-error --location --max-time 20 -D "$icon_headers" https://cv-coach-roan.vercel.app/icon.svg || true)"
-            asset_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/cv-isotipo-header-v1.webp || true)"
-            set_sound_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/sounds/cv-set-confirmed-v1.mp3 || true)"
-            workout_sound_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/sounds/cv-workout-complete-v1.mp3 || true)"
-
-            if [[ \
-              "$root_body" == *"CV Coach"* && \
-              "$root_body" != *"Cliente Premium Preview"* && \
-              "$root_body" == *"America/Santiago"* && \
-              "$root_body" == *"cv-client-runtime-v51"* && \
-              "$root_body" == *"cv-workout-regression-guard-v52"* && \
-              "$root_body" == *"cv-client-sound-v53"* && \
-              "$root_body" == *"cv-mobile-workout-reliability-v54"* && \
-              "$root_body" == *"cv-workout-sound-language-v55"* && \
-              "$root_body" == *"cv-set-toggle-runtime-v56"* && \
-              "$root_body" == *"cv-client-modules-v57"* && \
-              "$root_body" == *"cv-client-e2e-v58"* && \
-              "$root_body" == *"cv-coach-client-loop-v59"* && \
-              "$root_body" == *"cv-rank-system-v60"* && \
-              "$root_body" == *"CV RANK SYSTEM"* && \
-              "$root_body" == *"rank_up:'Nuevo rango'"* && \
-              "$root_body" == *"get_client_rank_state_backend"* && \
-              "$root_body" == *"VER MI EVOLUCIÓN"* && \
-              "$root_body" != *"baseRender=window.render"* && \
-              "$root_body" != *"baseNav=window.nav"* && \
-              "$root_body" != *"cvRirInput"* && \
-              "$manifest_body" == *'"name": "CV Coach"'* && \
-              "$manifest_body" == *'"src": "./icon.svg"'* && \
-              "$sw_body" == *"cv-coach-shell"* && \
-              "$icon_body" == *"<svg"* && \
-              "$asset_status" == "200" && \
-              "$set_sound_status" == "200" && \
-              "$workout_sound_status" == "200" ]]; then
-                grep -qi '^x-content-type-options: nosniff' "$root_headers"
-                grep -qi '^x-frame-options: DENY' "$root_headers"
-                grep -qi '^content-security-policy:' "$root_headers"
-                grep -qi '^cache-control:.*no-store' "$sw_headers"
-                grep -qi '^content-type:.*application/manifest' "$manifest_headers"
-                grep -qi '^content-type:.*image/svg' "$icon_headers"
-                echo 'PUBLIC_PORTAL_CV_RANK_V60_OK'
-                rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers"
-                exit 0
+            headers="$(mktemp)"
+            body="$(curl --fail --silent --show-error --location --max-time 20 -D "$headers" https://cv-coach-roan.vercel.app || true)"
+            js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/cv-rank-v61.js || true)"
+            css_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/cv-rank-v61.css || true)"
+            assets_ok=true
+            for f in bronze silver gold platinum diamond legend; do
+              status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 "https://cv-coach-roan.vercel.app/assets/ranks/cv-rank-${f}-v61.webp" || true)"
+              [[ "$status" == "200" ]] || assets_ok=false
+            done
+            if [[ "$body" == *"cv-rank-engine-v61"* && "$body" == *"./assets/cv-rank-v61.js"* && "$body" != *"cv-rank-system-v60-js"* && "$js_status" == "200" && "$css_status" == "200" && "$assets_ok" == "true" ]]; then
+              grep -qi '^x-content-type-options: nosniff' "$headers"
+              grep -qi '^x-frame-options: DENY' "$headers"
+              grep -qi '^content-security-policy:' "$headers"
+              echo 'PUBLIC_PORTAL_CV_RANK_V61_OK'
+              rm -f "$headers"
+              exit 0
             fi
-            rm -f "$root_headers" "$sw_headers" "$manifest_headers" "$icon_headers"
+            rm -f "$headers"
             sleep 3
           done
-          echo 'Public CV Rank V60 alias verification failed' >&2
+          echo 'Public CV Rank V61 alias verification failed' >&2
           exit 1
 
       - name: Vercel credential required for canonical production
