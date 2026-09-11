@@ -1,6 +1,7 @@
 from pathlib import Path
 import hashlib
 import json
+import runpy
 
 ROOT = Path(__file__).resolve().parent
 HTML = ROOT / "stable" / "index.html"
@@ -95,3 +96,9 @@ for patch in [
 metadata["patches"] = patches
 BUILD.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-4:]}, ensure_ascii=False))
+
+# V54 is chained from the existing V53 build gate so current repository and
+# production workflows cannot produce a client artifact without the mobile
+# workout reliability fix and its regression contract.
+runpy.run_path(str(ROOT / "upgrade_client_v54.py"), run_name="__main__")
+runpy.run_path(str(ROOT.parent / "scripts" / "test-mobile-workout-v54.py"), run_name="__main__")
