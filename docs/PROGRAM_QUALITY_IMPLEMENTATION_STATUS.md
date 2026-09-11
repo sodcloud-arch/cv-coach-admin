@@ -1,1 +1,0 @@
-Status: backend schema applied in Supabase; frontend/edge integration pending review branch.
