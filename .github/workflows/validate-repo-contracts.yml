@@ -30,6 +30,7 @@ jobs:
           python client-portal/upgrade_client_v50.py
           python client-portal/upgrade_client_v51.py
           python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
           grep -q 'cv-feedback-simple-v48' client-portal/stable/index.html
           grep -q 'save_workout_feedback_v2' client-portal/stable/index.html
           grep -q 'cvSetToggleLocksV48' client-portal/stable/index.html
@@ -46,6 +47,12 @@ jobs:
           grep -q 'cv-render-bus-v51-js' client-portal/stable/index.html
           grep -q "new CustomEvent('cv:rendered')" client-portal/stable/index.html
           grep -q 'cv-workout-regression-guard-v52' client-portal/stable/index.html
+          grep -q 'cv-client-sound-v53' client-portal/stable/index.html
+          grep -q 'cv-sound-manager-v53-js' client-portal/stable/index.html
+          grep -q './assets/sounds/cv-set-confirmed-v1.mp3' client-portal/stable/index.html
+          grep -q './assets/sounds/cv-workout-complete-v1.mp3' client-portal/stable/index.html
+          test -s client-portal/assets/sounds/cv-set-confirmed-v1.mp3
+          test -s client-portal/assets/sounds/cv-workout-complete-v1.mp3
           if grep -q 'baseRender=window.render' client-portal/stable/index.html; then
             echo 'Historical render wrapper remained in stable artifact' >&2
             exit 1
@@ -64,6 +71,8 @@ jobs:
           fi
       - name: Run workout runtime regression guard V52
         run: python scripts/test-workout-runtime-v52.py
+      - name: Run client sound regression guard V53
+        run: python scripts/test-client-sound-v53.py
       - name: Validate client inline JavaScript
         run: |
           python - <<'PY'
