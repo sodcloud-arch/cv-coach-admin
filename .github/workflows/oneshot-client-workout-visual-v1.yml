@@ -31,6 +31,7 @@ jobs:
           python scripts/oneshot-client-workout-visual-v1.py
           cp client-portal/stable/index.html client-portal/index.html
           rm -rf client-portal/stable
+          sed -i 's/[[:space:]]*$//' client-portal/index.html
 
       - name: Validate portal
         run: |
