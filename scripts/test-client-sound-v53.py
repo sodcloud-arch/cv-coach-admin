@@ -31,10 +31,20 @@ required = [
     "./assets/sounds/cv-set-confirmed-v1.mp3",
     "./assets/sounds/cv-workout-complete-v1.mp3",
     "document.addEventListener('pointerdown'",
+    "Promise.allSettled(pending)",
 ]
 for item in required:
     if item not in text:
         raise SystemExit(f'V53 sound contract missing: {item}')
+
+# iOS/Safari: both play() attempts must be issued before the first await so
+# the same user activation can unlock both sounds.
+unlock_match = re.search(r"function unlock\(\)\{(.*?)return Promise\.allSettled\(pending\)\s*\}", text, flags=re.S)
+if not unlock_match:
+    raise SystemExit('V53 iOS unlock contract missing')
+unlock_body = unlock_match.group(1)
+if 'await audio.play()' in unlock_body or unlock_body.count('audio.play()') != 1:
+    raise SystemExit('V53 iOS unlock must synchronously enqueue audio.play() for each source')
 
 m = re.search(r"const volumes=\{set_confirmed:([0-9.]+),workout_complete:([0-9.]+)\}", text)
 if not m:
