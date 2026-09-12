@@ -1,0 +1,64 @@
+name: CV Coach Client Journey V75
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'client-portal/**'
+      - 'index.html'
+      - 'scripts/test-client-journey-v75.py'
+      - 'supabase/migrations/**'
+      - '.github/workflows/client-journey-v75.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client-portal/**'
+      - 'index.html'
+      - 'scripts/test-client-journey-v75.py'
+      - 'supabase/migrations/**'
+      - '.github/workflows/client-journey-v75.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  client-journey-v75:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build canonical client through V74
+        shell: bash
+        run: |
+          set -euo pipefail
+          python client-portal/stabilize.py
+          python client-portal/consolidate_runtime.py
+          python client-portal/consolidate_session_runtime.py
+          python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
+          python client-portal/upgrade_client_v49.py
+          python client-portal/upgrade_client_v50.py
+          python client-portal/upgrade_client_v51.py
+          python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
+          python client-portal/upgrade_client_v54.py
+          python client-portal/upgrade_client_v55.py
+          python client-portal/upgrade_client_v56.py
+          python client-portal/upgrade_client_v57.py
+          python client-portal/upgrade_client_v59.py
+          python client-portal/upgrade_client_v60.py
+          python client-portal/repair_client_v60.py
+          python client-portal/upgrade_client_v61.py
+          python client-portal/upgrade_client_v67.py
+          python client-portal/upgrade_client_v68.py
+          python client-portal/upgrade_client_v69.py
+          python client-portal/upgrade_client_v74.py
+
+      - name: Validate full athlete to coach journey contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/test-client-journey-v75.py
