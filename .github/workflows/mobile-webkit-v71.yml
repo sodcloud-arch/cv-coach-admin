@@ -1,11 +1,14 @@
-name: CV Coach Mobile WebKit V73
+name: CV Coach Mobile WebKit V74
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - review/v73-touch-hardening
     paths:
       - 'client-portal/**'
       - 'scripts/test-client-mobile-webkit-v71.mjs'
+      - 'scripts/diagnose-v73-set-check-ready.mjs'
       - '.github/workflows/mobile-webkit-v71.yml'
   workflow_dispatch:
 
@@ -19,7 +22,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build client through V73
+      - name: Build client through V74
         shell: bash
         run: |
           set -euo pipefail
@@ -44,15 +47,19 @@ jobs:
           python client-portal/upgrade_client_v67.py
           python client-portal/upgrade_client_v68.py
           python client-portal/upgrade_client_v69.py
+          python client-portal/upgrade_client_v74.py
           python scripts/test-workout-controller-v71.py
           node --check client-portal/assets/cv-workout-numpad-v73.js
+          node --check client-portal/assets/cv-workout-set-guard-v74.js
+          grep -q 'CVWorkoutSetGuardV74' client-portal/stable/index.html
+          grep -q 'cv-workout-set-guard-v74: single-flight-set-toggle + hydration-guard' client-portal/stable/index.html
           if grep -q 'CVIOSKeyboardV72' client-portal/stable/index.html; then echo 'V72 native-keyboard controller still active' >&2; exit 1; fi
       - name: Install Playwright WebKit
         shell: bash
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
-      - name: Run iPhone-sized V73 workout editor smoke test
+      - name: Run V74 physical and concurrency checks
         shell: bash
         run: |
           set -euo pipefail
@@ -60,4 +67,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 0.5; done
-          CV_TEST_URL=http://127.0.0.1:4173 node scripts/test-client-mobile-webkit-v71.mjs
+          echo '--- V74 physical set-check after portal readiness ---'
+          CV_TEST_URL=http://127.0.0.1:4173 node scripts/diagnose-v73-set-check-ready.mjs
+          echo '--- V74 concurrent double-toggle guard ---'
+          CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=double node scripts/test-client-mobile-webkit-v71.mjs
