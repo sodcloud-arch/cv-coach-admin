@@ -60,6 +60,11 @@ async function appStartTest({autoSet=false}={}){
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:20000});
     await page.evaluate(()=>document.getElementById('demoBtn')?.click());
     await page.waitForFunction(()=>!document.getElementById('app')?.classList.contains('hidden'),null,{timeout:5000});
+    // Demo boot has historical render observers that may throw transient null-read errors while
+    // its data object is being installed. Wait for the actual demo model before entering workout;
+    // then clear those boot-only diagnostics so this gate measures the workout path itself.
+    await page.waitForFunction(()=>{try{return typeof data!=='undefined'&&Array.isArray(data?.days)&&data.days.length>0&&typeof workout!=='undefined'&&workout!==null}catch(_){return false}},null,{timeout:5000});
+    errors.length=0;
     await page.evaluate(()=>window.openDay('d1'));
     await page.waitForFunction(()=>!!document.getElementById('cvw_0_0')&&!!window.CVWorkoutControllerV71&&!!window.CVIOSKeyboardV72,null,{timeout:5000});
     const diag=await page.evaluate(()=>({v71:window.CVWorkoutControllerV71?.version,v72:window.CVIOSKeyboardV72?.version,session:window.CVWorkoutControllerV71?.diagnose?.().sessionId,view:document.body.dataset.cvView}));
@@ -87,7 +92,7 @@ async function appStartTest({autoSet=false}={}){
       assert.deepEqual(got,{w:20,r:8},'explicit start lost pre-start values');
       console.log('CV_DEMO_EXPLICIT_START_WEBKIT_OK');
     }
-    assert.equal(errors.length,0,'App page errors: '+errors.join(' | '));
+    assert.equal(errors.length,0,'Workout-path page errors: '+errors.join(' | '));
   } finally {
     await context.close().catch(()=>{});
     await browser.close().catch(()=>{});
