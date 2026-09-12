@@ -30,9 +30,11 @@ AUDIO.write_bytes(raw)
 subprocess.run(['node','--check',str(JS)],check=True)
 css=CSS.read_text(encoding='utf-8')
 js=JS.read_text(encoding='utf-8')
-for token in ['RANK_UP_AUDIO','RANK_UP_IMPACT=3.36','cv66Impact','cv-rank-up-v67.mp3']:
+for token in ['RANK_UP_AUDIO','cv66Impact','cv-rank-up-v67.mp3']:
     if token not in js:
         raise SystemExit(f'CV Rank V67 JS contract missing: {token}')
+if 'RANK_UP_IMPACT=3.36' not in js and 'RANK_UP_IMPACT_SOURCE=3.36' not in js:
+    raise SystemExit('CV Rank V67 impact anchor contract missing')
 for token in ['cv67OldCharge','cv67OldBurst','cv67NewReveal','cv67ImpactFlash']:
     if token not in css:
         raise SystemExit(f'CV Rank V67 CSS contract missing: {token}')
@@ -45,9 +47,11 @@ if '</head>' not in text or '</body>' not in text:
 text=text.replace('</head>',f'<style id="{STYLE_ID}">\n{css}\n</style>\n</head>',1)
 text=text.replace('</body>',MARKER+'\n</body>',1)
 
-for token in [STYLE_ID,MARKER,'RANK_UP_IMPACT=3.36','cv-rank-up-v67.mp3','cv67NewReveal']:
+for token in [STYLE_ID,MARKER,'cv-rank-up-v67.mp3','cv67NewReveal']:
     if token not in text:
         raise SystemExit(f'CV Rank V67 final contract missing: {token}')
+if 'RANK_UP_IMPACT=3.36' not in text and 'RANK_UP_IMPACT_SOURCE=3.36' not in text:
+    raise SystemExit('CV Rank V67 final impact anchor missing')
 
 HTML.write_text(text,encoding='utf-8')
 sha=hashlib.sha256(text.encode()).hexdigest()
@@ -62,4 +66,4 @@ patch='Extracted rank-up sound + frame-locked 3.36s badge swap v67'
 if patch not in patches: patches.append(patch)
 meta['patches']=patches
 BUILD.write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-print(json.dumps({'sha256':sha,'bytes':meta['bytes'],'audio_bytes':AUDIO.stat().st_size,'audio_sha256':audio_sha,'impact_seconds':3.36,'patch':patch},ensure_ascii=False))
+print(json.dumps({'sha256':sha,'bytes':meta['bytes'],'audio_bytes':AUDIO.stat().st_size,'audio_sha256':audio_sha,'impact_source_seconds':3.36,'patch':patch},ensure_ascii=False))
