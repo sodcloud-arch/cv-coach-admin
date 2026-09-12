@@ -1,5 +1,5 @@
 (function(){
-  if(window.CVRankCelebrationV66?.version==='v66')return;
+  if(window.CVRankCelebrationV66?.version==='v67')return;
   const rankMap={
     bronze:{name:'BRONCE',asset:'./assets/ranks/cv-rank-bronze-v61.webp',c1:'#C47A3A',c2:'#6E351E'},
     silver:{name:'PLATA',asset:'./assets/ranks/cv-rank-silver-v61.webp',c1:'#D8E0E6',c2:'#71808A'},
@@ -8,8 +8,12 @@
     diamond:{name:'DIAMANTE',asset:'./assets/ranks/cv-rank-diamond-v61.webp',c1:'#5596FF',c2:'#173F9C'},
     legend:{name:'LEYENDA',asset:'./assets/ranks/cv-rank-legend-v61.webp',c1:'#F5F7FA',c2:'#FF2037'}
   };
+  const RANK_UP_AUDIO='./assets/sounds/cv-rank-up-v67.mp3';
+  const RANK_UP_IMPACT=3.36;
+  const RANK_UP_DURATION=5.76;
   let overlay=null,pending=null,checking=false,audioCtx=null,primed=false,previewTimer=null;
-  const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  let rankPlayer=null,impactRaf=null,impactFallback=null,impactFired=false;
+  const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function real(){try{return mode==='real'&&!!user?.id&&!!sb}catch(_){return false}}
   function demo(){try{return mode!=='real'}catch(_){return true}}
   function enabled(){try{return localStorage.getItem('cv_sound_enabled')!=='0'}catch(_){return true}}
@@ -20,7 +24,7 @@
     if(kind==='legend_unlock'){tone(220,.15,0,.018,'sine');tone(330,.18,.10,.021,'triangle');tone(494,.18,.20,.024,'triangle');tone(659,.24,.31,.026,'sine');tone(988,.35,.44,.022,'sine');return}
     tone(262,.11,0,.018);tone(392,.13,.08,.021);tone(523,.16,.18,.024);tone(784,.28,.31,.025)
   }
-  function haptic(kind){try{navigator.vibrate?.(kind==='level_up'?[45,35,70]:kind==='legend_unlock'?[80,40,120,55,180]:[65,35,95,45,135])}catch(_){}}
+  function haptic(kind){try{navigator.vibrate?.(kind==='level_up'?[45,35,70]:kind==='legend_unlock'?[80,40,120,55,180]:[95,35,155,45,210])}catch(_){}}
   function rank(raw,key){const base=rankMap[key]||rankMap.bronze;return {...base,...(raw||{}),rank_key:key||raw?.rank_key||'bronze',rank_name:raw?.rank_name||base.name,badge_path:raw?.badge_path||base.asset,color_primary:raw?.color_primary||base.c1,color_secondary:raw?.color_secondary||base.c2}}
   function normalize(x){
     if(!x||x.pending===false)return null;
@@ -43,8 +47,8 @@
         <div class="cv66Kicker">${isLevel?safe(to.rank_name):e.direction==='legend_unlock'?'RANGO MÁXIMO':'NUEVO RANGO'}</div>
         <div class="cv66Title">${safe(h[0])}<br>${safe(h[1])}</div>
         <div class="cv66Stage">
-          ${!isLevel?`<img class="cv66Badge from" src="${safe(from.badge_path)}?v=66" alt="${safe(from.rank_name)}">`:''}
-          <img class="cv66Badge to" src="${safe(to.badge_path)}?v=66" alt="${safe(to.rank_name)}">
+          ${!isLevel?`<img class="cv66Badge from" src="${safe(from.badge_path)}?v=67" alt="${safe(from.rank_name)}">`:''}
+          <img class="cv66Badge to" src="${safe(to.badge_path)}?v=67" alt="${safe(to.rank_name)}">
           ${shardMarkup()}
         </div>
         <div class="cv66Transition">${trans}</div>
@@ -54,22 +58,60 @@
       </div>
     </div>`
   }
-  function close(){if(!overlay)return;overlay.remove();overlay=null;pending=null;document.body.classList.remove('cv66NoScroll');setTimeout(decorateDemoPreview,80)}
+  function stopRankAudio(){
+    if(impactRaf){cancelAnimationFrame(impactRaf);impactRaf=null}
+    if(impactFallback){clearTimeout(impactFallback);impactFallback=null}
+    if(rankPlayer){try{rankPlayer.pause();rankPlayer.currentTime=0}catch(_){}rankPlayer=null}
+    impactFired=false
+  }
+  function fireRankImpact(){
+    if(impactFired||!overlay)return;impactFired=true;
+    overlay.classList.add('cv66Impact');
+    haptic('rank_up')
+  }
+  function scheduleSilentImpact(){impactFallback=setTimeout(fireRankImpact,Math.round(RANK_UP_IMPACT*1000))}
+  function watchAudioImpact(player){
+    const step=()=>{
+      if(!overlay||player!==rankPlayer||impactFired)return;
+      if(Number(player.currentTime)>=RANK_UP_IMPACT){fireRankImpact();return}
+      impactRaf=requestAnimationFrame(step)
+    };
+    impactRaf=requestAnimationFrame(step)
+  }
+  function primeRankAudio(){
+    if(rankPlayer||!enabled())return;
+    try{
+      const a=new Audio(RANK_UP_AUDIO);a.preload='auto';a.volume=.82;a.muted=true;
+      const p=a.play();Promise.resolve(p).catch(()=>{}).then(()=>{try{a.pause();a.currentTime=0;a.muted=false}catch(_){};rankPlayer=null});rankPlayer=a
+    }catch(_){rankPlayer=null}
+  }
+  function startRankUpAudio(){
+    stopRankAudio();
+    overlay?.classList.add('cv66RankAudioSync');
+    if(!enabled()){scheduleSilentImpact();return}
+    try{
+      const a=new Audio(RANK_UP_AUDIO);rankPlayer=a;a.preload='auto';a.volume=.86;a.currentTime=0;
+      const p=a.play();
+      Promise.resolve(p).then(()=>{overlay?.classList.add('cv66AudioPlaying');watchAudioImpact(a)}).catch(()=>{rankPlayer=null;scheduleSilentImpact();impactFallback=setTimeout(()=>{sfx('rank_up')},Math.round(RANK_UP_IMPACT*1000))})
+    }catch(_){rankPlayer=null;scheduleSilentImpact();impactFallback=setTimeout(()=>{sfx('rank_up')},Math.round(RANK_UP_IMPACT*1000))}
+  }
+  function close(){if(!overlay)return;stopRankAudio();overlay.remove();overlay=null;pending=null;document.body.classList.remove('cv66NoScroll');setTimeout(decorateDemoPreview,80)}
   async function acknowledge(){
     const e=pending;if(!e)return close();
     if(e.__preview)return close();
-    try{const q=await sb.rpc('ack_rank_transition_v66',{p_actor_id:user.id,p_transition_id:e.transition_id});if(q.error)throw q.error;close();setTimeout(check,260)}catch(err){console.warn('CV Rank V66 ack failed',err)}
+    try{const q=await sb.rpc('ack_rank_transition_v66',{p_actor_id:user.id,p_transition_id:e.transition_id});if(q.error)throw q.error;close();setTimeout(check,260)}catch(err){console.warn('CV Rank V67 ack failed',err)}
   }
   function show(raw,opts={}){
     const e=normalize(raw);if(!e||overlay)return false;e.__preview=!!opts.preview;pending=e;
     document.body.classList.add('cv66NoScroll');document.body.insertAdjacentHTML('beforeend',html(e));overlay=document.querySelector('.cv66Ascend:last-of-type');
     overlay?.querySelector('.cv66Continue')?.addEventListener('click',acknowledge,{once:true});
-    setTimeout(()=>{sfx(e.direction);haptic(e.direction)},160);
+    if(e.direction==='rank_up')requestAnimationFrame(startRankUpAudio);
+    else setTimeout(()=>{sfx(e.direction);haptic(e.direction)},160);
     return true
   }
   async function check(){
     if(checking||overlay||!real())return;checking=true;
-    try{const q=await sb.rpc('get_pending_rank_transition_v66',{p_actor_id:user.id});if(q.error)throw q.error;const e=normalize(q.data);if(e)show(e)}catch(err){console.warn('CV Rank V66 check failed',err)}finally{checking=false}
+    try{const q=await sb.rpc('get_pending_rank_transition_v66',{p_actor_id:user.id});if(q.error)throw q.error;const e=normalize(q.data);if(e)show(e)}catch(err){console.warn('CV Rank V67 check failed',err)}finally{checking=false}
   }
   function preview(kind='rank_up'){
     kind=String(kind);if(kind==='legend_unlock')return show({pending:true,direction:kind,from_level:25,to_level:26,from_rank:{rank_key:'diamond'},to_rank:{rank_key:'legend'},metadata:{discipline_score:97,rating_change:180}},{preview:true});
@@ -88,11 +130,11 @@
     box.append(note,btn);card.append(box)
   }
   function schedulePreview(){clearTimeout(previewTimer);previewTimer=setTimeout(decorateDemoPreview,80)}
-  document.addEventListener('pointerdown',()=>{if(!primed){primed=true;ctx()}},{capture:true});
+  document.addEventListener('pointerdown',()=>{if(!primed){primed=true;ctx();primeRankAudio()}},{capture:true});
   document.addEventListener('cv:rendered',()=>{setTimeout(check,160);schedulePreview()});
   window.addEventListener('pageshow',()=>{setTimeout(check,450);schedulePreview()});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){setTimeout(check,400);schedulePreview()}});
   new MutationObserver(schedulePreview).observe(document.documentElement,{childList:true,subtree:true});
   setTimeout(check,900);schedulePreview();
-  window.CVRankCelebrationV66={version:'v66',check,show,preview,close,decorateDemoPreview};
+  window.CVRankCelebrationV66={version:'v67',check,show,preview,close,decorateDemoPreview,rankUpImpact:RANK_UP_IMPACT,rankUpDuration:RANK_UP_DURATION,rankUpAudio:RANK_UP_AUDIO};
 })();
