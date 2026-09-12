@@ -7,6 +7,7 @@ HTML=ROOT/'stable'/'index.html'
 GUARD=ROOT/'assets'/'cv-workout-set-guard-v74.js'
 MARKER='<!-- cv-workout-set-guard-v74: single-flight-set-toggle + hydration-guard -->'
 START_STABILITY_MARKER='<!-- cv-workout-start-stability-v76: preserve-v40-cta-during-v31-enhance -->'
+RIR_STABILITY_MARKER='<!-- cv-workout-rir-stability-v76: idempotent-prescription-strip -->'
 SCRIPT_ID='cv-workout-set-guard-v74-js'
 
 for p in [HTML,GUARD]:
@@ -22,6 +23,7 @@ text=HTML.read_text(encoding='utf-8')
 text=re.sub(r'<script id="cv-workout-set-guard-v74-js">.*?</script>','',text,flags=re.S)
 text=text.replace(MARKER,'')
 text=text.replace(START_STABILITY_MARKER,'')
+text=text.replace(RIR_STABILITY_MARKER,'')
 
 # Boot/hydration hardening: historical post-render helpers can run before demo/real data
 # is available. Return an empty prestart exercise list until the portal is hydrated.
@@ -50,8 +52,28 @@ if old_hero_owner in text:
 elif "if(h.querySelector('.cvWorkoutStartV40'))return;" not in text:
     raise SystemExit('V76 pre-start hero ownership target missing')
 
+# V76 production-canary finding: V31 hideRir() is called from a childList
+# MutationObserver. stripRirPrescription() used replaceChildren() on every observer
+# pass, which created another childList mutation and could keep the workout screen
+# in a self-triggering render loop. Mark each rendered prescription after the first
+# transformation; a real render creates a fresh node without the marker and is still
+# processed once.
+old_rir_strip="""  function stripRirPrescription(el){
+    if(!el)return;const raw=(el.textContent||'').split('·').map(x=>x.trim()).filter(Boolean).filter(x=>!/^RIR\\b/i.test(x));
+    el.replaceChildren(...raw.map(text=>{const s=document.createElement('span');s.className='cvPrescriptionChip';s.textContent=text;return s}));
+  }"""
+new_rir_strip="""  function stripRirPrescription(el){
+    if(!el||el.dataset.cvRirStrippedV76==='1')return;const raw=(el.textContent||'').split('·').map(x=>x.trim()).filter(Boolean).filter(x=>!/^RIR\\b/i.test(x));
+    el.replaceChildren(...raw.map(text=>{const s=document.createElement('span');s.className='cvPrescriptionChip';s.textContent=text;return s}));
+    el.dataset.cvRirStrippedV76='1';
+  }"""
+if old_rir_strip in text:
+    text=text.replace(old_rir_strip,new_rir_strip,1)
+elif "el.dataset.cvRirStrippedV76==='1'" not in text:
+    raise SystemExit('V76 RIR observer stability target missing')
+
 # Inject after every historical workout wrapper so V74 owns the final toggle contract.
-payload=f'\n{START_STABILITY_MARKER}\n{MARKER}\n<script id="{SCRIPT_ID}">\n{guard}\n</script>\n'
+payload=f'\n{START_STABILITY_MARKER}\n{RIR_STABILITY_MARKER}\n{MARKER}\n<script id="{SCRIPT_ID}">\n{guard}\n</script>\n'
 if '</body>' not in text:
     raise SystemExit('V74 body injection target missing')
 text=text.replace('</body>',payload+'</body>',1)
@@ -59,9 +81,9 @@ text=text.replace('</body>',payload+'</body>',1)
 # Final ownership / safety checks.
 if text.rfind('CVWorkoutSetGuardV74') <= text.rfind('window.cvToggleSet='):
     raise SystemExit('V74 is not the final set-toggle owner')
-for token in [MARKER,START_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;"]:
+for token in [MARKER,START_STABILITY_MARKER,RIR_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;","el.dataset.cvRirStrippedV76==='1'","el.dataset.cvRirStrippedV76='1'"]:
     if token not in text:
         raise SystemExit(f'V74 stable artifact missing: {token}')
 
 HTML.write_text(text,encoding='utf-8')
-print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76"],"bytes":%d}'%len(text.encode('utf-8')))
+print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","idempotent RIR observer transform v76"],"bytes":%d}'%len(text.encode('utf-8')))
