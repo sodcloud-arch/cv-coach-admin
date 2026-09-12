@@ -9,6 +9,7 @@ JS=ROOT/'assets'/'cv-rank-celebration-v66.js'
 SOUNDS=ROOT/'assets'/'sounds'
 PARTS=[SOUNDS/f'cv-rank-up-v67.part{i}.b64' for i in range(1,5)]
 AUDIO=SOUNDS/'cv-rank-up-v67.mp3'
+EXPECTED_AUDIO_SHA='ea7bdb79a6230c0fa00c42d0e51bccd9c23fee61a9db94b6afcd8fdaaa92358f'
 MARKER='<!-- cv-rank-audio-sync-v67: extracted-rankup-audio + 3.36s-impact-lock -->'
 STYLE_ID='cv-rank-celebration-v67-css'
 
@@ -21,8 +22,9 @@ try:
     raw=base64.b64decode(raw_b64,validate=True)
 except Exception as exc:
     raise SystemExit(f'CV Rank V67 audio base64 invalid: {exc}')
-if len(raw)<12000 or not raw.startswith(b'ID3'):
-    raise SystemExit('CV Rank V67 decoded audio contract failed')
+audio_sha=hashlib.sha256(raw).hexdigest()
+if len(raw)<12000 or not raw.startswith(b'ID3') or audio_sha!=EXPECTED_AUDIO_SHA:
+    raise SystemExit(f'CV Rank V67 decoded audio contract failed: bytes={len(raw)} sha={audio_sha}')
 AUDIO.write_bytes(raw)
 
 subprocess.run(['node','--check',str(JS)],check=True)
@@ -60,4 +62,4 @@ patch='Extracted rank-up sound + frame-locked 3.36s badge swap v67'
 if patch not in patches: patches.append(patch)
 meta['patches']=patches
 BUILD.write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-print(json.dumps({'sha256':sha,'bytes':meta['bytes'],'audio_bytes':AUDIO.stat().st_size,'impact_seconds':3.36,'patch':patch},ensure_ascii=False))
+print(json.dumps({'sha256':sha,'bytes':meta['bytes'],'audio_bytes':AUDIO.stat().st_size,'audio_sha256':audio_sha,'impact_seconds':3.36,'patch':patch},ensure_ascii=False))
