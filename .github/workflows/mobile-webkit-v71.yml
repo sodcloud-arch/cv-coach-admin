@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - review/v73-touch-hardening
+      - fix/v76-compact-signature
     paths:
       - 'client-portal/**'
       - 'scripts/test-client-mobile-webkit-v71.mjs'
