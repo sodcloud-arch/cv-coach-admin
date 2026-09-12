@@ -54,20 +54,11 @@ if old_hero_owner in text:
 elif "if(h.querySelector('.cvWorkoutStartV40'))return;" not in text:
     raise SystemExit('V76 pre-start hero ownership target missing')
 
-# V76 production-canary post-start finding: V31 observes child-list mutations and its
-# own visual enhancement pass was creating fresh child nodes every time it ran. That
-# makes the observer wake itself forever on an active workout, eventually killing
-# WebKit. Every V31 child-list write below is made differential/idempotent.
-old_rir="""    el.replaceChildren(...raw.map(text=>{const s=document.createElement('span');s.className='cvPrescriptionChip';s.textContent=text;return s}));"""
-new_rir="""    const cvRirSignatureV76=raw.join('\\u001f');
-    if(el.dataset.cvRirSignatureV76===cvRirSignatureV76)return;
-    el.dataset.cvRirSignatureV76=cvRirSignatureV76;
-    el.replaceChildren(...raw.map(text=>{const s=document.createElement('span');s.className='cvPrescriptionChip';s.textContent=text;return s}));"""
-if old_rir in text:
-    text=text.replace(old_rir,new_rir,1)
-elif 'cvRirSignatureV76' not in text:
-    raise SystemExit('V76 V31 RIR differential target missing')
-
+# V76 production-canary post-start finding: after V50 the RIR post-render helper has
+# already been removed. The V31 child-list observer still survives, and two writes
+# remain capable of waking it forever: the exercise status text and the workout hero.
+# Make both writes differential/idempotent so a second pass with identical state is a
+# true no-op and cannot schedule an endless observer/render cycle in WebKit.
 old_badge="""      if(badge){badge.className='cvExerciseStatusV31 '+(complete?'complete':current?'current':'pending');badge.textContent=complete?'COMPLETADO':current?'AHORA':'PENDIENTE'}"""
 new_badge="""      if(badge){badge.className='cvExerciseStatusV31 '+(complete?'complete':current?'current':'pending');const cvBadgeTextV76=complete?'COMPLETADO':current?'AHORA':'PENDIENTE';if(badge.textContent!==cvBadgeTextV76)badge.textContent=cvBadgeTextV76}"""
 if old_badge in text:
@@ -115,7 +106,7 @@ text=text.replace('</body>',payload+'</body>',1)
 # Final ownership / safety checks.
 if text.rfind('CVWorkoutSetGuardV74') <= text.rfind('window.cvToggleSet='):
     raise SystemExit('V74 is not the final set-toggle owner')
-for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,ACTIVE_DOM_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;",'cvRirSignatureV76','cvBadgeTextV76','cvHeroSignatureV76',"live&&live.textContent!=='LISTO PARA INICIAR'",'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;']:
+for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,ACTIVE_DOM_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;",'cvBadgeTextV76','cvHeroSignatureV76',"live&&live.textContent!=='LISTO PARA INICIAR'",'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;']:
     if token not in text:
         raise SystemExit(f'V74 stable artifact missing: {token}')
 
