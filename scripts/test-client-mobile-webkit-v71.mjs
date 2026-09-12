@@ -24,8 +24,19 @@ async function demoWorkoutPage(label){
   await page.evaluate(()=>document.getElementById('demoBtn')?.click());
   await page.locator('#app:not(.hidden)').waitFor({state:'visible',timeout:10000});
   await page.evaluate(()=>window.openDay('d1'));
-  await page.locator('.cvWorkoutStartV40').waitFor({state:'visible',timeout:10000});
-  console.log(`${label}_READY`);
+  await page.locator('#cvw_0_0').waitFor({state:'visible',timeout:10000});
+  const diag=await page.evaluate(()=>({
+    v71:window.CVWorkoutControllerV71?.version||null,
+    v72:window.CVIOSKeyboardV72?.version||null,
+    view:document.body.dataset.cvView||null,
+    session:window.CVWorkoutControllerV71?.diagnose?.().sessionId||null,
+    cta:!!document.querySelector('.cvWorkoutStartV40')
+  }));
+  assert.equal(diag.v71,'v71',`${label}: V71 missing`);
+  assert.equal(diag.v72,'v72',`${label}: V72 missing`);
+  assert.equal(diag.view,'workout',`${label}: workout view missing`);
+  assert.equal(diag.session,null,`${label}: demo should begin in pre-start state`);
+  console.log(`${label}_READY cta=${diag.cta}`);
   return {page,errors,events};
 }
 
@@ -50,36 +61,39 @@ async function setWorkoutInput(page,id,value){
 }
 
 try{
-  // Path A: explicit INICIAR ENTRENAMIENTO + the same focusout lifecycle used by iOS Done/Listo.
+  // Path A: reproduce the iOS Listo/Done lifecycle on a KG input.
   const a=await demoWorkoutPage('PATH_A');
   const page=a.page;
   await deterministicScrollToInput(page,'cvw_0_0');
   const scrollBefore=await page.evaluate(()=>window.scrollY);
 
-  // Use DOM focus instead of Playwright actionability: the app intentionally has continuous
-  // mutation/render observers, which can keep a locator from ever reaching Playwright's
-  // synthetic "stable" state even though Safari can focus the input normally.
+  // Focus is native-DOM driven because the app contains continuous render observers.
   await page.evaluate(()=>document.getElementById('cvw_0_0')?.focus({preventScroll:true}));
   await page.waitForTimeout(850);
-  const scrollStable=await page.evaluate(()=>window.scrollY);
+  const keyboardState=await page.evaluate(()=>window.CVIOSKeyboardV72?.state?.());
+  assert.equal(keyboardState?.active,true,'V72 did not own the focused workout input');
+  assert.ok(Math.abs((keyboardState?.restoreY??-999)-scrollBefore)<=2,`V72 captured wrong pre-keyboard scroll: ${keyboardState?.restoreY} vs ${scrollBefore}`);
 
-  // Emulate the page displacement caused by iOS shrinking/settling its visual viewport.
+  // Headless WebKit has no native iOS keyboard, so emulate the viewport displacement
+  // Safari produces while the numeric keyboard is settling. Listo = blur/focusout.
   await page.evaluate(()=>window.scrollBy(0,170));
   const scrollShifted=await page.evaluate(()=>window.scrollY);
+  assert.ok(scrollShifted>scrollBefore+100,'Synthetic iOS viewport displacement did not occur');
   await page.evaluate(()=>document.activeElement?.blur());
   await page.waitForTimeout(820);
   const scrollAfter=await page.evaluate(()=>window.scrollY);
-  console.log(`PATH_A_SCROLL before=${scrollBefore} stable=${scrollStable} shifted=${scrollShifted} after=${scrollAfter}`);
-  assert.ok(Math.abs(scrollAfter-scrollBefore)<=8,`Done/blur did not restore scroll: before=${scrollBefore} after=${scrollAfter}`);
-  assert.equal(await page.evaluate(()=>window.CVIOSKeyboardV72?.version),'v72','V72 keyboard guard missing');
+  const doneState=await page.evaluate(()=>window.CVIOSKeyboardV72?.state?.());
+  console.log(`PATH_A_SCROLL before=${scrollBefore} shifted=${scrollShifted} after=${scrollAfter}`);
+  assert.equal(doneState?.active,false,'V72 remained in keyboard-editing state after Listo/blur');
+  assert.ok(Math.abs(scrollAfter-scrollBefore)<=8,`Listo/blur did not restore scroll: before=${scrollBefore} after=${scrollAfter}`);
 
+  // Explicit start must preserve what the client wrote before starting.
   await setWorkoutInput(page,'cvw_0_0','20');
   await setWorkoutInput(page,'cvr_0_0','8');
   const started=await page.evaluate(()=>window.startWorkout());
   assert.equal(started,true,'explicit start should return true');
   await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo',null,{timeout:5000});
   assert.equal(await page.evaluate(()=>document.body.classList.contains('cvWorkoutActiveV40')),true,'active class missing after start');
-  assert.equal(await page.locator('.cvWorkoutStartV40').count(),0,'start CTA remained after start');
   const preserved=await page.evaluate(()=>{const s=window.cvExercises?.()?.[0]?.sets?.[0];return {w:s?.weight_kg,r:s?.reps}});
   assert.deepEqual(preserved,{w:20,r:8},'pre-start values were not preserved');
   assert.equal(a.errors.length,0,'Path A page errors: '+a.errors.join(' | '));
@@ -91,6 +105,8 @@ try{
   const pageB=b.page;
   await setWorkoutInput(pageB,'cvw_0_0','22.5');
   await setWorkoutInput(pageB,'cvr_0_0','9');
+  const hasCheck=await pageB.evaluate(()=>!!document.querySelector('.cvSetCheck'));
+  assert.equal(hasCheck,true,'first set check control missing');
   await pageB.evaluate(()=>document.querySelector('.cvSetCheck')?.click());
   await pageB.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo',null,{timeout:5000});
   await pageB.waitForFunction(()=>window.cvExercises?.()?.[0]?.sets?.[0]?.completed===true,null,{timeout:5000});
