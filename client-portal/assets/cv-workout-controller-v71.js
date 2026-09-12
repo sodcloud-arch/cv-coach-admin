@@ -106,24 +106,8 @@
     return activeStart
   }
 
-  /* V71 is authoritative: do not wrap the historical start chain again. */
+  /* V71 owns workout start only. Keyboard/viewport behavior belongs exclusively to V72. */
   window.startWorkout=canonicalStart;
-
-  /* Keep iOS numeric entry stable. The older center-scroll runs first; this corrects only the excess. */
-  document.addEventListener('focusin',event=>{
-    const el=event.target;if(!(el instanceof HTMLInputElement)||!/^cv(w|r|ri)_/.test(el.id))return;
-    document.body.classList.add('cvKeyboardEditingV71');
-    setTimeout(()=>{
-      if(document.activeElement!==el)return;
-      const vv=window.visualViewport,top=(vv?.offsetTop||0)+100,bottom=(vv?.offsetTop||0)+(vv?.height||window.innerHeight)-72,rect=el.getBoundingClientRect();
-      let dy=0;if(rect.top<top)dy=rect.top-top;else if(rect.bottom>bottom)dy=rect.bottom-bottom;
-      if(Math.abs(dy)>2)window.scrollBy({top:dy,behavior:'auto'})
-    },280)
-  },true);
-  document.addEventListener('focusout',event=>{
-    const el=event.target;if(!(el instanceof HTMLInputElement)||!/^cv(w|r|ri)_/.test(el.id))return;
-    setTimeout(()=>{if(!(document.activeElement instanceof HTMLInputElement)||!/^cv(w|r|ri)_/.test(document.activeElement.id))document.body.classList.remove('cvKeyboardEditingV71')},220)
-  },true);
 
   window.CVWorkoutControllerV71={version:'v71',start:canonicalStart,diagnose:()=>({mode:typeof mode==='undefined'?null:mode,view:typeof view==='undefined'?null:view,dayId:workout?.dayId||null,sessionId:workout?.sessionId||null,started:workout?.started||null,busy:!!activeStart})};
 })();
