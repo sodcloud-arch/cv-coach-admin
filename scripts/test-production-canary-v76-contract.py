@@ -24,6 +24,8 @@ required_script = [
     'elementFromPoint',
     'rectClose',
     'page.touchscreen.tap',
+    "serviceWorkers:'block'",
+    'CV_CANARY_V76_SERVICE_WORKER_ISOLATED',
     'CV_CANARY_V76_START_TOUCH_STABLE',
     'CV_CANARY_V76_TOUCH_READY',
     'athleteRest(accessToken',
