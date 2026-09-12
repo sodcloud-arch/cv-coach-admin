@@ -29,16 +29,22 @@ async function waitForV73Decoration(page,id){
 }
 
 async function openPadByRealTap(page,id){
+  // A render can legitimately replace workout row nodes. A human taps the currently
+  // visible node, so resolve the element only after that short render train settles.
+  await page.waitForTimeout(220);
   await waitForV73Decoration(page,id);
   await page.evaluate(inputId=>{
     const el=document.getElementById(inputId);
     el?.scrollIntoView?.({block:'center',inline:'nearest',behavior:'instant'});
   },id);
-  await page.waitForTimeout(120);
-  const input=page.locator('#'+id);
-  const box=await input.boundingBox();
-  assert.ok(box&&box.width>0&&box.height>0,`No tappable V73 box for ${id}`);
-  const point={x:box.x+box.width/2,y:box.y+box.height/2};
+  await page.waitForTimeout(160);
+  await waitForV73Decoration(page,id);
+  const point=await page.evaluate(inputId=>{
+    const el=document.getElementById(inputId);if(!el)return null;
+    const r=el.getBoundingClientRect();
+    return {x:r.left+r.width/2,y:r.top+r.height/2,width:r.width,height:r.height};
+  },id);
+  assert.ok(point&&point.width>0&&point.height>0,`No tappable V73 box for ${id}`);
   const hit=await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.id||document.elementFromPoint(x,y)?.className||'',point);
   assert.ok(String(hit).includes(id)||String(hit).includes('cv'),`Unexpected element over ${id}: ${hit}`);
   await page.touchscreen.tap(point.x,point.y);
@@ -47,7 +53,6 @@ async function openPadByRealTap(page,id){
     const root=document.getElementById('cvNumpadV73');
     return !!s?.open&&s.inputId===inputId&&root&&!root.classList.contains('hidden')&&root.getAttribute('aria-hidden')==='false';
   },id,{timeout:3000});
-  // Let the complete iOS/WebKit event train (pointer/touch/click/focus) settle.
   await page.waitForTimeout(180);
   const settled=await page.evaluate(inputId=>({
     pad:window.CVWorkoutNumpadV73.state(),
