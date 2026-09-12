@@ -23,11 +23,11 @@ text=text.replace(MARKER,'')
 
 # Boot/hydration hardening: historical post-render helpers can run before demo/real data
 # is available. Return an empty prestart exercise list until the portal is hydrated.
-old="function cvPrestartExercises(){const d=data.days.find(x=>x.id===workout.dayId);const raw=data.exercises[d.id]||[];"
-new="function cvPrestartExercises(){if(!data||!workout?.dayId||!Array.isArray(data.days))return [];const d=data.days.find(x=>x.id===workout.dayId);if(!d)return [];const raw=(data.exercises&&data.exercises[d.id])||[];"
-if old in text:
-    text=text.replace(old,new,1)
-elif new not in text:
+pattern=r"function cvPrestartExercises\(\)\{\s*const d=data\.days\.find\(x=>x\.id===workout\.dayId\);const raw=data\.exercises\[d\.id\]\|\|\[\];"
+replacement="function cvPrestartExercises(){\n    if(!data||!workout?.dayId||!Array.isArray(data.days))return [];\n    const d=data.days.find(x=>x.id===workout.dayId);if(!d)return [];const raw=(data.exercises&&data.exercises[d.id])||[];"
+if re.search(pattern,text):
+    text=re.sub(pattern,replacement,text,count=1)
+elif 'if(!data||!workout?.dayId||!Array.isArray(data.days))return [];' not in text:
     raise SystemExit('V74 hydration guard target missing')
 
 # Inject after every historical workout wrapper so V74 owns the final toggle contract.
@@ -39,7 +39,7 @@ text=text.replace('</body>',payload+'</body>',1)
 # Final ownership / safety checks.
 if text.rfind('CVWorkoutSetGuardV74') <= text.rfind('window.cvToggleSet='):
     raise SystemExit('V74 is not the final set-toggle owner')
-for token in [MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save']:
+for token in [MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];']:
     if token not in text:
         raise SystemExit(f'V74 stable artifact missing: {token}')
 
