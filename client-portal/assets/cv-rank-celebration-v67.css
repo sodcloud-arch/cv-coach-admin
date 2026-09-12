@@ -1,0 +1,98 @@
+/* CV Coach · Rank Up Audio Sync V67
+   Rank-up choreography is anchored to the extracted reference audio.
+   Official impact anchor: 3.36 s. Badge swap, flash, shards and haptic fire together. */
+
+.cv66Ascend.rank_up .cv66Beam{
+  opacity:0;animation:cv67ChargeBeam 3.36s linear forwards;
+}
+.cv66Ascend.rank_up .cv66Flash{
+  opacity:0;animation:none;
+}
+.cv66Ascend.rank_up .cv66Ring,
+.cv66Ascend.rank_up .cv66Ring::before,
+.cv66Ascend.rank_up .cv66Ring::after{
+  opacity:0;animation:none;
+}
+.cv66Ascend.rank_up .cv66Badge.from{
+  opacity:1;animation:cv67OldCharge 3.36s cubic-bezier(.22,.72,.2,1) forwards;
+}
+.cv66Ascend.rank_up .cv66Badge.to{
+  opacity:0;transform:scale(.22);filter:blur(22px) brightness(3.4) drop-shadow(0 0 28px white);animation:none;
+}
+.cv66Ascend.rank_up .cv66Shard{opacity:0;animation:none}
+.cv66Ascend.rank_up .cv66Transition,
+.cv66Ascend.rank_up .cv66Sub,
+.cv66Ascend.rank_up .cv66Stats,
+.cv66Ascend.rank_up .cv66Continue{
+  opacity:0;animation:none;
+}
+.cv66Ascend.rank_up .cv66Continue{pointer-events:none;transform:translateY(9px)}
+
+.cv66Ascend.rank_up.cv66Impact .cv66Flash{animation:cv67ImpactFlash .62s cubic-bezier(.1,.8,.2,1) forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Ring{animation:cv67ImpactRing .82s ease-out forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Ring::before{animation:cv67ImpactRing .72s .04s ease-out forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Ring::after{animation:cv67ImpactRing 1.02s .08s ease-out forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Badge.from{animation:cv67OldBurst .22s cubic-bezier(.1,.8,.18,1) forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Badge.to{animation:cv67NewReveal 1.32s cubic-bezier(.1,.82,.18,1) forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Shard{animation:cv67ShardBurst 1.18s ease-out forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Transition{animation:cv66Rise .55s .24s ease-out forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Sub{animation:cv66Rise .55s .48s ease-out forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Stats{animation:cv66Rise .55s .76s ease-out forwards}
+.cv66Ascend.rank_up.cv66Impact .cv66Continue{animation:cv66Button .58s 1.62s ease-out forwards}
+
+@keyframes cv67ChargeBeam{
+  0%{opacity:0;transform:translateX(-50%) scaleY(.04)}
+  12%{opacity:.16}
+  48%{opacity:.34;transform:translateX(-50%) scaleY(.38)}
+  78%{opacity:.62;transform:translateX(-50%) scaleY(.74)}
+  94%{opacity:.96;transform:translateX(-50%) scaleY(1)}
+  100%{opacity:1;transform:translateX(-50%) scaleY(1.02)}
+}
+@keyframes cv67OldCharge{
+  0%{opacity:.92;transform:scale(.94);filter:brightness(.82) saturate(.82) drop-shadow(0 0 8px color-mix(in srgb,var(--cv66) 22%,transparent))}
+  34%{opacity:1;transform:scale(.99);filter:brightness(1.02) saturate(1) drop-shadow(0 0 14px color-mix(in srgb,var(--cv66) 32%,transparent))}
+  72%{transform:scale(1.035);filter:brightness(1.22) saturate(1.08) drop-shadow(0 0 23px color-mix(in srgb,var(--cv66) 46%,transparent))}
+  92%{transform:scale(1.065);filter:brightness(1.55) saturate(1.12) drop-shadow(0 0 34px color-mix(in srgb,var(--cv66) 62%,transparent))}
+  100%{opacity:1;transform:scale(1.08);filter:brightness(1.8) saturate(1.16) drop-shadow(0 0 42px color-mix(in srgb,var(--cv66) 76%,transparent))}
+}
+@keyframes cv67OldBurst{
+  0%{opacity:1;transform:scale(1.08);filter:brightness(1.8) blur(0)}
+  38%{opacity:.95;transform:scale(.84);filter:brightness(3.2) blur(2px)}
+  100%{opacity:0;transform:scale(.12) rotate(-5deg);filter:brightness(5) blur(15px)}
+}
+@keyframes cv67NewReveal{
+  0%{opacity:0;transform:scale(.18);filter:blur(24px) brightness(4.5)}
+  16%{opacity:1;transform:scale(.48);filter:blur(12px) brightness(3.5)}
+  44%{opacity:1;transform:scale(1.14);filter:blur(0) brightness(2.1) drop-shadow(0 0 46px white) drop-shadow(0 0 38px var(--cv66))}
+  67%{transform:scale(.97);filter:brightness(1.45) drop-shadow(0 0 32px var(--cv66))}
+  100%{opacity:1;transform:scale(1);filter:brightness(1.04) drop-shadow(0 0 17px color-mix(in srgb,var(--cv66) 58%,transparent))}
+}
+@keyframes cv67ImpactFlash{
+  0%{opacity:0}
+  7%{opacity:.92}
+  19%{opacity:.18}
+  31%{opacity:.5}
+  58%{opacity:.08}
+  100%{opacity:0}
+}
+@keyframes cv67ImpactRing{
+  0%{opacity:.92;transform:translate(-50%,-50%) scale(.12)}
+  18%{opacity:.78}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.62)}
+}
+@keyframes cv67ShardBurst{
+  0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--r)) scale(.18)}
+  8%{opacity:1}
+  100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(calc(var(--r) + 135deg)) scale(.08)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .cv66Ascend.rank_up .cv66Badge.from{animation:none;opacity:1;transform:none;filter:none}
+  .cv66Ascend.rank_up .cv66Badge.to{animation:none;opacity:0}
+  .cv66Ascend.rank_up.cv66Impact .cv66Badge.from{display:none}
+  .cv66Ascend.rank_up.cv66Impact .cv66Badge.to{opacity:1;transform:none;filter:none}
+  .cv66Ascend.rank_up.cv66Impact .cv66Transition,
+  .cv66Ascend.rank_up.cv66Impact .cv66Sub,
+  .cv66Ascend.rank_up.cv66Impact .cv66Stats,
+  .cv66Ascend.rank_up.cv66Impact .cv66Continue{opacity:1;transform:none;pointer-events:auto}
+}
