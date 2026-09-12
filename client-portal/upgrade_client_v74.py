@@ -8,6 +8,7 @@ GUARD=ROOT/'assets'/'cv-workout-set-guard-v74.js'
 MARKER='<!-- cv-workout-set-guard-v74: single-flight-set-toggle + hydration-guard -->'
 START_STABILITY_MARKER='<!-- cv-workout-start-stability-v76: preserve-v40-cta-during-v31-enhance -->'
 COMPACT_STABILITY_MARKER='<!-- cv-workout-compact-stability-v76: mutation-safe-v40-sync -->'
+ACTIVE_DOM_STABILITY_MARKER='<!-- cv-workout-active-dom-stability-v76: mutation-safe-v31-enhance -->'
 SCRIPT_ID='cv-workout-set-guard-v74-js'
 
 for p in [HTML,GUARD]:
@@ -24,6 +25,7 @@ text=re.sub(r'<script id="cv-workout-set-guard-v74-js">.*?</script>','',text,fla
 text=text.replace(MARKER,'')
 text=text.replace(START_STABILITY_MARKER,'')
 text=text.replace(COMPACT_STABILITY_MARKER,'')
+text=text.replace(ACTIVE_DOM_STABILITY_MARKER,'')
 
 # Boot/hydration hardening: historical post-render helpers can run before demo/real data
 # is available. Return an empty prestart exercise list until the portal is hydrated.
@@ -52,6 +54,30 @@ if old_hero_owner in text:
 elif "if(h.querySelector('.cvWorkoutStartV40'))return;" not in text:
     raise SystemExit('V76 pre-start hero ownership target missing')
 
+# V76 production-canary post-start finding: after V50 the RIR post-render helper has
+# already been removed. The V31 child-list observer still survives, and two writes
+# remain capable of waking it forever: the exercise status text and the workout hero.
+# Make both writes differential/idempotent so a second pass with identical state is a
+# true no-op and cannot schedule an endless observer/render cycle in WebKit.
+old_badge="""      if(badge){badge.className='cvExerciseStatusV31 '+(complete?'complete':current?'current':'pending');badge.textContent=complete?'COMPLETADO':current?'AHORA':'PENDIENTE'}"""
+new_badge="""      if(badge){badge.className='cvExerciseStatusV31 '+(complete?'complete':current?'current':'pending');const cvBadgeTextV76=complete?'COMPLETADO':current?'AHORA':'PENDIENTE';if(badge.textContent!==cvBadgeTextV76)badge.textContent=cvBadgeTextV76}"""
+if old_badge in text:
+    text=text.replace(old_badge,new_badge,1)
+elif 'cvBadgeTextV76' not in text:
+    raise SystemExit('V76 V31 badge differential target missing')
+
+old_active_hero="""    if(h.querySelector('.cvWorkoutStartV40'))return;
+    h.innerHTML="""
+new_active_hero="""    if(h.querySelector('.cvWorkoutStartV40'))return;
+    const cvHeroSignatureV76=JSON.stringify([workout?.dayId||'',d?.name||'',d?.focus||'',estimated,state.totalExercises,state.totalSets,state.doneSets,state.doneExercises,pct]);
+    if(h.dataset.cvHeroSignatureV76===cvHeroSignatureV76)return;
+    h.dataset.cvHeroSignatureV76=cvHeroSignatureV76;
+    h.innerHTML="""
+if old_active_hero in text:
+    text=text.replace(old_active_hero,new_active_hero,1)
+elif 'cvHeroSignatureV76' not in text:
+    raise SystemExit('V76 V31 active hero differential target missing')
+
 # V76 production-canary finding: after runtime consolidation, V40 owns a child-list /
 # character-data MutationObserver. Its own sync functions must therefore never write
 # identical DOM content, otherwise each observer pass creates the mutation that wakes
@@ -72,7 +98,7 @@ elif 'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;' not in 
     raise SystemExit('V76 V40 active differential target missing')
 
 # Inject after every historical workout wrapper so V74 owns the final toggle contract.
-payload=f'\n{START_STABILITY_MARKER}\n{COMPACT_STABILITY_MARKER}\n{MARKER}\n<script id="{SCRIPT_ID}">\n{guard}\n</script>\n'
+payload=f'\n{START_STABILITY_MARKER}\n{COMPACT_STABILITY_MARKER}\n{ACTIVE_DOM_STABILITY_MARKER}\n{MARKER}\n<script id="{SCRIPT_ID}">\n{guard}\n</script>\n'
 if '</body>' not in text:
     raise SystemExit('V74 body injection target missing')
 text=text.replace('</body>',payload+'</body>',1)
@@ -80,9 +106,9 @@ text=text.replace('</body>',payload+'</body>',1)
 # Final ownership / safety checks.
 if text.rfind('CVWorkoutSetGuardV74') <= text.rfind('window.cvToggleSet='):
     raise SystemExit('V74 is not the final set-toggle owner')
-for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;","live&&live.textContent!=='LISTO PARA INICIAR'",'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;']:
+for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,ACTIVE_DOM_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;",'cvBadgeTextV76','cvHeroSignatureV76',"live&&live.textContent!=='LISTO PARA INICIAR'",'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;']:
     if token not in text:
         raise SystemExit(f'V74 stable artifact missing: {token}')
 
 HTML.write_text(text,encoding='utf-8')
-print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","mutation-safe V40 compact sync v76"],"bytes":%d}'%len(text.encode('utf-8')))
+print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","mutation-safe V31 active workout v76","mutation-safe V40 compact sync v76"],"bytes":%d}'%len(text.encode('utf-8')))
