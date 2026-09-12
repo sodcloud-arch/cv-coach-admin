@@ -24,13 +24,15 @@ css=CSS.read_text(encoding='utf-8')
 checks={
     'html marker':'cv-rank-audio-sync-v67',
     'audio path':'cv-rank-up-v67.mp3',
-    'impact constant':'RANK_UP_IMPACT=3.36',
-    'audio clock watcher':'player.currentTime)>=RANK_UP_IMPACT',
     'impact class':"classList.add('cv66Impact')",
 }
 for label,token in checks.items():
     if token not in html and token not in js:
         raise SystemExit(f'V67 {label} contract missing: {token}')
+if 'RANK_UP_IMPACT=3.36' not in js and 'RANK_UP_IMPACT_SOURCE=3.36' not in js:
+    raise SystemExit('V67 impact constant/source anchor missing')
+if 'player.currentTime)>=RANK_UP_IMPACT' not in js and 'player.currentTime)>=RANK_UP_IMPACT_SOURCE' not in js:
+    raise SystemExit('V67 audio clock watcher missing')
 for token in ['cv67OldCharge','cv67OldBurst','cv67NewReveal','cv67ImpactFlash']:
     if token not in css or token not in html:
         raise SystemExit(f'V67 CSS sync contract missing: {token}')
