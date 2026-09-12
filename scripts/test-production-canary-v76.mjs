@@ -37,12 +37,83 @@ async function control(action,payload={}){
   return body;
 }
 
-async function tap(page,locator){
+function rectClose(a,b,tolerance=0.75){
+  if(!a||!b)return false;
+  return ['x','y','width','height'].every(k=>Math.abs(Number(a[k])-Number(b[k]))<=tolerance);
+}
+
+async function tap(page,locator,label='target'){
   await locator.waitFor({state:'visible',timeout:15000});
-  await locator.scrollIntoViewIfNeeded();
-  const box=await locator.boundingBox();
-  if(!box)throw new Error('Touch target has no bounding box');
-  await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);
+  let lastDiagnostic=null;
+
+  // Do not delegate the touch to Playwright's element-actionability layer. The
+  // production canary must prove what an actual finger needs: a connected,
+  // visible, geometrically stable and unobstructed target, then a raw touch at
+  // its coordinates. This also avoids false failures from WebKit's indefinite
+  // "waiting for element to be stable" heuristic on a dynamically hydrated UI.
+  for(let attempt=0;attempt<4;attempt++){
+    const token=`cv-canary-${label}-${Date.now()}-${attempt}-${Math.random().toString(36).slice(2)}`;
+    try{
+      await locator.evaluate((el,marker)=>{
+        el.setAttribute('data-cv-canary-touch',marker);
+        el.scrollIntoView({block:'center',inline:'nearest',behavior:'auto'});
+      },token);
+    }catch{
+      await page.waitForTimeout(80);
+      continue;
+    }
+
+    const selector=`[data-cv-canary-touch="${token}"]`;
+    const deadline=Date.now()+4000;
+    let previous=null;
+    let stableSamples=0;
+
+    while(Date.now()<deadline){
+      const sample=await page.evaluate(({selector})=>{
+        const el=document.querySelector(selector);
+        if(!el||!el.isConnected)return {connected:false};
+        const r=el.getBoundingClientRect();
+        const cx=r.left+r.width/2;
+        const cy=r.top+r.height/2;
+        const hit=document.elementFromPoint(cx,cy);
+        const style=getComputedStyle(el);
+        return {
+          connected:true,
+          rect:{x:r.x,y:r.y,width:r.width,height:r.height},
+          center:{x:cx,y:cy},
+          viewport:{width:window.innerWidth,height:window.innerHeight},
+          hitOk:Boolean(hit&&(hit===el||el.contains(hit))),
+          text:(el.textContent||'').trim().slice(0,80),
+          className:typeof el.className==='string'?el.className:'',
+          visibility:style.visibility,
+          display:style.display,
+          opacity:style.opacity,
+          transform:style.transform,
+          animationName:style.animationName,
+        };
+      },{selector}).catch(()=>({connected:false}));
+
+      lastDiagnostic=sample;
+      if(!sample.connected)break;
+      const r=sample.rect;
+      const c=sample.center;
+      const inViewport=r.width>=20&&r.height>=20&&c.x>=0&&c.y>=0&&c.x<=sample.viewport.width&&c.y<=sample.viewport.height;
+      const visuallyReady=sample.display!=='none'&&sample.visibility!=='hidden'&&Number(sample.opacity)>0;
+      if(inViewport&&visuallyReady&&sample.hitOk&&rectClose(previous,r))stableSamples+=1;
+      else stableSamples=0;
+      previous=r;
+
+      if(stableSamples>=3){
+        console.log(`CV_CANARY_V76_TOUCH_READY ${label} ${JSON.stringify({rect:r,hitOk:sample.hitOk,text:sample.text,animationName:sample.animationName,transform:sample.transform})}`);
+        await page.touchscreen.tap(c.x,c.y);
+        return sample;
+      }
+      await page.waitForTimeout(80);
+    }
+    await page.waitForTimeout(100);
+  }
+
+  throw new Error(`Raw touch target never became stable/unobstructed (${label}): ${JSON.stringify(lastDiagnostic)}`);
 }
 
 async function startWorkoutFromCurrentView(page){
@@ -53,7 +124,8 @@ async function startWorkoutFromCurrentView(page){
     for(let i=0;i<count;i++){
       const candidate=candidates.nth(i);
       if(await candidate.isVisible().catch(()=>false)){
-        await tap(page,candidate);
+        await tap(page,candidate,'start-workout');
+        console.log('CV_CANARY_V76_START_TOUCH_STABLE');
         return;
       }
     }
@@ -70,15 +142,15 @@ async function startWorkoutFromCurrentView(page){
 
 async function editNumber(page,selector,value){
   const input=page.locator(selector);
-  await tap(page,input);
+  await tap(page,input,`edit-${selector.replace('#','')}`);
   const panel=page.locator('#cvNumpadV73');
   await panel.waitFor({state:'visible',timeout:10000});
-  await tap(page,panel.locator('[data-cv-key="clear"]'));
+  await tap(page,panel.locator('[data-cv-key="clear"]'),'numpad-clear');
   for(const char of String(value)){
     const key=char==='.'?'dot':char;
-    await tap(page,panel.locator(`[data-cv-key="${key}"]`));
+    await tap(page,panel.locator(`[data-cv-key="${key}"]`),`numpad-${key}`);
   }
-  await tap(page,panel.locator('[data-cv-key="done"]'));
+  await tap(page,panel.locator('[data-cv-key="done"]'),'numpad-done');
   await page.waitForFunction(({sel,expected})=>document.querySelector(sel)?.value===expected,{sel:selector,expected:String(value)},{timeout:10000});
 }
 
@@ -191,8 +263,7 @@ try{
   console.log('CV_CANARY_V76_AUTH_OK');
 
   // Home's VER RUTINA already calls openDay() and lands on the workout screen.
-  // Follow the real action rather than assuming an obsolete intermediate copy step.
-  await tap(page,routineCta);
+  await tap(page,routineCta,'open-routine');
   await startWorkoutFromCurrentView(page);
 
   await page.locator('#cvw_0_0').waitFor({state:'visible',timeout:20000});
@@ -203,21 +274,19 @@ try{
   await editNumber(page,'#cvw_0_0',EXPECTED_WEIGHT);
   await editNumber(page,'#cvr_0_0',EXPECTED_REPS);
   const check=page.locator('.cvSetCheck').first();
-  await tap(page,check);
+  await tap(page,check,'complete-set');
   await waitSetPersisted(page,active.id);
   console.log('CV_CANARY_V76_REAL_SET_OK');
 
   const finish=page.getByRole('button',{name:/FINALIZAR/i}).last();
-  await finish.waitFor({state:'visible',timeout:15000});
-  await finish.scrollIntoViewIfNeeded();
-  await finish.click();
+  await tap(page,finish,'finish-workout');
 
   await page.locator('#cvFeedbackFinish').waitFor({state:'visible',timeout:10000});
   await page.locator('#cvFeedbackEffort').evaluate(el=>{el.value='6';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
   await page.locator('#cvFeedbackFatigue').evaluate(el=>{el.value='3';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
   await page.locator('#cvFeedbackPain').evaluate(el=>{el.value='0';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
   await page.locator('#cvFeedbackNotes').fill(`CV_CANARY_V76 run=${RUN_ID}`);
-  await page.locator('#cvFeedbackFinish').click();
+  await tap(page,page.locator('#cvFeedbackFinish'),'submit-feedback');
 
   const terminal=await waitTerminal(page,active.id);
   if(terminal.status!=='abandoned')throw new Error(`Expected abandoned terminal status, got ${terminal.status}`);
