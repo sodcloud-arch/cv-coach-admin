@@ -12,6 +12,8 @@ SCRIPT_ID = 'cv-workout-interaction-v74-js'
 MARKER = '<!-- cv-workout-interaction-v74: immediate-feedback + per-set-lock + canonical-null-data-render-guard -->'
 RENDER_ANCHOR = "function render(){const c=$('#content');"
 RENDER_GUARDED = "function render(){if(typeof data==='undefined'||data===null)return false;/* cv74 canonical render null guard */const c=$('#content');"
+PRESTART_ANCHOR = "  function cvPrestartExercises(){\n    const d=data.days.find(x=>x.id===workout.dayId);const raw=data.exercises[d.id]||[];"
+PRESTART_GUARDED = "  function cvPrestartExercises(){\n    if(!data||!Array.isArray(data.days)||!data.exercises||!workout?.dayId)return [];/* cv74 prestart null guard */\n    const d=data.days.find(x=>x.id===workout.dayId);if(!d)return [];const raw=data.exercises[d.id]||[];"
 
 for path in [HTML, JS]:
     if not path.exists() or path.stat().st_size < 500:
@@ -47,6 +49,14 @@ if '/* cv74 canonical render null guard */' not in text:
         raise SystemExit(f'V74 canonical render anchor mismatch: expected 1, got {count}')
     text = text.replace(RENDER_ANCHOR, RENDER_GUARDED, 1)
 
+# Startup decorators can call cvExercises() before client data/workout state exists.
+# Make the canonical prestart exercise factory safe at its source instead of masking callers.
+if '/* cv74 prestart null guard */' not in text:
+    count = text.count(PRESTART_ANCHOR)
+    if count != 1:
+        raise SystemExit(f'V74 prestart anchor mismatch: expected 1, got {count}')
+    text = text.replace(PRESTART_ANCHOR, PRESTART_GUARDED, 1)
+
 if 'CVWorkoutNumpadV73' not in text:
     raise SystemExit('V74 requires built V73 runtime')
 if '</body>' not in text:
@@ -64,6 +74,7 @@ for token in [
     'CVWorkoutInteractionV74',
     '__cv74Interaction',
     '/* cv74 canonical render null guard */',
+    '/* cv74 prestart null guard */',
 ]:
     if token not in text:
         raise SystemExit(f'V74 final token missing: {token}')
@@ -86,9 +97,10 @@ for patch in [
     'Immediate first-touch set feedback v74',
     'Per-set concurrent toggle lock v74',
     'Canonical null-data render race guard v74',
+    'Prestart exercise null-data guard v74',
 ]:
     if patch not in patches:
         patches.append(patch)
 metadata['patches'] = patches
 BUILD.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-print(json.dumps({'sha256': sha, 'bytes': metadata['bytes'], 'patches': patches[-3:]}, ensure_ascii=False))
+print(json.dumps({'sha256': sha, 'bytes': metadata['bytes'], 'patches': patches[-4:]}, ensure_ascii=False))

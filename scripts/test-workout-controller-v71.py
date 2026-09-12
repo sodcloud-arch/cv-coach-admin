@@ -69,6 +69,7 @@ required_html=[
     'cv-workout-interaction-v74-js',
     'cv-workout-interaction-v74: immediate-feedback + per-set-lock + canonical-null-data-render-guard',
     '/* cv74 canonical render null guard */',
+    '/* cv74 prestart null guard */',
     'CVWorkoutInteractionV74',
 ]
 for token in required_html:
