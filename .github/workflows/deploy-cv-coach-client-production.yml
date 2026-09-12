@@ -17,6 +17,7 @@ on:
       - 'scripts/test-cv-rank-engine-v61.py'
       - 'scripts/test-cv-rank-ui-v64.py'
       - 'scripts/test-cv-rank-ui-v65.py'
+      - 'scripts/test-cv-rank-audio-v67.py'
       - 'supabase/migrations/**'
       - '.github/workflows/deploy-cv-coach-client-production.yml'
   workflow_dispatch:
@@ -40,7 +41,7 @@ jobs:
       - name: Checkout canonical main
         uses: actions/checkout@v4
 
-      - name: Build and regression-gate client artifact through V65
+      - name: Build and regression-gate client artifact through V67
         shell: bash
         run: |
           set -euo pipefail
@@ -72,8 +73,11 @@ jobs:
           python scripts/test-cv-rank-engine-v61.py
           python scripts/test-cv-rank-ui-v64.py
           python scripts/test-cv-rank-ui-v65.py
+          python client-portal/upgrade_client_v67.py
+          python scripts/test-cv-rank-audio-v67.py
           node --check client-portal/assets/cv-rank-real-ui-v64.js
           node --check client-portal/assets/cv-rank-real-ui-v65.js
+          node --check client-portal/assets/cv-rank-celebration-v66.js
           python scripts/test-workout-runtime-v52.py
           python scripts/test-client-sound-v53.py
 
@@ -83,10 +87,13 @@ jobs:
           grep -q 'cv-rank-engine-v61' client-portal/stable/index.html
           grep -q 'cv-rank-real-ui-v64' client-portal/stable/index.html
           grep -q 'cv-rank-real-ui-v65' client-portal/stable/index.html
+          grep -q 'cv-rank-audio-sync-v67' client-portal/stable/index.html
+          grep -q 'RANK_UP_IMPACT=3.36' client-portal/stable/index.html
           grep -q 'cv64WorkoutRankHud' client-portal/stable/index.html
           grep -q 'cv65LeagueProgress' client-portal/stable/index.html
           grep -q './assets/cv-rank-v61.js' client-portal/stable/index.html
           grep -q './assets/cv-rank-v61.css' client-portal/stable/index.html
+          test -s client-portal/assets/sounds/cv-rank-up-v67.mp3
           if grep -q 'cv-rank-system-v60-js' client-portal/stable/index.html; then echo 'V60 rank runtime still active' >&2; exit 1; fi
           if grep -q 'cv-rank-system-v60-css' client-portal/stable/index.html; then echo 'V60 rank CSS still active' >&2; exit 1; fi
           if grep -q 'cv-rank-real-ui-v63-js' client-portal/stable/index.html; then echo 'V63 UI runtime still active' >&2; exit 1; fi
@@ -139,6 +146,7 @@ jobs:
           test -s .vercel/output/static/index.html
           test -s .vercel/output/static/assets/cv-rank-v61.js
           test -s .vercel/output/static/assets/cv-rank-v61.css
+          test -s .vercel/output/static/assets/sounds/cv-rank-up-v67.mp3
           for f in tutorial bronze silver gold platinum diamond legend; do test -s ".vercel/output/static/assets/ranks/cv-rank-${f}-v61.webp"; done
 
       - name: Deploy CV Coach client production
@@ -147,7 +155,7 @@ jobs:
         shell: bash
         run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
-      - name: Verify public production alias through V65
+      - name: Verify public production alias through V67
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
@@ -157,24 +165,25 @@ jobs:
             body="$(curl --fail --silent --show-error --location --max-time 20 -D "$headers" https://cv-coach-roan.vercel.app || true)"
             js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/cv-rank-v61.js || true)"
             css_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/cv-rank-v61.css || true)"
+            audio_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/assets/sounds/cv-rank-up-v67.mp3 || true)"
             sw_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/sw.js || true)"
             assets_ok=true
             for f in tutorial bronze silver gold platinum diamond legend; do
               status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 "https://cv-coach-roan.vercel.app/assets/ranks/cv-rank-${f}-v61.webp?v=64" || true)"
               [[ "$status" == "200" ]] || assets_ok=false
             done
-            if [[ "$body" == *"cv-rank-engine-v61"* && "$body" == *"cv-rank-real-ui-v64"* && "$body" == *"cv-rank-real-ui-v65"* && "$body" == *"cv64WorkoutRankHud"* && "$body" == *"cv65LeagueProgress"* && "$body" == *"./assets/cv-rank-v61.js"* && "$body" != *"cv-rank-system-v60-js"* && "$body" != *"cv-rank-real-ui-v63-js"* && "$js_status" == "200" && "$css_status" == "200" && "$sw_status" == "200" && "$assets_ok" == "true" ]]; then
+            if [[ "$body" == *"cv-rank-engine-v61"* && "$body" == *"cv-rank-real-ui-v64"* && "$body" == *"cv-rank-real-ui-v65"* && "$body" == *"cv-rank-audio-sync-v67"* && "$body" == *"RANK_UP_IMPACT=3.36"* && "$body" == *"cv64WorkoutRankHud"* && "$body" == *"cv65LeagueProgress"* && "$body" == *"./assets/cv-rank-v61.js"* && "$body" != *"cv-rank-system-v60-js"* && "$body" != *"cv-rank-real-ui-v63-js"* && "$js_status" == "200" && "$css_status" == "200" && "$audio_status" == "200" && "$sw_status" == "200" && "$assets_ok" == "true" ]]; then
               grep -qi '^x-content-type-options: nosniff' "$headers"
               grep -qi '^x-frame-options: DENY' "$headers"
               grep -qi '^content-security-policy:' "$headers"
-              echo 'PUBLIC_PORTAL_CV_RANK_V65_OK'
+              echo 'PUBLIC_PORTAL_CV_RANK_V67_OK'
               rm -f "$headers"
               exit 0
             fi
             rm -f "$headers"
             sleep 3
           done
-          echo 'Public CV Rank V65 alias verification failed' >&2
+          echo 'Public CV Rank V67 alias verification failed' >&2
           exit 1
 
       - name: Vercel credential required for canonical production
