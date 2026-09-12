@@ -13,6 +13,7 @@ required_workflow = [
     "cron: '17 */6 * * *'",
     'id-token: write',
     'scripts/test-production-canary-v76.mjs',
+    'DEBUG: pw:browser',
 ]
 required_script = [
     'cv-canary-auth-v76',
