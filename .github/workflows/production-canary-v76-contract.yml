@@ -1,0 +1,39 @@
+name: CV Coach Production Canary V76 Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/production-canary-v76.yml'
+      - '.github/workflows/production-canary-v76-contract.yml'
+      - 'scripts/test-production-canary-v76.mjs'
+      - 'scripts/test-production-canary-v76-contract.py'
+      - 'supabase/functions/cv-canary-auth-v76/**'
+      - 'supabase/migrations/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/production-canary-v76.yml'
+      - '.github/workflows/production-canary-v76-contract.yml'
+      - 'scripts/test-production-canary-v76.mjs'
+      - 'scripts/test-production-canary-v76-contract.py'
+      - 'supabase/functions/cv-canary-auth-v76/**'
+      - 'supabase/migrations/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-canary-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate V76 architecture contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/test-production-canary-v76-contract.py
+          node --check scripts/test-production-canary-v76.mjs
