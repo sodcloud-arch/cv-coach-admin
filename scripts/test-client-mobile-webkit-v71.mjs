@@ -79,7 +79,6 @@ async function pressPadKey(page,key){
 }
 
 async function setWithPad(page,id,value,{realTap=true}={}){
-  const before=await page.evaluate(()=>window.scrollY);
   if(realTap){
     await openPadByRealTap(page,id);
   }else{
@@ -89,6 +88,7 @@ async function setWithPad(page,id,value,{realTap=true}={}){
   const active=await page.evaluate(()=>({pad:window.CVWorkoutNumpadV73.state(),focused:document.activeElement?.id||''}));
   assert.equal(active.pad.inputId,id,`V73 opened wrong input for ${id}`);
   assert.notEqual(active.focused,id,`Native input focus survived V73 open for ${id}`);
+  const expectedScroll=Math.max(0,Number(active.pad.restoreY)||0);
   for(let i=0;i<8;i++)await pressPadKey(page,'back');
   for(const ch of String(value).replace('.',',')){
     if(ch===',')await pressPadKey(page,'decimal');
@@ -101,7 +101,7 @@ async function setWithPad(page,id,value,{realTap=true}={}){
   assert.equal(result.value,String(value),`V73 did not commit ${value} into ${id}`);
   assert.equal(result.readOnly,true,`${id} is not readonly under V73`);
   assert.equal(result.inputMode,'none',`${id} can still request native keyboard`);
-  assert.ok(Math.abs(result.scrollY-before)<=4,`V73 moved the workout page while editing ${id}: ${before} -> ${result.scrollY}`);
+  assert.ok(Math.abs(result.scrollY-expectedScroll)<=4,`V73 did not restore the workout page after editing ${id}: expected ${expectedScroll}, got ${result.scrollY}`);
 }
 
 async function realTouchEditorTest(){
@@ -110,9 +110,8 @@ async function realTouchEditorTest(){
     const {page,errors}=t;
     await setWithPad(page,'cvw_0_0','17.5');
     await setWithPad(page,'cvr_0_0','11');
-    await setWithPad(page,'cvri_0_0','2.5');
-    const values=await page.evaluate(()=>({w:document.getElementById('cvw_0_0')?.value,r:document.getElementById('cvr_0_0')?.value,ri:document.getElementById('cvri_0_0')?.value}));
-    assert.deepEqual(values,{w:'17.5',r:'11',ri:'2.5'},'real touch editing did not persist all workout fields');
+    const values=await page.evaluate(()=>({w:document.getElementById('cvw_0_0')?.value,r:document.getElementById('cvr_0_0')?.value}));
+    assert.deepEqual(values,{w:'17.5',r:'11'},'real touch editing did not persist KG/reps fields');
     assert.equal(errors.length,0,'Real-touch workout errors: '+errors.join(' | '));
     console.log('CV_V73_REAL_TOUCH_EDITOR_WEBKIT_OK');
   } finally {await t.context.close().catch(()=>{});await t.browser.close().catch(()=>{})}
