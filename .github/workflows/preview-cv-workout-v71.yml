@@ -1,0 +1,127 @@
+name: CV Coach Workout V71 Preview
+
+on:
+  push:
+    branches: ['fix/workout-optimistic-v71']
+  workflow_dispatch:
+
+concurrency:
+  group: cv-coach-workout-v71-preview
+  cancel-in-progress: true
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_pD5aAwrw2qpbPgoEarWhxcKF
+      VERCEL_PROJECT_ID: prj_PmFZQqN9tVEAUgKH8ekcnOoSgNOL
+      VERCEL_CLI_VERSION: 59.13.1
+    steps:
+      - name: Checkout V71 preview branch
+        uses: actions/checkout@v4
+
+      - name: Build canonical client through V71
+        shell: bash
+        run: |
+          set -euo pipefail
+          python client-portal/stabilize.py
+          python client-portal/consolidate_runtime.py
+          python client-portal/consolidate_session_runtime.py
+          python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
+          python client-portal/upgrade_client_v49.py
+          python client-portal/upgrade_client_v50.py
+          python client-portal/upgrade_client_v51.py
+          python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
+          python client-portal/upgrade_client_v54.py
+          python client-portal/upgrade_client_v55.py
+          python client-portal/upgrade_client_v56.py
+          python client-portal/upgrade_client_v57.py
+          python client-portal/upgrade_client_v59.py
+          python client-portal/upgrade_client_v60.py
+          python client-portal/repair_client_v60.py
+          python client-portal/upgrade_client_v61.py
+          python client-portal/upgrade_client_v67.py
+          python client-portal/upgrade_client_v68.py
+          python client-portal/upgrade_client_v69.py
+          python client-portal/upgrade_client_v71.py
+          node --check client-portal/assets/cv-workout-optimistic-v71.js
+          python scripts/test-workout-runtime-v52.py
+          python scripts/test-mobile-workout-v54.py
+          python scripts/test-set-toggle-runtime-v56.py
+          python scripts/test-cv-runtime-stability-v69.py
+          python scripts/test-workout-optimistic-v71.py
+          test "$(wc -c < client-portal/stable/index.html)" -gt 50000
+          grep -q 'CVWorkoutOptimisticV71' client-portal/stable/index.html
+          grep -q 'cv-workout-optimistic-v71: immediate-set-feedback' client-portal/stable/index.html
+          grep -q 'CVRankStateGuardV70' client-portal/stable/index.html
+
+      - name: Require preview credential
+        shell: bash
+        run: |
+          test -n "${VERCEL_TOKEN:-}" || { echo 'VERCEL_TOKEN_MISSING'; exit 1; }
+
+      - name: Create static Vercel Build Output
+        working-directory: client-portal/stable
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel/output/static/assets/sounds .vercel/output/static/assets/ranks
+          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
+          cp index.html .vercel/output/static/index.html
+          cp ../manifest.webmanifest .vercel/output/static/manifest.webmanifest
+          cp ../sw.js .vercel/output/static/sw.js
+          cp ../icon.svg .vercel/output/static/icon.svg
+          cp ../assets/cv-isotipo-header-v1.webp .vercel/output/static/assets/cv-isotipo-header-v1.webp
+          cp ../assets/cv-rank-v61.js .vercel/output/static/assets/cv-rank-v61.js
+          cp ../assets/cv-rank-v61.css .vercel/output/static/assets/cv-rank-v61.css
+          cp ../assets/sounds/*.mp3 .vercel/output/static/assets/sounds/
+          cp ../assets/ranks/*.webp .vercel/output/static/assets/ranks/
+          cat > .vercel/output/config.json <<'JSON'
+          {
+            "version": 3,
+            "routes": [
+              {"src":"/","dest":"/index.html","headers":{"Cache-Control":"no-store","Content-Security-Policy":"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://fmhcansyxcsqkrivqchr.supabase.co wss://fmhcansyxcsqkrivqchr.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","X-Robots-Tag":"noindex, nofollow"}},
+              {"src":"/sw.js","dest":"/sw.js","headers":{"Cache-Control":"no-cache, no-store, must-revalidate","Service-Worker-Allowed":"/","X-Content-Type-Options":"nosniff"}},
+              {"src":"/manifest.webmanifest","dest":"/manifest.webmanifest","headers":{"Cache-Control":"no-cache","Content-Type":"application/manifest+json; charset=utf-8","X-Content-Type-Options":"nosniff"}},
+              {"src":"/icon.svg","dest":"/icon.svg","headers":{"Cache-Control":"public, max-age=3600","Content-Type":"image/svg+xml; charset=utf-8","X-Content-Type-Options":"nosniff"}},
+              {"src":"/assets/(.*)","dest":"/assets/$1","headers":{"Cache-Control":"public, max-age=3600","X-Content-Type-Options":"nosniff"}},
+              {"handle":"filesystem"},
+              {"src":"/(.*)","dest":"/index.html","headers":{"Cache-Control":"no-store","Content-Security-Policy":"default-src 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://fmhcansyxcsqkrivqchr.supabase.co wss://fmhcansyxcsqkrivqchr.supabase.co; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests","X-Content-Type-Options":"nosniff","X-Frame-Options":"DENY","Referrer-Policy":"strict-origin-when-cross-origin","Permissions-Policy":"camera=(), microphone=(), geolocation=()","X-Robots-Tag":"noindex, nofollow"}}
+            ]
+          }
+          JSON
+
+      - name: Deploy isolated V71 preview
+        id: deploy
+        working-directory: client-portal/stable
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="$(npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --token="$VERCEL_TOKEN")"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "### CV Coach V71 preview" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "PREVIEW_URL=$URL"
+
+      - name: Verify V71 preview
+        shell: bash
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            body="$(curl --fail --silent --show-error --location --max-time 20 "$PREVIEW_URL" || true)"
+            if [[ "$body" == *"CVWorkoutOptimisticV71"* && "$body" == *"__cv71Optimistic"* && "$body" == *"CVRankStateGuardV70"* ]]; then
+              echo 'CV_WORKOUT_V71_PREVIEW_OK'
+              exit 0
+            fi
+            sleep 3
+          done
+          echo 'V71 preview verification failed' >&2
+          exit 1
