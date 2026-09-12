@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 ROOT=Path(__file__).resolve().parents[1]
 PORTAL=ROOT/'client-portal'
@@ -26,7 +27,9 @@ for token in ['CVRankRealUIV64','?v=${VERSION}','cv64WorkoutRankHud','moveSessio
     assert token in js, f'V64 JS contract missing: {token}'
 for token in ['cv-rank-real-ui-v64.css','cv-rank-real-ui-v64-hotfix.css','cv-rank-real-ui-v64.js','cv-rank-real-ui-v64: cache-fresh-transparent-badges','.cv64CompactPath .cv64Step.next:after']:
     assert token in upgrade, f'V64 build contract missing: {token}'
-assert "CACHE_NAME='cv-coach-shell-v64'" in sw, 'service-worker cache was not bumped for V64'
+# V64 required a cache generation bump, but later releases are allowed to advance it.
+cache_match=re.search(r"CACHE_NAME='cv-coach-shell-v(\d+)'",sw)
+assert cache_match and int(cache_match.group(1))>=64, 'service-worker cache generation regressed below V64'
 assert 'cv-rank-tutorial-v61.webp' in sw, 'tutorial rank asset missing from shell cache'
 
 # The approved rank artwork must expose alpha so it can render without a rectangular background.
