@@ -21,6 +21,11 @@ required_script = [
     'verifyOtp',
     'startWorkoutFromCurrentView',
     'button[onclick*="startWorkout"]',
+    'elementFromPoint',
+    'rectClose',
+    'page.touchscreen.tap',
+    'CV_CANARY_V76_START_TOUCH_STABLE',
+    'CV_CANARY_V76_TOUCH_READY',
     '#cvw_0_0',
     '#cvr_0_0',
     '.cvSetCheck',
@@ -73,6 +78,8 @@ assert 'cliente.prueba@' not in script.lower(), 'canary script must not carry QA
 assert 'cliente.prueba@' not in edge.lower(), 'edge function must resolve QA email server-side'
 assert 'SUPABASE_SERVICE_ROLE_KEY' not in script, 'service-role key must stay server-side'
 assert 'ABRIR ENTRENAMIENTO' not in script, 'canary must not assume an obsolete intermediate copy step'
+assert 'scrollIntoViewIfNeeded' not in script, 'canary must use raw geometry/hit-test touch instead of Playwright actionability scrolling'
+assert '.click()' not in script, 'critical canary UI actions must remain physical touchscreen taps'
 assert 'workflow_dispatch:' in workflow
 assert 'schedule:' in workflow
 
