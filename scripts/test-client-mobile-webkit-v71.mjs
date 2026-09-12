@@ -126,8 +126,10 @@ async function explicitStartTest(){
   const t=await demoWorkoutPage('EXPLICIT');
   try{
     const {page,errors}=t;
-    await setWithPad(page,'cvw_0_0','20');
-    await setWithPad(page,'cvr_0_0','8');
+    // Start/session preservation is already a controller concern; keep setup deterministic
+    // here so this scenario does not duplicate the physical-editor stress test above.
+    await setWithPad(page,'cvw_0_0','20',{realTap:false});
+    await setWithPad(page,'cvr_0_0','8',{realTap:false});
     const started=await page.evaluate(()=>window.startWorkout());
     assert.equal(started,true,'explicit start did not resolve true');
     await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo',null,{timeout:5000});
@@ -142,15 +144,21 @@ async function autoStartTest(){
   const t=await demoWorkoutPage('AUTO');
   try{
     const {page,errors}=t;
-    await setWithPad(page,'cvw_0_0','22.5');
-    await setWithPad(page,'cvr_0_0','9');
-    const check=page.locator('.cvSetCheck').first();
-    await tapLocatorCenter(page,check,'first set check');
+    await setWithPad(page,'cvw_0_0','22.5',{realTap:false});
+    await setWithPad(page,'cvr_0_0','9',{realTap:false});
+    // The second user-facing path under review: a physical tap on the first series check.
+    await page.waitForTimeout(180);
+    const checkPoint=await page.evaluate(()=>{
+      const el=document.querySelector('.cvSetCheck');if(!el)return null;
+      const r=el.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2,width:r.width,height:r.height};
+    });
+    assert.ok(checkPoint&&checkPoint.width>0&&checkPoint.height>0,'No tappable first set check');
+    await page.touchscreen.tap(checkPoint.x,checkPoint.y);
     await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo'&&window.cvExercises?.()?.[0]?.sets?.[0]?.completed===true,null,{timeout:5000});
     const got=await page.evaluate(()=>{const s=window.cvExercises()?.[0]?.sets?.[0];return {w:s?.weight_kg,r:s?.reps,c:s?.completed}});
     assert.deepEqual(got,{w:22.5,r:9,c:true},'first-set auto-start lost V73 values or completion');
     assert.equal(errors.length,0,'Auto-start workout errors: '+errors.join(' | '));
-    console.log('CV_V73_AUTO_START_WEBKIT_OK');
+    console.log('CV_V73_AUTO_START_REAL_CHECK_WEBKIT_OK');
   } finally {await t.context.close().catch(()=>{});await t.browser.close().catch(()=>{})}
 }
 
