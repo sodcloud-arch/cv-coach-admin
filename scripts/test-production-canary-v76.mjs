@@ -149,6 +149,30 @@ async function editNumber(page,selector,value){
   await page.waitForFunction(({sel,expected})=>document.querySelector(sel)?.value===expected,{sel:selector,expected:String(value)},{timeout:10000});
 }
 
+async function dumpWorkoutDom(page){
+  const controls=await page.locator('input,button').evaluateAll(nodes=>nodes.filter(node=>{
+    const r=node.getBoundingClientRect();
+    const s=getComputedStyle(node);
+    return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden';
+  }).slice(0,120).map(node=>{
+    const owner=node.closest('.cvSetRow,.setRow,[class*="SetRow"],[class*="setRow"],.exerciseCard,[class*="exercise"]');
+    return {
+      tag:node.tagName,
+      id:node.id||'',
+      className:typeof node.className==='string'?node.className:'',
+      type:node.getAttribute('type')||'',
+      inputmode:node.getAttribute('inputmode')||'',
+      name:node.getAttribute('name')||'',
+      placeholder:node.getAttribute('placeholder')||'',
+      readonly:node.hasAttribute('readonly'),
+      text:(node.textContent||'').trim().slice(0,80),
+      ownerClass:owner&&typeof owner.className==='string'?owner.className:'',
+    };
+  }));
+  console.log('CV_CANARY_V76_WORKOUT_DOM',JSON.stringify(controls));
+  return controls;
+}
+
 async function athleteRest(accessToken,path){
   if(!accessToken)throw new Error('Athlete access token missing');
   const r=await fetch(`${BASE}/rest/v1/${path}`,{headers:{apikey:KEY,Authorization:`Bearer ${accessToken}`}});
@@ -275,6 +299,7 @@ try{
   console.log('CV_CANARY_V76_SESSION_CLAIMED');
 
   if(page.isClosed()||pageClosed||browserDisconnected)throw new Error('WebKit closed after workout start');
+  await dumpWorkoutDom(page);
   await page.locator('#cvw_0_0').waitFor({state:'visible',timeout:20000});
 
   await editNumber(page,'#cvw_0_0',EXPECTED_WEIGHT);

@@ -29,6 +29,8 @@ required_script = [
     'CV_CANARY_V76_SERVICE_WORKER_ISOLATED',
     'CV_CANARY_V76_START_TOUCH_STABLE',
     'CV_CANARY_V76_TOUCH_READY',
+    'CV_CANARY_V76_WORKOUT_DOM',
+    'dumpWorkoutDom(page)',
     'athleteRest(accessToken',
     'latestActiveSession(accessToken',
     'access_token:data.session.access_token',
