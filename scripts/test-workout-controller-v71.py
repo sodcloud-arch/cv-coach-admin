@@ -44,7 +44,8 @@ required_html=[
     'CVWorkoutNumpadV73',
     'cv-workout-compact-stability-v76: mutation-safe-v40-sync',
     "live&&live.textContent!=='LISTO PARA INICIAR'",
-    'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;',
+    "const compactSigV76=[name,s.doneSets,s.totalSets,Math.round(s.volume),s.pct].join('|');",
+    'copy.dataset.cvCompactSigV76=compactSigV76;',
 ]
 for token in required_html:
     if token not in html: raise SystemExit(f'V71/V73/V76 missing built contract: {token}')
@@ -52,9 +53,10 @@ for forbidden in [
     "el.scrollIntoView({behavior:'smooth',block:'center'})},180);",
     'CVIOSKeyboardV72',
     'cvKeyboardEditingV72',
-    "x.classList.add('cvInputActive')"
+    "x.classList.add('cvInputActive')",
+    'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;'
 ]:
-    if forbidden in html: raise SystemExit(f'Retired native-keyboard policy survived final build: {forbidden}')
+    if forbidden in html: raise SystemExit(f'Retired/unstable policy survived final build: {forbidden}')
 # V71 must be injected after legacy wrappers so it owns the final global start handler.
 pos_v71=html.rfind("window.startWorkout=canonicalStart")
 pos_any=max(html.rfind("window.startWorkout=async function"),html.rfind("window.startWorkout=async()=>"),html.rfind("window.startWorkout=guarded"))

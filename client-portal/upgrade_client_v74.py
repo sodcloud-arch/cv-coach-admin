@@ -55,7 +55,9 @@ elif "if(h.querySelector('.cvWorkoutStartV40'))return;" not in text:
 # V76 production-canary finding: after runtime consolidation, V40 owns a child-list /
 # character-data MutationObserver. Its own sync functions must therefore never write
 # identical DOM content, otherwise each observer pass creates the mutation that wakes
-# the next pass. Make both pre-start copy and active compact header differential.
+# the next pass. Pre-start copy is differential; active compact rendering uses a
+# semantic state signature instead of comparing serialized innerHTML (which browsers
+# normalize and can make textually unequal even when the DOM is equivalent).
 old_live="const live=hero.querySelector('.cvWorkoutLivePill');if(live)live.textContent='LISTO PARA INICIAR';"
 new_live="const live=hero.querySelector('.cvWorkoutLivePill');if(live&&live.textContent!=='LISTO PARA INICIAR')live.textContent='LISTO PARA INICIAR';"
 if old_live in text:
@@ -64,12 +66,19 @@ elif new_live not in text:
     raise SystemExit('V76 V40 pre-start differential target missing')
 
 old_compact="""    copy.innerHTML='<strong>'+esc(name)+'</strong><span><b>'+s.doneSets+'/'+s.totalSets+'</b> series · '+Math.round(s.volume).toLocaleString('es-CL')+' kg·reps · <em id=\"cvCompactTimerV40\">'+elapsedV40()+'</em> · '+s.pct+'%</span><span class=\"cvWorkoutCompactProgressV40\"><i style=\"width:'+s.pct+'%\"></i></span>';"""
-new_compact="""    const compactHtmlV76='<strong>'+esc(name)+'</strong><span><b>'+s.doneSets+'/'+s.totalSets+'</b> series · '+Math.round(s.volume).toLocaleString('es-CL')+' kg·reps · <em id=\"cvCompactTimerV40\">'+elapsedV40()+'</em> · '+s.pct+'%</span><span class=\"cvWorkoutCompactProgressV40\"><i style=\"width:'+s.pct+'%\"></i></span>';
+new_compact="""    const compactSigV76=[name,s.doneSets,s.totalSets,Math.round(s.volume),s.pct].join('|');
+    if(copy.dataset.cvCompactSigV76!==compactSigV76){
+      copy.innerHTML='<strong>'+esc(name)+'</strong><span><b>'+s.doneSets+'/'+s.totalSets+'</b> series · '+Math.round(s.volume).toLocaleString('es-CL')+' kg·reps · <em id=\"cvCompactTimerV40\">'+elapsedV40()+'</em> · '+s.pct+'%</span><span class=\"cvWorkoutCompactProgressV40\"><i style=\"width:'+s.pct+'%\"></i></span>';
+      copy.dataset.cvCompactSigV76=compactSigV76;
+    }"""
+legacy_compact_v76="""    const compactHtmlV76='<strong>'+esc(name)+'</strong><span><b>'+s.doneSets+'/'+s.totalSets+'</b> series · '+Math.round(s.volume).toLocaleString('es-CL')+' kg·reps · <em id=\"cvCompactTimerV40\">'+elapsedV40()+'</em> · '+s.pct+'%</span><span class=\"cvWorkoutCompactProgressV40\"><i style=\"width:'+s.pct+'%\"></i></span>';
     if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;"""
 if old_compact in text:
     text=text.replace(old_compact,new_compact,1)
-elif 'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;' not in text:
-    raise SystemExit('V76 V40 active differential target missing')
+elif legacy_compact_v76 in text:
+    text=text.replace(legacy_compact_v76,new_compact,1)
+elif 'copy.dataset.cvCompactSigV76=compactSigV76;' not in text:
+    raise SystemExit('V76 V40 active signature target missing')
 
 # Inject after every historical workout wrapper so V74 owns the final toggle contract.
 payload=f'\n{START_STABILITY_MARKER}\n{COMPACT_STABILITY_MARKER}\n{MARKER}\n<script id="{SCRIPT_ID}">\n{guard}\n</script>\n'
@@ -80,9 +89,9 @@ text=text.replace('</body>',payload+'</body>',1)
 # Final ownership / safety checks.
 if text.rfind('CVWorkoutSetGuardV74') <= text.rfind('window.cvToggleSet='):
     raise SystemExit('V74 is not the final set-toggle owner')
-for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;","live&&live.textContent!=='LISTO PARA INICIAR'",'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;']:
+for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;","live&&live.textContent!=='LISTO PARA INICIAR'","const compactSigV76=[name,s.doneSets,s.totalSets,Math.round(s.volume),s.pct].join('|');",'copy.dataset.cvCompactSigV76=compactSigV76;']:
     if token not in text:
         raise SystemExit(f'V74 stable artifact missing: {token}')
 
 HTML.write_text(text,encoding='utf-8')
-print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","mutation-safe V40 compact sync v76"],"bytes":%d}'%len(text.encode('utf-8')))
+print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","semantic-signature V40 compact sync v76"],"bytes":%d}'%len(text.encode('utf-8')))
