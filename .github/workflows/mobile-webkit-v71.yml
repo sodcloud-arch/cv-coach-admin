@@ -2,7 +2,9 @@ name: CV Coach Mobile WebKit V73
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - review/v73-touch-hardening
     paths:
       - 'client-portal/**'
       - 'scripts/test-client-mobile-webkit-v71.mjs'
@@ -52,7 +54,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
-      - name: Run iPhone-sized V73 workout editor smoke test
+      - name: Run iPhone-sized V73 real-touch workout editor test
         shell: bash
         run: |
           set -euo pipefail
