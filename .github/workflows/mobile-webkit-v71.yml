@@ -54,7 +54,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
-      - name: Run iPhone-sized V73 real-touch workout editor test
+      - name: Run isolated iPhone-sized V73 interaction gates
         shell: bash
         run: |
           set -euo pipefail
@@ -62,4 +62,9 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 0.5; done
-          CV_TEST_URL=http://127.0.0.1:4173 node scripts/test-client-mobile-webkit-v71.mjs
+          echo '--- V73 physical numeric editor ---'
+          CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=editor node scripts/test-client-mobile-webkit-v71.mjs
+          echo '--- V73 explicit workout start ---'
+          CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=start node scripts/test-client-mobile-webkit-v71.mjs
+          echo '--- V73 physical set-check + rapid double tap ---'
+          CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=check node scripts/test-client-mobile-webkit-v71.mjs
