@@ -16,8 +16,8 @@ WORKOUT_V71_ID='cv-workout-controller-v71-js'
 KEYBOARD_V72_ID='cv-ios-keyboard-v72-js'
 MARKER='<!-- cv-runtime-stability-v69: visual-master-rankup + bounded-workout-start + premium-backdrop -->'
 RANK_STATE_MARKER='<!-- cv-rank-state-guard-v70: no-zero-fallback + cached-real-dashboard + derived-next-level -->'
-WORKOUT_V71_MARKER='<!-- cv-workout-controller-v71: authoritative-start + demo-safe + ios-input-stability -->'
-KEYBOARD_V72_MARKER='<!-- cv-ios-keyboard-v72: preserve-scroll + done-key-restore + visual-viewport-stability -->'
+WORKOUT_V71_MARKER='<!-- cv-workout-controller-v71: authoritative-start + demo-safe + input-preservation -->'
+KEYBOARD_V72_MARKER='<!-- cv-ios-keyboard-v72: sole-workout-viewport-owner + preserve-scroll + done-key-restore -->'
 
 for p in [HTML,CSS,JS,RANK_STATE_JS,WORKOUT_V71_JS,KEYBOARD_V72_JS]:
     if not p.exists() or p.stat().st_size<300:
@@ -37,8 +37,11 @@ for token in ["version:'v69'",'RANK_IMPACT_MS=2480','RANK_FAILSAFE_MS=5200','STA
     if token not in js: raise SystemExit(f'V69 JS token missing: {token}')
 for token in ['CVRankStateGuardV70','get_client_rank_dashboard_v61','cv_rank_dashboard_v70_','Sincronizando progreso']:
     if token not in rank_state_js: raise SystemExit(f'V70 JS token missing: {token}')
-for token in ['CVWorkoutControllerV71','window.startWorkout=canonicalStart','snapshotInputs','applySnapshot','ensureAuth','cvKeyboardEditingV71']:
+for token in ['CVWorkoutControllerV71','window.startWorkout=canonicalStart','snapshotInputs','applySnapshot','ensureAuth',"version:'v71'"]:
     if token not in workout_v71_js: raise SystemExit(f'V71 JS token missing: {token}')
+# V71 may not own input viewport behavior anymore. V72 is the single owner.
+for forbidden in ['cvKeyboardEditingV71',"addEventListener('focusin'",'window.scrollBy({top:dy']:
+    if forbidden in workout_v71_js: raise SystemExit(f'V71 competing keyboard policy still present: {forbidden}')
 for token in ['CVIOSKeyboardV72',"version:'v72'",'cvKeyboardEditingV72','multiRestore','enterkeyhint']:
     if token not in keyboard_v72_js: raise SystemExit(f'V72 JS token missing: {token}')
 
@@ -48,6 +51,8 @@ text=re.sub(r'<script id="cv-runtime-stability-v69-js">.*?</script>','',text,fla
 text=re.sub(r'<script id="cv-rank-state-guard-v70-js">.*?</script>','',text,flags=re.S)
 text=re.sub(r'<script id="cv-workout-controller-v71-js">.*?</script>','',text,flags=re.S)
 text=re.sub(r'<script id="cv-ios-keyboard-v72-js">.*?</script>','',text,flags=re.S)
+text=text.replace('<!-- cv-workout-controller-v71: authoritative-start + demo-safe + ios-input-stability -->','')
+text=text.replace('<!-- cv-ios-keyboard-v72: preserve-scroll + done-key-restore + visual-viewport-stability -->','')
 text=text.replace(MARKER,'').replace(RANK_STATE_MARKER,'').replace(WORKOUT_V71_MARKER,'').replace(KEYBOARD_V72_MARKER,'')
 
 # Remove the legacy V40 focus policy at build time. It centered workout inputs on every
@@ -81,8 +86,8 @@ if BUILD.exists():
     except Exception:meta={}
 meta['bytes']=len(text.encode());meta['sha256']=sha
 patches=list(meta.get('patches') or [])
-for patch in ['Rank Up visual-master watchdog v69','Rank Up hard final-state failsafe v69','Premium energy backdrop v69','Bounded workout-start guard + active-session recovery v69','Real rank dashboard state guard + zero fallback repair v70','Authoritative workout start controller + demo-safe start v71','Prestart input preservation + iOS input stability v71','iOS Done-key scroll restoration + visual viewport guard v72','Retired legacy V40 input center-scroll policy v72']:
+for patch in ['Rank Up visual-master watchdog v69','Rank Up hard final-state failsafe v69','Premium energy backdrop v69','Bounded workout-start guard + active-session recovery v69','Real rank dashboard state guard + zero fallback repair v70','Authoritative workout start controller + demo-safe start v71','Prestart input preservation v71','iOS Done-key scroll restoration + visual viewport guard v72','Retired legacy V40 input center-scroll policy v72','Retired competing V71 input viewport policy v72']:
     if patch not in patches:patches.append(patch)
 meta['patches']=patches
 BUILD.write_text(json.dumps(meta,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-print(json.dumps({'sha256':sha,'bytes':meta['bytes'],'patches':patches[-9:]},ensure_ascii=False))
+print(json.dumps({'sha256':sha,'bytes':meta['bytes'],'patches':patches[-10:]},ensure_ascii=False))
