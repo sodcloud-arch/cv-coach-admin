@@ -1,4 +1,4 @@
-name: CV Coach Mobile WebKit V71
+name: CV Coach Mobile WebKit V73
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build client through V71
+      - name: Build client through V73
         shell: bash
         run: |
           set -euo pipefail
@@ -45,12 +45,14 @@ jobs:
           python client-portal/upgrade_client_v68.py
           python client-portal/upgrade_client_v69.py
           python scripts/test-workout-controller-v71.py
+          node --check client-portal/assets/cv-workout-numpad-v73.js
+          if grep -q 'CVIOSKeyboardV72' client-portal/stable/index.html; then echo 'V72 native-keyboard controller still active' >&2; exit 1; fi
       - name: Install Playwright WebKit
         shell: bash
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
-      - name: Run iPhone-sized demo workout smoke test
+      - name: Run iPhone-sized V73 workout editor smoke test
         shell: bash
         run: |
           set -euo pipefail
