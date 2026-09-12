@@ -21,31 +21,61 @@ async function demoWorkoutPage(label){
   return {browser,context,page,errors};
 }
 
+async function waitForV73Decoration(page,id){
+  await page.waitForFunction(inputId=>{
+    const el=document.getElementById(inputId);
+    return !!el&&el.dataset.cvPadV73==='1'&&el.readOnly===true&&el.getAttribute('inputmode')==='none';
+  },id,{timeout:5000,polling:50});
+}
+
 async function openPadByRealTap(page,id){
+  await waitForV73Decoration(page,id);
+  await page.evaluate(inputId=>{
+    const el=document.getElementById(inputId);
+    el?.scrollIntoView?.({block:'center',inline:'nearest',behavior:'instant'});
+  },id);
+  await page.waitForTimeout(120);
   const input=page.locator('#'+id);
-  await input.tap({timeout:3000});
+  const box=await input.boundingBox();
+  assert.ok(box&&box.width>0&&box.height>0,`No tappable V73 box for ${id}`);
+  const point={x:box.x+box.width/2,y:box.y+box.height/2};
+  const hit=await page.evaluate(({x,y})=>document.elementFromPoint(x,y)?.id||document.elementFromPoint(x,y)?.className||'',point);
+  assert.ok(String(hit).includes(id)||String(hit).includes('cv'),`Unexpected element over ${id}: ${hit}`);
+  await page.touchscreen.tap(point.x,point.y);
   await page.waitForFunction(inputId=>{
     const s=window.CVWorkoutNumpadV73?.state?.();
     const root=document.getElementById('cvNumpadV73');
     return !!s?.open&&s.inputId===inputId&&root&&!root.classList.contains('hidden')&&root.getAttribute('aria-hidden')==='false';
   },id,{timeout:3000});
-  // Let the complete iOS/WebKit synthetic event train (pointer/touch/click/focus) settle.
+  // Let the complete iOS/WebKit event train (pointer/touch/click/focus) settle.
   await page.waitForTimeout(180);
   const settled=await page.evaluate(inputId=>({
     pad:window.CVWorkoutNumpadV73.state(),
     focused:document.activeElement?.id||'',
     hidden:document.getElementById('cvNumpadV73')?.classList.contains('hidden'),
-    ariaHidden:document.getElementById('cvNumpadV73')?.getAttribute('aria-hidden')
+    ariaHidden:document.getElementById('cvNumpadV73')?.getAttribute('aria-hidden'),
+    decorated:document.getElementById(inputId)?.dataset.cvPadV73||'',
+    inputMode:document.getElementById(inputId)?.getAttribute('inputmode'),
+    readOnly:document.getElementById(inputId)?.readOnly
   }),id);
   assert.equal(settled.pad.open,true,`V73 pad closed after real tap event train for ${id}`);
   assert.equal(settled.pad.inputId,id,`V73 real tap settled on wrong input for ${id}`);
   assert.notEqual(settled.focused,id,`Native input focus survived real tap for ${id}`);
   assert.equal(settled.hidden,false,`V73 pad became hidden after real tap for ${id}`);
   assert.equal(settled.ariaHidden,'false',`V73 pad aria state regressed after real tap for ${id}`);
+  assert.equal(settled.decorated,'1',`${id} lost V73 decoration after touch`);
+  assert.equal(settled.inputMode,'none',`${id} reverted to native keyboard mode after touch`);
+  assert.equal(settled.readOnly,true,`${id} reverted to editable native input after touch`);
+}
+
+async function tapLocatorCenter(page,locator,label){
+  const box=await locator.boundingBox();
+  assert.ok(box&&box.width>0&&box.height>0,`No tappable box for ${label}`);
+  await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);
 }
 
 async function pressPadKey(page,key){
-  await page.locator(`[data-key="${key}"]`).tap({timeout:3000});
+  await tapLocatorCenter(page,page.locator(`[data-key="${key}"]`),`pad key ${key}`);
 }
 
 async function setWithPad(page,id,value,{realTap=true}={}){
@@ -64,7 +94,7 @@ async function setWithPad(page,id,value,{realTap=true}={}){
     if(ch===',')await pressPadKey(page,'decimal');
     else await pressPadKey(page,ch);
   }
-  await page.locator('[data-pad-action="done"]').tap({timeout:3000});
+  await tapLocatorCenter(page,page.locator('[data-pad-action="done"]'),'LISTO');
   await page.waitForFunction(inputId=>window.CVWorkoutNumpadV73.state().open===false&&document.getElementById(inputId)?.value!==undefined,id,{timeout:3000});
   await page.waitForTimeout(120);
   const result=await page.evaluate(inputId=>({value:document.getElementById(inputId)?.value,readOnly:document.getElementById(inputId)?.readOnly,inputMode:document.getElementById(inputId)?.getAttribute('inputmode'),scrollY:window.scrollY}),id);
@@ -110,7 +140,8 @@ async function autoStartTest(){
     const {page,errors}=t;
     await setWithPad(page,'cvw_0_0','22.5');
     await setWithPad(page,'cvr_0_0','9');
-    await page.locator('.cvSetCheck').first().tap({timeout:3000});
+    const check=page.locator('.cvSetCheck').first();
+    await tapLocatorCenter(page,check,'first set check');
     await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo'&&window.cvExercises?.()?.[0]?.sets?.[0]?.completed===true,null,{timeout:5000});
     const got=await page.evaluate(()=>{const s=window.cvExercises()?.[0]?.sets?.[0];return {w:s?.weight_kg,r:s?.reps,c:s?.completed}});
     assert.deepEqual(got,{w:22.5,r:9,c:true},'first-set auto-start lost V73 values or completion');
