@@ -1,1 +1,261 @@
-placeholder
+/* CV Coach · Rank Up Cinematic V68
+   Premium cleanup based on real iPhone QA:
+   - remove ghost/brand lettering behind the headline
+   - cleaner black stage with restrained CV glow
+   - audio-start-locked charge
+   - radial impact (no white rectangular blowout)
+   - faster, cleaner badge swap and result reveal */
+
+.cv66Ascend.rank_up{
+  background:#000!important;
+}
+.cv66Ascend.rank_up::before{
+  inset:0!important;
+  background:
+    radial-gradient(circle at 50% 47%,color-mix(in srgb,var(--cv66) 8%,transparent) 0 9%,transparent 31%),
+    radial-gradient(ellipse at 50% 63%,rgba(14,24,29,.52) 0%,rgba(3,8,11,.30) 31%,transparent 66%),
+    linear-gradient(180deg,#000 0%,#010405 56%,#000 100%)!important;
+  animation:none!important;
+  transform:none!important;
+}
+.cv66Ascend.rank_up::after{
+  content:none!important;
+  display:none!important;
+}
+.cv66Ascend.rank_up .cv66Brand{
+  display:none!important;
+}
+.cv66Ascend.rank_up .cv66Content{
+  min-height:100svh!important;
+  width:min(94vw,430px)!important;
+  justify-content:flex-start!important;
+  padding:
+    max(76px,calc(env(safe-area-inset-top) + 48px))
+    22px
+    calc(24px + env(safe-area-inset-bottom))!important;
+}
+.cv66Ascend.rank_up .cv66Kicker{
+  position:relative!important;
+  margin:0!important;
+  color:#90999f!important;
+  font-size:9px!important;
+  letter-spacing:.30em!important;
+  opacity:0;
+  transform:translateY(7px);
+  animation:cv68TitleIn .46s .08s ease-out forwards!important;
+}
+.cv66Ascend.rank_up .cv66Title{
+  margin:7px 0 0!important;
+  max-width:350px;
+  font-size:clamp(34px,9.2vw,46px)!important;
+  line-height:.93!important;
+  letter-spacing:-.045em!important;
+  color:#f7f8f9!important;
+  text-shadow:0 0 20px rgba(255,255,255,.05)!important;
+  opacity:0;
+  transform:translateY(9px);
+  animation:cv68TitleIn .52s .16s cubic-bezier(.2,.76,.22,1) forwards!important;
+}
+.cv66Ascend.rank_up .cv66Stage{
+  width:min(76vw,318px)!important;
+  height:min(76vw,318px)!important;
+  margin:28px 0 2px!important;
+  isolation:isolate;
+}
+.cv66Ascend.rank_up .cv66Stage::before{
+  content:''!important;
+  position:absolute!important;
+  left:50%!important;
+  bottom:9%!important;
+  width:74%!important;
+  height:15%!important;
+  transform:translateX(-50%)!important;
+  border-radius:50%!important;
+  background:color-mix(in srgb,var(--cv66) 16%,transparent)!important;
+  filter:blur(28px)!important;
+  opacity:.22!important;
+  animation:none!important;
+  z-index:-2!important;
+}
+.cv66Ascend.rank_up .cv66Stage::after{
+  content:'';position:absolute;left:50%;top:50%;width:34%;height:34%;
+  transform:translate(-50%,-50%) scale(.42);border-radius:50%;
+  background:radial-gradient(circle,#fff 0 2%,color-mix(in srgb,var(--cv66) 82%,white) 3% 8%,color-mix(in srgb,var(--cv66) 30%,transparent) 18%,transparent 68%);
+  filter:blur(1px) drop-shadow(0 0 18px color-mix(in srgb,var(--cv66) 28%,transparent));
+  opacity:0;z-index:-1;pointer-events:none;
+}
+.cv66Ascend.rank_up .cv66Beam{
+  top:26%!important;height:41%!important;width:1px!important;
+  opacity:0!important;animation:none!important;
+}
+.cv66Ascend.rank_up.cv66AudioPlaying .cv66Beam{
+  animation:cv68ChargeBeam 2.49s linear forwards!important;
+}
+.cv66Ascend.rank_up .cv66Flash{
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.92) 0 2%,rgba(255,255,255,.58) 4%,color-mix(in srgb,var(--cv66) 38%,transparent) 10%,transparent 41%)!important;
+  mix-blend-mode:screen!important;
+  opacity:0!important;
+  animation:none!important;
+}
+.cv66Ascend.rank_up .cv66Ring,
+.cv66Ascend.rank_up .cv66Ring::before,
+.cv66Ascend.rank_up .cv66Ring::after{
+  border-color:color-mix(in srgb,var(--cv66) 48%,rgba(255,255,255,.45))!important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--cv66) 28%,transparent)!important;
+  opacity:0!important;animation:none!important;
+}
+.cv66Ascend.rank_up .cv66Badge{
+  width:73%!important;height:73%!important;
+}
+.cv66Ascend.rank_up .cv66Badge.from{
+  opacity:.76!important;
+  transform:scale(.88)!important;
+  filter:brightness(.82) saturate(.88) drop-shadow(0 0 10px color-mix(in srgb,var(--cv66) 20%,transparent))!important;
+  animation:none!important;
+}
+.cv66Ascend.rank_up.cv66AudioPlaying .cv66Badge.from{
+  animation:cv68OldCharge 2.49s linear forwards!important;
+}
+.cv66Ascend.rank_up .cv66Badge.to{
+  opacity:0!important;
+  transform:scale(.62)!important;
+  filter:drop-shadow(0 0 0 transparent)!important;
+  animation:none!important;
+}
+.cv66Ascend.rank_up .cv66Shard{opacity:0!important;animation:none!important}
+.cv66Ascend.rank_up .cv66Transition,
+.cv66Ascend.rank_up .cv66Sub,
+.cv66Ascend.rank_up .cv66Stats,
+.cv66Ascend.rank_up .cv66Continue{
+  opacity:0!important;animation:none!important;
+}
+.cv66Ascend.rank_up .cv66Continue{
+  pointer-events:none!important;transform:translateY(7px)!important;
+}
+
+/* One impact event: old crest collapses, radial burst, new crest resolves. */
+.cv66Ascend.rank_up.cv66Impact .cv66Stage::after{animation:cv68CoreBurst .74s cubic-bezier(.08,.82,.18,1) forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Flash{animation:cv68ImpactFlash .54s cubic-bezier(.08,.82,.2,1) forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Ring{animation:cv68ImpactRing .78s ease-out forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Ring::before{animation:cv68ImpactRing .66s .035s ease-out forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Ring::after{animation:cv68ImpactRing .94s .07s ease-out forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Badge.from{animation:cv68OldBurst .17s cubic-bezier(.12,.82,.18,1) forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Badge.to{animation:cv68NewReveal 1.02s cubic-bezier(.12,.86,.18,1) forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Shard{animation:cv68ShardBurst .92s ease-out forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Transition{animation:cv68ResultIn .48s .34s ease-out forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Sub{animation:cv68ResultIn .48s .54s ease-out forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Stats{animation:cv68ResultIn .48s .76s ease-out forwards!important}
+.cv66Ascend.rank_up.cv66Impact .cv66Continue{animation:cv68ButtonIn .52s 1.22s ease-out forwards!important}
+
+.cv66Ascend.rank_up .cv66Transition{
+  margin-top:-2px!important;
+  min-height:27px!important;
+  gap:10px!important;
+  font-size:12px!important;
+  letter-spacing:.105em!important;
+}
+.cv66Ascend.rank_up .cv66Transition .arrow{
+  font-size:17px!important;
+  color:color-mix(in srgb,var(--cv66) 74%,white)!important;
+}
+.cv66Ascend.rank_up .cv66Sub{
+  margin-top:6px!important;
+  max-width:300px!important;
+  color:#939ca2!important;
+  font-size:10.5px!important;
+  line-height:1.45!important;
+}
+.cv66Ascend.rank_up .cv66Stats{
+  margin-top:15px!important;
+  gap:7px!important;
+}
+.cv66Ascend.rank_up .cv66Stat{
+  min-width:102px!important;
+  padding:7px 10px!important;
+  border-color:rgba(255,255,255,.065)!important;
+  background:rgba(5,9,11,.74)!important;
+  border-radius:10px!important;
+  backdrop-filter:blur(8px)!important;
+}
+.cv66Ascend.rank_up .cv66Stat small{font-size:7px!important;color:#69747b!important}
+.cv66Ascend.rank_up .cv66Stat b{font-size:13px!important}
+.cv66Ascend.rank_up .cv66Continue{
+  margin-top:19px!important;
+  width:min(100%,310px)!important;
+  min-height:46px!important;
+  border-radius:12px!important;
+  border-color:rgba(255,255,255,.14)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.022))!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05)!important;
+  color:#f3f5f6!important;
+  letter-spacing:.17em!important;
+}
+
+@keyframes cv68TitleIn{to{opacity:1;transform:translateY(0)}}
+@keyframes cv68ChargeBeam{
+  0%{opacity:0;transform:translateX(-50%) scaleY(.04)}
+  24%{opacity:.10}
+  58%{opacity:.28;transform:translateX(-50%) scaleY(.46)}
+  86%{opacity:.52;transform:translateX(-50%) scaleY(.82)}
+  100%{opacity:.78;transform:translateX(-50%) scaleY(1)}
+}
+@keyframes cv68OldCharge{
+  0%{opacity:.76;transform:scale(.88);filter:brightness(.82) saturate(.88) drop-shadow(0 0 10px color-mix(in srgb,var(--cv66) 20%,transparent))}
+  58%{opacity:.92;transform:scale(.94);filter:brightness(1.02) saturate(.96) drop-shadow(0 0 15px color-mix(in srgb,var(--cv66) 28%,transparent))}
+  88%{opacity:1;transform:scale(.985);filter:brightness(1.18) saturate(1.02) drop-shadow(0 0 21px color-mix(in srgb,var(--cv66) 38%,transparent))}
+  100%{opacity:1;transform:scale(1.015);filter:brightness(1.30) saturate(1.04) drop-shadow(0 0 27px color-mix(in srgb,var(--cv66) 46%,transparent))}
+}
+@keyframes cv68OldBurst{
+  0%{opacity:1;transform:scale(1.015);filter:brightness(1.30)}
+  42%{opacity:.70;transform:scale(.72);filter:brightness(2.15)}
+  100%{opacity:0;transform:scale(.08);filter:brightness(2.5)}
+}
+@keyframes cv68CoreBurst{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.28)}
+  10%{opacity:1;transform:translate(-50%,-50%) scale(.58)}
+  42%{opacity:.82;transform:translate(-50%,-50%) scale(1.15)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(2.25)}
+}
+@keyframes cv68NewReveal{
+  0%{opacity:0;transform:scale(.58);filter:drop-shadow(0 0 0 transparent)}
+  18%{opacity:1;transform:scale(.82);filter:drop-shadow(0 0 18px rgba(255,255,255,.55))}
+  49%{opacity:1;transform:scale(1.065);filter:drop-shadow(0 0 30px rgba(255,255,255,.42)) drop-shadow(0 0 22px var(--cv66))}
+  70%{transform:scale(.985);filter:drop-shadow(0 0 18px color-mix(in srgb,var(--cv66) 46%,transparent))}
+  100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 13px color-mix(in srgb,var(--cv66) 38%,transparent))}
+}
+@keyframes cv68ImpactFlash{
+  0%{opacity:0}
+  7%{opacity:.86}
+  20%{opacity:.18}
+  36%{opacity:.34}
+  64%{opacity:.06}
+  100%{opacity:0}
+}
+@keyframes cv68ImpactRing{
+  0%{opacity:.72;transform:translate(-50%,-50%) scale(.12)}
+  18%{opacity:.56}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.46)}
+}
+@keyframes cv68ShardBurst{
+  0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--r)) scale(.16)}
+  10%{opacity:.82}
+  100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(calc(var(--r) + 118deg)) scale(.06)}
+}
+@keyframes cv68ResultIn{to{opacity:1;transform:translateY(0)}}
+@keyframes cv68ButtonIn{to{opacity:1;pointer-events:auto;transform:translateY(0)}}
+
+@media(max-width:390px){
+  .cv66Ascend.rank_up .cv66Content{padding-top:max(66px,calc(env(safe-area-inset-top) + 38px))!important}
+  .cv66Ascend.rank_up .cv66Title{font-size:36px!important}
+  .cv66Ascend.rank_up .cv66Stage{width:70vw!important;height:70vw!important;margin-top:24px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .cv66Ascend.rank_up .cv66Kicker,.cv66Ascend.rank_up .cv66Title{opacity:1!important;transform:none!important;animation:none!important}
+  .cv66Ascend.rank_up.cv66AudioPlaying .cv66Beam,.cv66Ascend.rank_up.cv66AudioPlaying .cv66Badge.from{animation:none!important}
+  .cv66Ascend.rank_up.cv66Impact .cv66Badge.from{display:none!important}
+  .cv66Ascend.rank_up.cv66Impact .cv66Badge.to{opacity:1!important;transform:none!important;filter:none!important;animation:none!important}
+  .cv66Ascend.rank_up.cv66Impact .cv66Transition,
+  .cv66Ascend.rank_up.cv66Impact .cv66Sub,
+  .cv66Ascend.rank_up.cv66Impact .cv66Stats,
+  .cv66Ascend.rank_up.cv66Impact .cv66Continue{opacity:1!important;transform:none!important;pointer-events:auto!important;animation:none!important}
+}
