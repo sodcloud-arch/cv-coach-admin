@@ -42,9 +42,12 @@ required_html=[
     'cv-workout-numpad-v73-css',
     'cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save',
     'CVWorkoutNumpadV73',
+    'cv-workout-compact-stability-v76: mutation-safe-v40-sync',
+    "live&&live.textContent!=='LISTO PARA INICIAR'",
+    'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;',
 ]
 for token in required_html:
-    if token not in html: raise SystemExit(f'V71/V73 missing built contract: {token}')
+    if token not in html: raise SystemExit(f'V71/V73/V76 missing built contract: {token}')
 for forbidden in [
     "el.scrollIntoView({behavior:'smooth',block:'center'})},180);",
     'CVIOSKeyboardV72',
