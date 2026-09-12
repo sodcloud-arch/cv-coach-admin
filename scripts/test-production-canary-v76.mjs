@@ -46,11 +46,6 @@ async function tap(page,locator,label='target'){
   await locator.waitFor({state:'visible',timeout:15000});
   let lastDiagnostic=null;
 
-  // Do not delegate the touch to Playwright's element-actionability layer. The
-  // production canary must prove what an actual finger needs: a connected,
-  // visible, geometrically stable and unobstructed target, then a raw touch at
-  // its coordinates. This also avoids false failures from WebKit's indefinite
-  // "waiting for element to be stable" heuristic on a dynamically hydrated UI.
   for(let attempt=0;attempt<4;attempt++){
     const token=`cv-canary-${label}-${Date.now()}-${attempt}-${Math.random().toString(36).slice(2)}`;
     try{
@@ -154,39 +149,30 @@ async function editNumber(page,selector,value){
   await page.waitForFunction(({sel,expected})=>document.querySelector(sel)?.value===expected,{sel:selector,expected:String(value)},{timeout:10000});
 }
 
-async function athleteAuth(page){
-  return page.evaluate(async({base,key})=>{
-    const c=window.supabase.createClient(base,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
-    const {data,error}=await c.auth.getSession();
-    if(error||!data?.session?.access_token)throw new Error(error?.message||'Athlete session missing');
-    return {access_token:data.session.access_token,user_id:data.session.user.id};
-  },{base:BASE,key:KEY});
-}
-
-async function athleteRest(page,path){
-  const auth=await athleteAuth(page);
-  const r=await fetch(`${BASE}/rest/v1/${path}`,{headers:{apikey:KEY,Authorization:`Bearer ${auth.access_token}`}});
+async function athleteRest(accessToken,path){
+  if(!accessToken)throw new Error('Athlete access token missing');
+  const r=await fetch(`${BASE}/rest/v1/${path}`,{headers:{apikey:KEY,Authorization:`Bearer ${accessToken}`}});
   if(!r.ok)throw new Error(`Athlete REST ${r.status}: ${await r.text()}`);
   return r.json();
 }
 
-async function latestActiveSession(page,clientId){
-  const deadline=Date.now()+15000;
+async function latestActiveSession(accessToken,clientId,timeoutMs=15000){
+  const deadline=Date.now()+timeoutMs;
   while(Date.now()<deadline){
-    const rows=await athleteRest(page,`workout_sessions?client_id=eq.${encodeURIComponent(clientId)}&status=eq.in_progress&select=id,started_at&order=started_at.desc&limit=1`);
+    const rows=await athleteRest(accessToken,`workout_sessions?client_id=eq.${encodeURIComponent(clientId)}&status=eq.in_progress&select=id,started_at&order=started_at.desc&limit=1`);
     if(Array.isArray(rows)&&rows.length===1)return rows[0];
     await new Promise(r=>setTimeout(r,500));
   }
   throw new Error('Expected one active session but none became visible');
 }
 
-async function waitSetPersisted(page,sessionId){
+async function waitSetPersisted(accessToken,sessionId){
   const deadline=Date.now()+15000;
   while(Date.now()<deadline){
-    const exercises=await athleteRest(page,`session_exercises?workout_session_id=eq.${sessionId}&select=id`);
+    const exercises=await athleteRest(accessToken,`session_exercises?workout_session_id=eq.${sessionId}&select=id`);
     if(Array.isArray(exercises)&&exercises.length){
       const ids=exercises.map(x=>x.id).join(',');
-      const sets=await athleteRest(page,`set_logs?session_exercise_id=in.(${ids})&completed=eq.true&select=id,weight_kg,reps,completed`);
+      const sets=await athleteRest(accessToken,`set_logs?session_exercise_id=in.(${ids})&completed=eq.true&select=id,weight_kg,reps,completed`);
       const hit=(sets||[]).filter(x=>Number(x.weight_kg)===EXPECTED_WEIGHT&&Number(x.reps)===EXPECTED_REPS&&x.completed===true);
       if(hit.length===1)return hit[0];
     }
@@ -195,10 +181,10 @@ async function waitSetPersisted(page,sessionId){
   throw new Error('Completed canary set was not persisted');
 }
 
-async function waitTerminal(page,sessionId){
+async function waitTerminal(accessToken,sessionId){
   const deadline=Date.now()+20000;
   while(Date.now()<deadline){
-    const rows=await athleteRest(page,`workout_sessions?id=eq.${sessionId}&select=id,status,completion_pct,finished_at,session_notes`);
+    const rows=await athleteRest(accessToken,`workout_sessions?id=eq.${sessionId}&select=id,status,completion_pct,finished_at,session_notes`);
     if(rows?.[0]&&rows[0].status!=='in_progress')return rows[0];
     await new Promise(r=>setTimeout(r,700));
   }
@@ -208,13 +194,23 @@ async function waitTerminal(page,sessionId){
 let browser;
 let bootstrapped=false;
 let verified=false;
+let athleteAccessToken=null;
+let canaryClientId=null;
+let claimedSessionId=null;
+let browserDisconnected=false;
+let pageClosed=false;
 try{
   const bootstrap=await control('bootstrap');
   bootstrapped=true;
-  if(!bootstrap?.token_hash||!bootstrap?.client_id)throw new Error('Bootstrap contract incomplete');
+  canaryClientId=bootstrap?.client_id||null;
+  if(!bootstrap?.token_hash||!canaryClientId)throw new Error('Bootstrap contract incomplete');
   console.log('CV_CANARY_V76_AUTH_CONTROL_OK');
 
   browser=await webkit.launch({headless:true});
+  browser.on('disconnected',()=>{
+    browserDisconnected=true;
+    console.log('CV_CANARY_V76_BROWSER_DISCONNECTED');
+  });
   const context=await browser.newContext({
     ...devices['iPhone 13'],
     locale:'es-CL',
@@ -223,6 +219,11 @@ try{
   const page=await context.newPage();
   const pageErrors=[];
   page.on('pageerror',e=>pageErrors.push(String(e?.message||e)));
+  page.on('crash',()=>console.log('CV_CANARY_V76_PAGE_CRASH'));
+  page.on('close',()=>{
+    pageClosed=true;
+    console.log('CV_CANARY_V76_PAGE_CLOSED');
+  });
 
   await page.addInitScript(()=>{
     try{
@@ -253,29 +254,34 @@ try{
   const loginResult=await page.evaluate(async({base,key,tokenHash})=>{
     const c=window.supabase.createClient(base,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
     const {data,error}=await c.auth.verifyOtp({token_hash:tokenHash,type:'magiclink'});
-    if(error||!data?.session)throw new Error(error?.message||'Magic-link verification failed');
-    return {user_id:data.user?.id};
+    if(error||!data?.session?.access_token)throw new Error(error?.message||'Magic-link verification failed');
+    return {user_id:data.user?.id,access_token:data.session.access_token};
   },{base:BASE,key:KEY,tokenHash:bootstrap.token_hash});
-  if(loginResult?.user_id!==bootstrap.client_id)throw new Error('Authenticated unexpected canary user');
+  if(loginResult?.user_id!==canaryClientId)throw new Error('Authenticated unexpected canary user');
+  athleteAccessToken=loginResult.access_token;
   await page.reload({waitUntil:'domcontentloaded',timeout:30000});
   const routineCta=page.getByRole('button',{name:/VER RUTINA/i}).first();
   await routineCta.waitFor({state:'visible',timeout:30000});
   console.log('CV_CANARY_V76_AUTH_OK');
 
-  // Home's VER RUTINA already calls openDay() and lands on the workout screen.
   await tap(page,routineCta,'open-routine');
   await startWorkoutFromCurrentView(page);
 
-  await page.locator('#cvw_0_0').waitFor({state:'visible',timeout:20000});
-  const active=await latestActiveSession(page,bootstrap.client_id);
+  // Claim the backend session immediately and independently of WebKit. This
+  // guarantees deterministic cleanup even if the browser dies after START.
+  const active=await latestActiveSession(athleteAccessToken,canaryClientId);
   await control('claim',{session_id:active.id});
+  claimedSessionId=active.id;
   console.log('CV_CANARY_V76_SESSION_CLAIMED');
+
+  if(page.isClosed()||pageClosed||browserDisconnected)throw new Error('WebKit closed after workout start');
+  await page.locator('#cvw_0_0').waitFor({state:'visible',timeout:20000});
 
   await editNumber(page,'#cvw_0_0',EXPECTED_WEIGHT);
   await editNumber(page,'#cvr_0_0',EXPECTED_REPS);
   const check=page.locator('.cvSetCheck').first();
   await tap(page,check,'complete-set');
-  await waitSetPersisted(page,active.id);
+  await waitSetPersisted(athleteAccessToken,active.id);
   console.log('CV_CANARY_V76_REAL_SET_OK');
 
   const finish=page.getByRole('button',{name:/FINALIZAR/i}).last();
@@ -288,7 +294,7 @@ try{
   await page.locator('#cvFeedbackNotes').fill(`CV_CANARY_V76 run=${RUN_ID}`);
   await tap(page,page.locator('#cvFeedbackFinish'),'submit-feedback');
 
-  const terminal=await waitTerminal(page,active.id);
+  const terminal=await waitTerminal(athleteAccessToken,active.id);
   if(terminal.status!=='abandoned')throw new Error(`Expected abandoned terminal status, got ${terminal.status}`);
   console.log('CV_CANARY_V76_WORKOUT_OK');
 
@@ -303,6 +309,18 @@ try{
   console.error('CV_CANARY_V76_FAILED',String(error?.stack||error));
   process.exitCode=1;
 } finally {
+  // Last-chance recovery: if START created a session but WebKit died before the
+  // normal claim, discover it with the stored athlete token and claim it only
+  // so the server cleanup can delete it deterministically.
+  if(bootstrapped&&!claimedSessionId&&athleteAccessToken&&canaryClientId){
+    try{
+      const orphan=await latestActiveSession(athleteAccessToken,canaryClientId,5000);
+      await control('claim',{session_id:orphan.id});
+      claimedSessionId=orphan.id;
+      console.log('CV_CANARY_V76_SESSION_RECOVERED_FOR_CLEANUP');
+    }catch{}
+  }
+
   try{if(browser)await browser.close()}catch{}
   if(bootstrapped){
     try{
