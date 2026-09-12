@@ -67,7 +67,8 @@ required_html=[
     'cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save',
     'CVWorkoutNumpadV73',
     'cv-workout-interaction-v74-js',
-    'cv-workout-interaction-v74: immediate-feedback + per-set-lock + null-data-render-guard',
+    'cv-workout-interaction-v74: immediate-feedback + per-set-lock + canonical-null-data-render-guard',
+    '/* cv74 canonical render null guard */',
     'CVWorkoutInteractionV74',
 ]
 for token in required_html:
