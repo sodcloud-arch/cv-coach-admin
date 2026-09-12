@@ -7,7 +7,6 @@ async function demoWorkoutPage(label){
   const browser=await webkit.launch();
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});
 
-  // Keep workout interaction tests independent from headless WebKit media unlock.
   await context.addInitScript(()=>{
     try{localStorage.setItem('cv_sound_enabled','0')}catch(_){}
     class SilentAudio{
@@ -75,8 +74,6 @@ async function waitForV73Decoration(page,id){
 }
 
 async function setWithPad(page,id,value){
-  // Programmatic open() bypasses V73's physical pointer/touch capture. Wait for the
-  // normal post-render decoration contract so this helper does not create a false race.
   await waitForV73Decoration(page,id);
   const opened=await page.evaluate(inputId=>window.CVWorkoutNumpadV73.open(inputId),id);
   assert.equal(opened,true,`V73 failed to open ${id}`);
@@ -138,9 +135,6 @@ async function immediateFeedbackAndDoubleTapTest(){
     t=await demoWorkoutPage('PENDING_GUARD');
     const {page,errors}=t;
 
-    // This scenario isolates V74 locking/feedback. V73 editing is already exercised by
-    // the explicit-start and physical-auto-start scenarios above, so avoid reopening
-    // the pad a third time and creating unrelated WebKit timing noise.
     const seeded=await page.evaluate(()=>{
       const w=document.getElementById('cvw_0_0'),r=document.getElementById('cvr_0_0');
       if(!w||!r)return null;
@@ -152,10 +146,10 @@ async function immediateFeedbackAndDoubleTapTest(){
     assert.deepEqual(seeded,{w:'25',r:'10'},'V74 pending test could not seed KG/reps');
 
     const result=await page.evaluate(async()=>{
-      const originalStart=window.startWorkout;
-      window.startWorkout=async function(){await new Promise(r=>setTimeout(r,240));return originalStart.apply(this,arguments)};
+      const diagnosticBefore=window.CVWorkoutInteractionV74.diagnose();
       const first=window.cvToggleSet(0,0);
-      await new Promise(r=>setTimeout(r,35));
+
+      // No await here: V74 must lock and paint synchronously before its first async yield.
       const btn=document.querySelector('.cvSetCheck'),row=btn?.closest('.cvSetRow');
       const during={
         pending:window.CVWorkoutInteractionV74.pending.has('0:0'),
@@ -164,16 +158,18 @@ async function immediateFeedbackAndDoubleTapTest(){
         visualDone:!!btn?.classList.contains('done'),
         rowPending:!!row?.classList.contains('cv74Pending')
       };
-      const second=await window.cvToggleSet(0,0);
+      const secondPromise=window.cvToggleSet(0,0);
+      const second=await secondPromise;
       const firstResult=await first;
       const s=window.cvExercises()?.[0]?.sets?.[0];
-      return {during,second,firstResult,sessionId:window.CVWorkoutControllerV71?.diagnose?.().sessionId||'',set:s?{w:s.weight_kg,r:s.reps,c:s.completed}:null,pendingAfter:window.CVWorkoutInteractionV74.pending.size};
+      return {diagnosticBefore,during,second,firstResult,sessionId:window.CVWorkoutControllerV71?.diagnose?.().sessionId||'',set:s?{w:s.weight_kg,r:s.reps,c:s.completed}:null,pendingAfter:window.CVWorkoutInteractionV74.pending.size};
     });
 
-    assert.deepEqual(result.during,{pending:true,disabled:true,busy:'true',visualDone:true,rowPending:true},'V74 did not provide immediate pending feedback');
+    assert.equal(result.diagnosticBefore?.toggleInstalled,true,'V74 was not the active set-toggle owner');
+    assert.deepEqual(result.during,{pending:true,disabled:true,busy:'true',visualDone:true,rowPending:true},'V74 did not provide synchronous pending feedback');
     assert.equal(result.second,false,'V74 did not block the second concurrent toggle');
-    assert.equal(result.sessionId,'demo','V74 delayed auto-start did not establish session');
-    assert.deepEqual(result.set,{w:25,r:10,c:true},'V74 pending path corrupted first-set state');
+    assert.equal(result.sessionId,'demo','V74 auto-start did not establish session');
+    assert.deepEqual(result.set,{w:25,r:10,c:true},'V74 concurrent path corrupted first-set state');
     assert.equal(result.pendingAfter,0,'V74 pending lock leaked after completion');
     assert.equal(errors.length,0,'V74 pending guard errors: '+errors.join(' | '));
     console.log('CV_V74_IMMEDIATE_FEEDBACK_DOUBLE_TAP_GUARD_OK');
