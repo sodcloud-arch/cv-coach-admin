@@ -215,7 +215,9 @@ try{
     ...devices['iPhone 13'],
     locale:'es-CL',
     timezoneId:'America/Santiago',
+    serviceWorkers:'block',
   });
+  console.log('CV_CANARY_V76_SERVICE_WORKER_ISOLATED');
   const page=await context.newPage();
   const pageErrors=[];
   page.on('pageerror',e=>pageErrors.push(String(e?.message||e)));
@@ -267,8 +269,6 @@ try{
   await tap(page,routineCta,'open-routine');
   await startWorkoutFromCurrentView(page);
 
-  // Claim the backend session immediately and independently of WebKit. This
-  // guarantees deterministic cleanup even if the browser dies after START.
   const active=await latestActiveSession(athleteAccessToken,canaryClientId);
   await control('claim',{session_id:active.id});
   claimedSessionId=active.id;
@@ -309,9 +309,6 @@ try{
   console.error('CV_CANARY_V76_FAILED',String(error?.stack||error));
   process.exitCode=1;
 } finally {
-  // Last-chance recovery: if START created a session but WebKit died before the
-  // normal claim, discover it with the stored athlete token and claim it only
-  // so the server cleanup can delete it deterministically.
   if(bootstrapped&&!claimedSessionId&&athleteAccessToken&&canaryClientId){
     try{
       const orphan=await latestActiveSession(athleteAccessToken,canaryClientId,5000);
