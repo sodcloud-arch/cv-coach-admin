@@ -9,6 +9,7 @@ on:
       - 'client-portal/**'
       - 'scripts/test-client-mobile-webkit-v71.mjs'
       - 'scripts/diagnose-v73-set-check.mjs'
+      - 'scripts/diagnose-v73-set-check-ready.mjs'
       - '.github/workflows/mobile-webkit-v71.yml'
   workflow_dispatch:
 
@@ -55,7 +56,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
-      - name: Diagnose active V73 set-check path
+      - name: Run V73 post-ready physical checks
         shell: bash
         run: |
           set -euo pipefail
@@ -63,7 +64,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
           for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 0.5; done
-          echo '--- V73 centered physical set-check diagnostic ---'
-          CV_TEST_URL=http://127.0.0.1:4173 node scripts/diagnose-v73-set-check.mjs
+          echo '--- V73 physical set-check after portal readiness ---'
+          CV_TEST_URL=http://127.0.0.1:4173 node scripts/diagnose-v73-set-check-ready.mjs
           echo '--- V73 concurrent double-toggle guard ---'
           CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=double node scripts/test-client-mobile-webkit-v71.mjs
