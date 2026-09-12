@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Validate repository contracts
         run: python scripts/validate-repo-contracts.py
-      - name: Build client stabilized artifact through V67
+      - name: Build client stabilized artifact through V68
         shell: bash
         run: |
           set -euo pipefail
@@ -51,6 +51,8 @@ jobs:
           python scripts/test-cv-rank-ui-v65.py
           python client-portal/upgrade_client_v67.py
           python scripts/test-cv-rank-audio-v67.py
+          python client-portal/upgrade_client_v68.py
+          python scripts/test-cv-rank-cinematic-v68.py
           node --check client-portal/assets/cv-rank-real-ui-v64.js
           node --check client-portal/assets/cv-rank-real-ui-v65.js
           node --check client-portal/assets/cv-rank-celebration-v66.js
@@ -60,7 +62,8 @@ jobs:
           grep -q 'cv-rank-real-ui-v65' client-portal/stable/index.html
           grep -q 'cv65LeagueProgress' client-portal/stable/index.html
           grep -q 'cv-rank-audio-sync-v67' client-portal/stable/index.html
-          grep -q 'RANK_UP_IMPACT=3.36' client-portal/stable/index.html
+          grep -q 'cv-rank-cinematic-v68' client-portal/stable/index.html
+          grep -q 'RANK_UP_IMPACT_SOURCE=3.36' client-portal/stable/index.html
           test -s client-portal/assets/sounds/cv-rank-up-v67.mp3
           grep -q 'PLATINO' client-portal/assets/cv-rank-v61.js
           grep -q 'LEYENDA' client-portal/assets/cv-rank-v61.js
