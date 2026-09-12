@@ -26,6 +26,12 @@ required_script = [
     'page.touchscreen.tap',
     'CV_CANARY_V76_START_TOUCH_STABLE',
     'CV_CANARY_V76_TOUCH_READY',
+    'athleteRest(accessToken',
+    'latestActiveSession(accessToken',
+    'access_token:data.session.access_token',
+    'CV_CANARY_V76_SESSION_CLAIMED',
+    'CV_CANARY_V76_SESSION_RECOVERED_FOR_CLEANUP',
+    'CV_CANARY_V76_BROWSER_DISCONNECTED',
     '#cvw_0_0',
     '#cvr_0_0',
     '.cvSetCheck',
@@ -80,6 +86,8 @@ assert 'SUPABASE_SERVICE_ROLE_KEY' not in script, 'service-role key must stay se
 assert 'ABRIR ENTRENAMIENTO' not in script, 'canary must not assume an obsolete intermediate copy step'
 assert 'scrollIntoViewIfNeeded' not in script, 'canary must use raw geometry/hit-test touch instead of Playwright actionability scrolling'
 assert '.click()' not in script, 'critical canary UI actions must remain physical touchscreen taps'
+assert 'async function athleteAuth(page)' not in script, 'backend verification must not depend on a live WebKit page'
+assert 'await athleteRest(page' not in script, 'REST polling must remain browser-independent'
 assert 'workflow_dispatch:' in workflow
 assert 'schedule:' in workflow
 
