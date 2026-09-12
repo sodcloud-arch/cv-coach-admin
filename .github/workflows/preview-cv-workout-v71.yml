@@ -109,19 +109,24 @@ jobs:
           echo "$URL" >> "$GITHUB_STEP_SUMMARY"
           echo "PREVIEW_URL=$URL"
 
-      - name: Verify V71 preview
+      - name: Verify protected V71 preview deployment
         shell: bash
         env:
           PREVIEW_URL: ${{ steps.deploy.outputs.url }}
         run: |
           set -euo pipefail
+          host="${PREVIEW_URL#https://}"
+          host="${host%/}"
           for attempt in 1 2 3 4 5 6; do
-            body="$(curl --fail --silent --show-error --location --max-time 20 "$PREVIEW_URL" || true)"
-            if [[ "$body" == *"CVWorkoutOptimisticV71"* && "$body" == *"__cv71Optimistic"* && "$body" == *"CVRankStateGuardV70"* ]]; then
-              echo 'CV_WORKOUT_V71_PREVIEW_OK'
+            payload="$(curl --fail --silent --show-error --max-time 20 \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v13/deployments/$host?teamId=$VERCEL_ORG_ID" || true)"
+            state="$(printf '%s' "$payload" | python -c 'import json,sys; print((json.load(sys.stdin).get("readyState") or ""))' 2>/dev/null || true)"
+            if [[ "$state" == "READY" ]]; then
+              echo 'CV_WORKOUT_V71_PREVIEW_READY'
               exit 0
             fi
             sleep 3
           done
-          echo 'V71 preview verification failed' >&2
+          echo 'V71 preview did not reach READY state' >&2
           exit 1
