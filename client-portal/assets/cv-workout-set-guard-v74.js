@@ -18,6 +18,10 @@
     btn.disabled=!!busy;
     if(busy)btn.setAttribute('aria-busy','true');else btn.removeAttribute('aria-busy')
   }
+  function release(k,i,j){
+    pending.delete(k);
+    paint(i,j,false)
+  }
   function ensureStyle(){
     if(document.getElementById('cv-workout-set-guard-v74-css'))return;
     const style=document.createElement('style');
@@ -36,16 +40,16 @@
       const startedAt=Date.now();
       pending.set(k,{startedAt});
       paint(i,j,true);
-      let result=false;
+      let result;
       try{
-        result=await base.apply(this,arguments);
-        return result;
-      }finally{
-        const left=MIN_LOCK_MS-(Date.now()-startedAt);
-        if(left>0)await new Promise(resolve=>setTimeout(resolve,left));
-        pending.delete(k);
-        paint(i,j,false)
+        result=await base.apply(this,arguments)
+      }catch(err){
+        release(k,i,j);
+        throw err
       }
+      const left=MIN_LOCK_MS-(Date.now()-startedAt);
+      if(left>0)setTimeout(()=>release(k,i,j),left);else release(k,i,j);
+      return result
     };
     guarded.__cvSetGuardV74=true;
     guarded.__cvSetGuardBase=base;
