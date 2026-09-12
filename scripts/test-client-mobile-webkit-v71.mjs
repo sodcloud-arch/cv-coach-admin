@@ -183,34 +183,52 @@ async function explicitStartTest(){
 async function physicalSetCheckTest(){
   let t;
   try{
-    t=await demoWorkoutPage('SET_CHECK');
+    t=await demoWorkoutPage('SET_CHECK_SINGLE');
     const {page,errors}=t;
     await setWithDeterministicPad(page,'cvw_0_0','22.5');
     await setWithDeterministicPad(page,'cvr_0_0','9');
     await page.waitForTimeout(180);
-    await page.evaluate(()=>{
-      const base=window.cvToggleSet;
-      window.__cvPhysicalToggleCalls=0;
-      window.cvToggleSet=function(){window.__cvPhysicalToggleCalls++;return base.apply(this,arguments)};
-    });
     const p=await currentCenter(page,'.cvSetCheck','first set check');
     await page.touchscreen.tap(p.x,p.y);
-    await page.waitForTimeout(65);
-    await page.touchscreen.tap(p.x,p.y);
-    await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo',null,{timeout:5000});
-    await page.waitForTimeout(550);
-    const got=await page.evaluate(()=>{
-      const s=window.cvExercises()?.[0]?.sets?.[0];
-      return {w:s?.weight_kg,r:s?.reps,c:s?.completed,calls:window.__cvPhysicalToggleCalls||0};
-    });
-    assert.equal(got.calls,1,`Rapid physical double tap invoked cvToggleSet ${got.calls} times`);
-    assert.deepEqual({w:got.w,r:got.r,c:got.c},{w:22.5,r:9,c:true},'physical first-set tap lost values or completion');
+    await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo'&&window.cvExercises?.()?.[0]?.sets?.[0]?.completed===true,null,{timeout:5000});
+    const got=await page.evaluate(()=>{const s=window.cvExercises()?.[0]?.sets?.[0];return {w:s?.weight_kg,r:s?.reps,c:s?.completed}});
+    assert.deepEqual(got,{w:22.5,r:9,c:true},'physical first-set tap lost values or completion');
     assert.equal(errors.length,0,'Physical set-check errors: '+errors.join(' | '));
-    console.log('CV_V73_PHYSICAL_SET_CHECK_DOUBLE_TAP_GUARD_OK');
+    console.log('CV_V73_PHYSICAL_SET_CHECK_SINGLE_TAP_OK');
   } finally {await closeTest(t)}
 }
 
-const scenarios={editor:realTouchEditorTest,start:explicitStartTest,check:physicalSetCheckTest};
+async function concurrentToggleGuardTest(){
+  let t;
+  try{
+    t=await demoWorkoutPage('SET_CHECK_CONCURRENT');
+    const {page,errors}=t;
+    await setWithDeterministicPad(page,'cvw_0_0','22.5');
+    await setWithDeterministicPad(page,'cvr_0_0','9');
+    const result=await page.evaluate(async()=>{
+      const p1=Promise.resolve(window.cvToggleSet(0,0));
+      await new Promise(r=>setTimeout(r,65));
+      const p2=Promise.resolve(window.cvToggleSet(0,0));
+      const settled=await Promise.allSettled([p1,p2]);
+      const s=window.cvExercises()?.[0]?.sets?.[0];
+      return {
+        first:settled[0].status==='fulfilled'?settled[0].value:'rejected',
+        second:settled[1].status==='fulfilled'?settled[1].value:'rejected',
+        completed:!!s?.completed,
+        w:s?.weight_kg,
+        r:s?.reps,
+        sessionId:window.CVWorkoutControllerV71?.diagnose?.().sessionId||''
+      };
+    });
+    assert.equal(result.sessionId,'demo','concurrent toggle did not establish demo session');
+    assert.equal(result.second,false,`second concurrent toggle was not rejected/ignored: ${String(result.second)}`);
+    assert.deepEqual({w:result.w,r:result.r,completed:result.completed},{w:22.5,r:9,completed:true},'concurrent toggle corrupted first-set state');
+    assert.equal(errors.length,0,'Concurrent set-toggle errors: '+errors.join(' | '));
+    console.log('CV_V73_CONCURRENT_SET_TOGGLE_GUARD_OK');
+  } finally {await closeTest(t)}
+}
+
+const scenarios={editor:realTouchEditorTest,start:explicitStartTest,check:physicalSetCheckTest,double:concurrentToggleGuardTest};
 
 if(scenario==='all'){
   for(const [name,fn] of Object.entries(scenarios))await withInfraRetry(name.toUpperCase(),fn);
