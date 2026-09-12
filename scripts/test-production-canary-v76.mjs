@@ -45,6 +45,29 @@ async function tap(page,locator){
   await page.touchscreen.tap(box.x+box.width/2,box.y+box.height/2);
 }
 
+async function startWorkoutFromCurrentView(page){
+  const deadline=Date.now()+15000;
+  while(Date.now()<deadline){
+    const candidates=page.locator('button[onclick*="startWorkout"], .cvWorkoutStartV40');
+    const count=await candidates.count();
+    for(let i=0;i<count;i++){
+      const candidate=candidates.nth(i);
+      if(await candidate.isVisible().catch(()=>false)){
+        await tap(page,candidate);
+        return;
+      }
+    }
+    await page.waitForTimeout(250);
+  }
+  const visibleButtons=await page.locator('button:visible').evaluateAll(nodes=>nodes.slice(0,20).map(node=>({
+    text:(node.textContent||'').trim(),
+    id:node.id||'',
+    className:typeof node.className==='string'?node.className:'',
+    onclick:node.getAttribute('onclick')||'',
+  })));
+  throw new Error(`Workout start control missing; visible_buttons=${JSON.stringify(visibleButtons)}`);
+}
+
 async function editNumber(page,selector,value){
   const input=page.locator(selector);
   await tap(page,input);
@@ -76,9 +99,13 @@ async function athleteRest(page,path){
 }
 
 async function latestActiveSession(page,clientId){
-  const rows=await athleteRest(page,`workout_sessions?client_id=eq.${encodeURIComponent(clientId)}&status=eq.in_progress&select=id,started_at&order=started_at.desc&limit=1`);
-  if(!Array.isArray(rows)||rows.length!==1)throw new Error(`Expected one active session, got ${Array.isArray(rows)?rows.length:'invalid'}`);
-  return rows[0];
+  const deadline=Date.now()+15000;
+  while(Date.now()<deadline){
+    const rows=await athleteRest(page,`workout_sessions?client_id=eq.${encodeURIComponent(clientId)}&status=eq.in_progress&select=id,started_at&order=started_at.desc&limit=1`);
+    if(Array.isArray(rows)&&rows.length===1)return rows[0];
+    await new Promise(r=>setTimeout(r,500));
+  }
+  throw new Error('Expected one active session but none became visible');
 }
 
 async function waitSetPersisted(page,sessionId){
@@ -159,16 +186,14 @@ try{
   },{base:BASE,key:KEY,tokenHash:bootstrap.token_hash});
   if(loginResult?.user_id!==bootstrap.client_id)throw new Error('Authenticated unexpected canary user');
   await page.reload({waitUntil:'domcontentloaded',timeout:30000});
-  await page.getByRole('button',{name:/VER RUTINA/i}).waitFor({state:'visible',timeout:30000});
+  const routineCta=page.getByRole('button',{name:/VER RUTINA/i}).first();
+  await routineCta.waitFor({state:'visible',timeout:30000});
   console.log('CV_CANARY_V76_AUTH_OK');
 
-  await page.getByRole('button',{name:/VER RUTINA/i}).click();
-  const openWorkout=page.getByRole('button',{name:/ABRIR ENTRENAMIENTO/i}).first();
-  await openWorkout.waitFor({state:'visible',timeout:15000});
-  await openWorkout.click();
-  const start=page.getByRole('button',{name:/^INICIAR$/i}).first();
-  await start.waitFor({state:'visible',timeout:15000});
-  await start.click();
+  // Home's VER RUTINA already calls openDay() and lands on the workout screen.
+  // Follow the real action rather than assuming an obsolete intermediate copy step.
+  await tap(page,routineCta);
+  await startWorkoutFromCurrentView(page);
 
   await page.locator('#cvw_0_0').waitFor({state:'visible',timeout:20000});
   const active=await latestActiveSession(page,bootstrap.client_id);
