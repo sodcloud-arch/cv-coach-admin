@@ -1,0 +1,4 @@
+CV Coach V75 audit branch initialized.
+Unified client journey gate: scripts/test-client-journey-v75.py
+Historical duration repair: supabase/migrations/202609121820_workout_duration_backfill_v75.sql
+Expected CI marker: CV_CLIENT_JOURNEY_V75_OK
