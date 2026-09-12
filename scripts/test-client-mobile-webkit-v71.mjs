@@ -137,8 +137,19 @@ async function immediateFeedbackAndDoubleTapTest(){
   try{
     t=await demoWorkoutPage('PENDING_GUARD');
     const {page,errors}=t;
-    await setWithPad(page,'cvw_0_0','25');
-    await setWithPad(page,'cvr_0_0','10');
+
+    // This scenario isolates V74 locking/feedback. V73 editing is already exercised by
+    // the explicit-start and physical-auto-start scenarios above, so avoid reopening
+    // the pad a third time and creating unrelated WebKit timing noise.
+    const seeded=await page.evaluate(()=>{
+      const w=document.getElementById('cvw_0_0'),r=document.getElementById('cvr_0_0');
+      if(!w||!r)return null;
+      w.value='25';r.value='10';
+      w.dispatchEvent(new Event('input',{bubbles:true}));
+      r.dispatchEvent(new Event('input',{bubbles:true}));
+      return {w:w.value,r:r.value};
+    });
+    assert.deepEqual(seeded,{w:'25',r:'10'},'V74 pending test could not seed KG/reps');
 
     const result=await page.evaluate(async()=>{
       const originalStart=window.startWorkout;
