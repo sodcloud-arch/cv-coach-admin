@@ -1,4 +1,4 @@
-const CACHE_NAME='cv-coach-shell-v64';
+const CACHE_NAME='cv-coach-shell-v72';
 const APP_SHELL=[
   './','./index.html','./manifest.webmanifest','./icon.svg',
   './assets/cv-rank-v61.js','./assets/cv-rank-v61.css',
