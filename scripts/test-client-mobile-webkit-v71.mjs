@@ -21,25 +21,71 @@ async function demoWorkoutPage(label){
   return {browser,context,page,errors};
 }
 
-async function setWithPad(page,id,value){
+async function openPadByRealTap(page,id){
+  const input=page.locator('#'+id);
+  await input.tap({timeout:3000});
+  await page.waitForFunction(inputId=>{
+    const s=window.CVWorkoutNumpadV73?.state?.();
+    const root=document.getElementById('cvNumpadV73');
+    return !!s?.open&&s.inputId===inputId&&root&&!root.classList.contains('hidden')&&root.getAttribute('aria-hidden')==='false';
+  },id,{timeout:3000});
+  // Let the complete iOS/WebKit synthetic event train (pointer/touch/click/focus) settle.
+  await page.waitForTimeout(180);
+  const settled=await page.evaluate(inputId=>({
+    pad:window.CVWorkoutNumpadV73.state(),
+    focused:document.activeElement?.id||'',
+    hidden:document.getElementById('cvNumpadV73')?.classList.contains('hidden'),
+    ariaHidden:document.getElementById('cvNumpadV73')?.getAttribute('aria-hidden')
+  }),id);
+  assert.equal(settled.pad.open,true,`V73 pad closed after real tap event train for ${id}`);
+  assert.equal(settled.pad.inputId,id,`V73 real tap settled on wrong input for ${id}`);
+  assert.notEqual(settled.focused,id,`Native input focus survived real tap for ${id}`);
+  assert.equal(settled.hidden,false,`V73 pad became hidden after real tap for ${id}`);
+  assert.equal(settled.ariaHidden,'false',`V73 pad aria state regressed after real tap for ${id}`);
+}
+
+async function pressPadKey(page,key){
+  await page.locator(`[data-key="${key}"]`).tap({timeout:3000});
+}
+
+async function setWithPad(page,id,value,{realTap=true}={}){
   const before=await page.evaluate(()=>window.scrollY);
-  const opened=await page.evaluate(inputId=>window.CVWorkoutNumpadV73.open(inputId),id);
-  assert.equal(opened,true,`V73 failed to open ${id}`);
+  if(realTap){
+    await openPadByRealTap(page,id);
+  }else{
+    const opened=await page.evaluate(inputId=>window.CVWorkoutNumpadV73.open(inputId),id);
+    assert.equal(opened,true,`V73 failed to open ${id}`);
+  }
   const active=await page.evaluate(()=>({pad:window.CVWorkoutNumpadV73.state(),focused:document.activeElement?.id||''}));
   assert.equal(active.pad.inputId,id,`V73 opened wrong input for ${id}`);
   assert.notEqual(active.focused,id,`Native input focus survived V73 open for ${id}`);
-  await page.evaluate(()=>{for(let i=0;i<8;i++)document.querySelector('[data-key="back"]')?.click()});
+  for(let i=0;i<8;i++)await pressPadKey(page,'back');
   for(const ch of String(value).replace('.',',')){
-    if(ch===',')await page.evaluate(()=>document.querySelector('[data-key="decimal"]')?.click());
-    else await page.evaluate(k=>document.querySelector(`[data-key="${k}"]`)?.click(),ch);
+    if(ch===',')await pressPadKey(page,'decimal');
+    else await pressPadKey(page,ch);
   }
-  await page.evaluate(()=>document.querySelector('[data-pad-action="done"]')?.click());
+  await page.locator('[data-pad-action="done"]').tap({timeout:3000});
   await page.waitForFunction(inputId=>window.CVWorkoutNumpadV73.state().open===false&&document.getElementById(inputId)?.value!==undefined,id,{timeout:3000});
+  await page.waitForTimeout(120);
   const result=await page.evaluate(inputId=>({value:document.getElementById(inputId)?.value,readOnly:document.getElementById(inputId)?.readOnly,inputMode:document.getElementById(inputId)?.getAttribute('inputmode'),scrollY:window.scrollY}),id);
   assert.equal(result.value,String(value),`V73 did not commit ${value} into ${id}`);
   assert.equal(result.readOnly,true,`${id} is not readonly under V73`);
   assert.equal(result.inputMode,'none',`${id} can still request native keyboard`);
   assert.ok(Math.abs(result.scrollY-before)<=4,`V73 moved the workout page while editing ${id}: ${before} -> ${result.scrollY}`);
+}
+
+async function realTouchEditorTest(){
+  const t=await demoWorkoutPage('REAL_TOUCH');
+  try{
+    const {page,errors}=t;
+    await setWithPad(page,'cvw_0_0','17.5');
+    await setWithPad(page,'cvr_0_0','11');
+    await setWithPad(page,'cvri_0_0','2.5');
+    const values=await page.evaluate(()=>({w:document.getElementById('cvw_0_0')?.value,r:document.getElementById('cvr_0_0')?.value,ri:document.getElementById('cvri_0_0')?.value}));
+    assert.deepEqual(values,{w:'17.5',r:'11',ri:'2.5'},'real touch editing did not persist all workout fields');
+    assert.equal(errors.length,0,'Real-touch workout errors: '+errors.join(' | '));
+    console.log('CV_V73_REAL_TOUCH_EDITOR_WEBKIT_OK');
+  } finally {await t.context.close().catch(()=>{});await t.browser.close().catch(()=>{})}
 }
 
 async function explicitStartTest(){
@@ -64,7 +110,7 @@ async function autoStartTest(){
     const {page,errors}=t;
     await setWithPad(page,'cvw_0_0','22.5');
     await setWithPad(page,'cvr_0_0','9');
-    await page.evaluate(()=>document.querySelector('.cvSetCheck')?.click());
+    await page.locator('.cvSetCheck').first().tap({timeout:3000});
     await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo'&&window.cvExercises?.()?.[0]?.sets?.[0]?.completed===true,null,{timeout:5000});
     const got=await page.evaluate(()=>{const s=window.cvExercises()?.[0]?.sets?.[0];return {w:s?.weight_kg,r:s?.reps,c:s?.completed}});
     assert.deepEqual(got,{w:22.5,r:9,c:true},'first-set auto-start lost V73 values or completion');
@@ -73,6 +119,7 @@ async function autoStartTest(){
   } finally {await t.context.close().catch(()=>{});await t.browser.close().catch(()=>{})}
 }
 
+await realTouchEditorTest();
 await explicitStartTest();
 await autoStartTest();
-console.log('CV_MOBILE_WEBKIT_V71_V73_OK');
+console.log('CV_MOBILE_WEBKIT_V71_V73_REAL_TOUCH_OK');
