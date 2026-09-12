@@ -66,5 +66,7 @@ jobs:
           CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=editor node scripts/test-client-mobile-webkit-v71.mjs
           echo '--- V73 explicit workout start ---'
           CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=start node scripts/test-client-mobile-webkit-v71.mjs
-          echo '--- V73 physical set-check + rapid double tap ---'
+          echo '--- V73 physical first set check ---'
           CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=check node scripts/test-client-mobile-webkit-v71.mjs
+          echo '--- V73 concurrent double-toggle guard ---'
+          CV_TEST_URL=http://127.0.0.1:4173 CV_SCENARIO=double node scripts/test-client-mobile-webkit-v71.mjs
