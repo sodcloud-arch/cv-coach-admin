@@ -67,7 +67,17 @@ async function closeTest(t){
   await t?.browser?.close().catch(()=>{});
 }
 
+async function waitForV73Decoration(page,id){
+  await page.waitForFunction(inputId=>{
+    const el=document.getElementById(inputId);
+    return !!el&&el.dataset.cvPadV73==='1'&&el.readOnly===true&&el.getAttribute('inputmode')==='none';
+  },id,{timeout:3000,polling:25});
+}
+
 async function setWithPad(page,id,value){
+  // Programmatic open() bypasses V73's physical pointer/touch capture. Wait for the
+  // normal post-render decoration contract so this helper does not create a false race.
+  await waitForV73Decoration(page,id);
   const opened=await page.evaluate(inputId=>window.CVWorkoutNumpadV73.open(inputId),id);
   assert.equal(opened,true,`V73 failed to open ${id}`);
   const active=await page.evaluate(()=>({pad:window.CVWorkoutNumpadV73.state(),focused:document.activeElement?.id||''}));
