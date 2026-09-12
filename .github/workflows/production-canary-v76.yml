@@ -1,0 +1,53 @@
+name: CV Coach Production Canary V76
+
+on:
+  workflow_run:
+    workflows: ["CV Coach Client Production Deploy"]
+    types: [completed]
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cv-coach-production-canary-v76
+  cancel-in-progress: false
+
+jobs:
+  production-canary:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout canonical main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Validate public portal readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(curl --fail --silent --show-error --location --max-time 20 https://cv-coach-roan.vercel.app)"
+          [[ "$body" == *"CVWorkoutNumpadV73"* ]]
+          [[ "$body" == *"CVWorkoutSetGuardV74"* ]]
+          [[ "$body" == *"cv-workout-set-guard-v74: single-flight-set-toggle + hydration-guard"* ]]
+          echo 'CV_CANARY_V76_PORTAL_READY'
+
+      - name: Install Playwright WebKit
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Run isolated production canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-production-canary-v76.mjs
