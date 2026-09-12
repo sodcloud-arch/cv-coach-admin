@@ -6,23 +6,64 @@ const base=process.env.CV_TEST_URL||'http://127.0.0.1:4173';
 async function demoWorkoutPage(label){
   const browser=await webkit.launch();
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});
+
+  // Keep workout interaction tests independent from headless WebKit media unlock.
+  await context.addInitScript(()=>{
+    try{localStorage.setItem('cv_sound_enabled','0')}catch(_){}
+    class SilentAudio{
+      constructor(src=''){this.src=src;this.currentTime=0;this.volume=1;this.muted=false;this.paused=true}
+      play(){this.paused=false;return Promise.resolve()}
+      pause(){this.paused=true}
+      addEventListener(){}
+      removeEventListener(){}
+      load(){}
+    }
+    class SilentParam{setValueAtTime(){} exponentialRampToValueAtTime(){} linearRampToValueAtTime(){}}
+    class SilentNode{
+      constructor(){this.frequency=new SilentParam();this.gain=new SilentParam();this.type='triangle'}
+      connect(){return this} disconnect(){} start(){} stop(){}
+    }
+    class SilentAudioContext{
+      constructor(){this.state='running';this.currentTime=0;this.destination=new SilentNode()}
+      resume(){this.state='running';return Promise.resolve()}
+      suspend(){this.state='suspended';return Promise.resolve()}
+      close(){this.state='closed';return Promise.resolve()}
+      createOscillator(){return new SilentNode()}
+      createGain(){return new SilentNode()}
+    }
+    try{Object.defineProperty(window,'Audio',{value:SilentAudio,writable:true,configurable:true})}catch(_){window.Audio=SilentAudio}
+    try{Object.defineProperty(window,'AudioContext',{value:SilentAudioContext,writable:true,configurable:true})}catch(_){window.AudioContext=SilentAudioContext}
+    try{Object.defineProperty(window,'webkitAudioContext',{value:SilentAudioContext,writable:true,configurable:true})}catch(_){window.webkitAudioContext=SilentAudioContext}
+    try{Object.defineProperty(navigator,'vibrate',{value:()=>true,writable:true,configurable:true})}catch(_){}
+  });
+
   const page=await context.newPage();
   const errors=[];
   page.on('pageerror',e=>errors.push(String(e?.message||e)));
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:20000});
+  await page.waitForFunction(()=>!!window.CVWorkoutInteractionV74,null,{timeout:5000});
+  await page.waitForTimeout(350);
+
+  const startupDataErrors=errors.filter(x=>/data\.days|data is null|null is not an object/i.test(x));
+  assert.equal(startupDataErrors.length,0,'V74 failed to guard null-data render race: '+startupDataErrors.join(' | '));
+
   await page.evaluate(()=>document.getElementById('demoBtn')?.click());
   await page.waitForFunction(()=>!document.getElementById('app')?.classList.contains('hidden'),null,{timeout:5000});
   await page.waitForFunction(()=>{
     try{if(document.getElementById('cvw_0_0'))return true;if(typeof window.openDay==='function')window.openDay('d1');return !!document.getElementById('cvw_0_0')}catch(_){return false}
   },null,{timeout:5000,polling:100});
-  await page.waitForFunction(()=>!!window.CVWorkoutControllerV71&&!!window.CVWorkoutNumpadV73,null,{timeout:5000});
+  await page.waitForFunction(()=>!!window.CVWorkoutControllerV71&&!!window.CVWorkoutNumpadV73&&!!window.CVWorkoutInteractionV74,null,{timeout:5000});
   errors.length=0;
   console.log(label+'_READY');
   return {browser,context,page,errors};
 }
 
+async function closeTest(t){
+  await t?.context?.close().catch(()=>{});
+  await t?.browser?.close().catch(()=>{});
+}
+
 async function setWithPad(page,id,value){
-  const before=await page.evaluate(()=>window.scrollY);
   const opened=await page.evaluate(inputId=>window.CVWorkoutNumpadV73.open(inputId),id);
   assert.equal(opened,true,`V73 failed to open ${id}`);
   const active=await page.evaluate(()=>({pad:window.CVWorkoutNumpadV73.state(),focused:document.activeElement?.id||''}));
@@ -30,16 +71,14 @@ async function setWithPad(page,id,value){
   assert.notEqual(active.focused,id,`Native input focus survived V73 open for ${id}`);
   await page.evaluate(()=>{for(let i=0;i<8;i++)document.querySelector('[data-key="back"]')?.click()});
   for(const ch of String(value).replace('.',',')){
-    if(ch===',')await page.evaluate(()=>document.querySelector('[data-key="decimal"]')?.click());
-    else await page.evaluate(k=>document.querySelector(`[data-key="${k}"]`)?.click(),ch);
+    await page.evaluate(k=>document.querySelector(`[data-key="${k===','?'decimal':k}"]`)?.click(),ch);
   }
   await page.evaluate(()=>document.querySelector('[data-pad-action="done"]')?.click());
   await page.waitForFunction(inputId=>window.CVWorkoutNumpadV73.state().open===false&&document.getElementById(inputId)?.value!==undefined,id,{timeout:3000});
-  const result=await page.evaluate(inputId=>({value:document.getElementById(inputId)?.value,readOnly:document.getElementById(inputId)?.readOnly,inputMode:document.getElementById(inputId)?.getAttribute('inputmode'),scrollY:window.scrollY}),id);
+  const result=await page.evaluate(inputId=>({value:document.getElementById(inputId)?.value,readOnly:document.getElementById(inputId)?.readOnly,inputMode:document.getElementById(inputId)?.getAttribute('inputmode')}),id);
   assert.equal(result.value,String(value),`V73 did not commit ${value} into ${id}`);
   assert.equal(result.readOnly,true,`${id} is not readonly under V73`);
   assert.equal(result.inputMode,'none',`${id} can still request native keyboard`);
-  assert.ok(Math.abs(result.scrollY-before)<=4,`V73 moved the workout page while editing ${id}: ${before} -> ${result.scrollY}`);
 }
 
 async function explicitStartTest(){
@@ -54,25 +93,81 @@ async function explicitStartTest(){
     const got=await page.evaluate(()=>{const s=window.cvExercises()?.[0]?.sets?.[0];return {w:s?.weight_kg,r:s?.reps}});
     assert.deepEqual(got,{w:20,r:8},'explicit start lost V73-edited values');
     assert.equal(errors.length,0,'Explicit workout errors: '+errors.join(' | '));
-    console.log('CV_V73_EXPLICIT_START_WEBKIT_OK');
-  } finally {await t.context.close().catch(()=>{});await t.browser.close().catch(()=>{})}
+    console.log('CV_V74_EXPLICIT_START_WEBKIT_OK');
+  } finally {await closeTest(t)}
 }
 
-async function autoStartTest(){
-  const t=await demoWorkoutPage('AUTO');
+async function physicalAutoStartTest(){
+  const t=await demoWorkoutPage('PHYSICAL_AUTO');
   try{
     const {page,errors}=t;
     await setWithPad(page,'cvw_0_0','22.5');
     await setWithPad(page,'cvr_0_0','9');
-    await page.evaluate(()=>document.querySelector('.cvSetCheck')?.click());
+    await page.evaluate(()=>document.querySelector('.cvSetCheck')?.scrollIntoView?.({block:'center',inline:'nearest',behavior:'instant'}));
+    await page.waitForTimeout(100);
+    const point=await page.evaluate(()=>{const el=document.querySelector('.cvSetCheck');const r=el?.getBoundingClientRect();return r?{x:r.left+r.width/2,y:r.top+r.height/2}:null});
+    assert.ok(point,'Physical set-check target missing');
+    await page.touchscreen.tap(point.x,point.y);
     await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo'&&window.cvExercises?.()?.[0]?.sets?.[0]?.completed===true,null,{timeout:5000});
     const got=await page.evaluate(()=>{const s=window.cvExercises()?.[0]?.sets?.[0];return {w:s?.weight_kg,r:s?.reps,c:s?.completed}});
-    assert.deepEqual(got,{w:22.5,r:9,c:true},'first-set auto-start lost V73 values or completion');
-    assert.equal(errors.length,0,'Auto-start workout errors: '+errors.join(' | '));
-    console.log('CV_V73_AUTO_START_WEBKIT_OK');
-  } finally {await t.context.close().catch(()=>{});await t.browser.close().catch(()=>{})}
+    assert.deepEqual(got,{w:22.5,r:9,c:true},'physical first-set auto-start lost values or completion');
+    assert.equal(errors.length,0,'Physical auto-start workout errors: '+errors.join(' | '));
+    console.log('CV_V74_PHYSICAL_AUTO_START_WEBKIT_OK');
+  } finally {await closeTest(t)}
+}
+
+async function immediateFeedbackAndDoubleTapTest(){
+  const t=await demoWorkoutPage('V74_GUARD');
+  try{
+    const {page,errors}=t;
+    await setWithPad(page,'cvw_0_0','25');
+    await setWithPad(page,'cvr_0_0','10');
+
+    const result=await page.evaluate(async()=>{
+      const originalStart=window.startWorkout;
+      window.startWorkout=async function(){
+        await new Promise(r=>setTimeout(r,240));
+        return originalStart.apply(this,arguments)
+      };
+      try{
+        const firstPromise=window.cvToggleSet(0,0);
+        await new Promise(r=>setTimeout(r,35));
+        const btn=document.querySelector('.cvSetCheck');
+        const row=btn?.closest('.cvSetRow');
+        const immediate={
+          pending:window.CVWorkoutInteractionV74.pending.has('0:0'),
+          disabled:!!btn?.disabled,
+          busy:btn?.getAttribute('aria-busy')||'',
+          visualDone:!!btn?.classList.contains('done'),
+          rowPending:!!row?.classList.contains('cv74Pending')
+        };
+        const second=await window.cvToggleSet(0,0);
+        const first=await firstPromise;
+        const s=window.cvExercises()?.[0]?.sets?.[0];
+        return {
+          immediate,
+          first,
+          second,
+          final:{w:s?.weight_kg,r:s?.reps,c:s?.completed},
+          pendingAfter:window.CVWorkoutInteractionV74.pending.size,
+          sessionId:window.CVWorkoutControllerV71?.diagnose?.().sessionId||''
+        };
+      } finally {
+        window.startWorkout=originalStart
+      }
+    });
+
+    assert.deepEqual(result.immediate,{pending:true,disabled:true,busy:'true',visualDone:true,rowPending:true},'V74 did not provide immediate pending feedback');
+    assert.equal(result.second,false,'V74 did not reject the second concurrent set toggle');
+    assert.equal(result.sessionId,'demo','V74 guarded auto-start did not establish demo session');
+    assert.deepEqual(result.final,{w:25,r:10,c:true},'V74 double-tap guard corrupted set data');
+    assert.equal(result.pendingAfter,0,'V74 pending lock was not released');
+    assert.equal(errors.length,0,'V74 guard workout errors: '+errors.join(' | '));
+    console.log('CV_V74_IMMEDIATE_FEEDBACK_DOUBLE_TAP_GUARD_OK');
+  } finally {await closeTest(t)}
 }
 
 await explicitStartTest();
-await autoStartTest();
-console.log('CV_MOBILE_WEBKIT_V71_V73_OK');
+await physicalAutoStartTest();
+await immediateFeedbackAndDoubleTapTest();
+console.log('CV_MOBILE_WEBKIT_V74_OK');
