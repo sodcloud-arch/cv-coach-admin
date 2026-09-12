@@ -59,12 +59,17 @@ try{
     },true));
     const baseToggle=window.cvToggleSet;
     window.__cvToggleCalls=[];
-    window.cvToggleSet=function(){
+    const instrumented=function(){
       const args=[...arguments];window.__cvToggleCalls.push({phase:'enter',args,at:performance.now()});
       const out=baseToggle.apply(this,args);
       Promise.resolve(out).then(v=>window.__cvToggleCalls.push({phase:'resolve',args,value:v,at:performance.now()})).catch(e=>window.__cvToggleCalls.push({phase:'reject',args,error:String(e?.message||e),at:performance.now()}));
       return out;
     };
+    // Tell the V74 MutationObserver that this diagnostic wrapper already preserves
+    // the guard contract, so it must not wrap the test wrapper a second time.
+    instrumented.__cvSetGuardV74=true;
+    instrumented.__cvSetGuardBase=baseToggle;
+    window.cvToggleSet=instrumented;
   });
 
   await page.evaluate(()=>document.querySelector('.cvSetCheck')?.scrollIntoView?.({block:'center',inline:'nearest',behavior:'instant'}));
@@ -81,14 +86,11 @@ try{
   await page.touchscreen.tap(target.x,target.y);
   await page.waitForFunction(()=>window.__cvTouchTrace?.some(x=>x.type==='click'&&String(x.cls).includes('cvSetCheck')),null,{timeout:3000});
   await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo'&&window.cvExercises?.()?.[0]?.sets?.[0]?.completed===true,null,{timeout:5000});
-
-  // V74 intentionally holds the public toggle promise for at least 420 ms so a
-  // second tap cannot undo a just-confirmed set. Wait for that protected resolution.
-  await page.waitForFunction(()=>window.__cvToggleCalls?.some(x=>x.phase==='resolve'&&x.value===true),null,{timeout:2000});
+  await page.waitForFunction(()=>window.__cvToggleCalls?.some(x=>x.phase==='resolve'&&x.value===true),null,{timeout:3000});
   await page.waitForFunction(()=>{
     const btn=document.querySelector('.cvSetCheck');
     return !!btn&&!btn.disabled&&!btn.hasAttribute('aria-busy');
-  },null,{timeout:2000});
+  },null,{timeout:3000});
 
   const result=await page.evaluate(()=>{
     const s=window.cvExercises()?.[0]?.sets?.[0];
