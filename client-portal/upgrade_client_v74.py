@@ -9,7 +9,9 @@ HTML = ROOT / 'stable' / 'index.html'
 BUILD = ROOT / 'stable' / 'build.json'
 JS = ROOT / 'assets' / 'cv-workout-interaction-v74.js'
 SCRIPT_ID = 'cv-workout-interaction-v74-js'
-MARKER = '<!-- cv-workout-interaction-v74: immediate-feedback + per-set-lock + null-data-render-guard -->'
+MARKER = '<!-- cv-workout-interaction-v74: immediate-feedback + per-set-lock + canonical-null-data-render-guard -->'
+RENDER_ANCHOR = "function render(){const c=$('#content');"
+RENDER_GUARDED = "function render(){if(typeof data==='undefined'||data===null)return false;/* cv74 canonical render null guard */const c=$('#content');"
 
 for path in [HTML, JS]:
     if not path.exists() or path.stat().st_size < 500:
@@ -24,11 +26,9 @@ required_js = [
     "paint(i,j,target,true)",
     "btn.disabled=true",
     "btn.setAttribute('aria-busy','true')",
-    "if(!dataReady())return false",
     "await base.apply(this,arguments)",
     "after!==target",
     "__cv74Interaction",
-    "__cv74RenderGuard",
     "CVWorkoutInteractionV74",
 ]
 for token in required_js:
@@ -38,6 +38,14 @@ for token in required_js:
 text = HTML.read_text(encoding='utf-8')
 text = re.sub(r'<script id="cv-workout-interaction-v74-js">.*?</script>', '', text, flags=re.S)
 text = text.replace(MARKER, '')
+
+# The historical portal can call render() before V74's late runtime wrapper is loaded.
+# Guard the canonical render function itself so null-data startup is safe from first definition.
+if '/* cv74 canonical render null guard */' not in text:
+    count = text.count(RENDER_ANCHOR)
+    if count != 1:
+        raise SystemExit(f'V74 canonical render anchor mismatch: expected 1, got {count}')
+    text = text.replace(RENDER_ANCHOR, RENDER_GUARDED, 1)
 
 if 'CVWorkoutNumpadV73' not in text:
     raise SystemExit('V74 requires built V73 runtime')
@@ -50,7 +58,13 @@ text = text.replace(
     1,
 )
 
-for token in [SCRIPT_ID, MARKER, 'CVWorkoutInteractionV74', '__cv74Interaction', '__cv74RenderGuard']:
+for token in [
+    SCRIPT_ID,
+    MARKER,
+    'CVWorkoutInteractionV74',
+    '__cv74Interaction',
+    '/* cv74 canonical render null guard */',
+]:
     if token not in text:
         raise SystemExit(f'V74 final token missing: {token}')
 
@@ -71,7 +85,7 @@ patches = list(metadata.get('patches') or [])
 for patch in [
     'Immediate first-touch set feedback v74',
     'Per-set concurrent toggle lock v74',
-    'Null-data render race guard v74',
+    'Canonical null-data render race guard v74',
 ]:
     if patch not in patches:
         patches.append(patch)
