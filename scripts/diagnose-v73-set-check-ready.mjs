@@ -5,7 +5,7 @@ const base=process.env.CV_TEST_URL||'http://127.0.0.1:4173';
 const browser=await webkit.launch();
 const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:'block'});
 
-// Keep the physical touchscreen path but neutralize headless-Linux media/haptics.
+// Keep the physical touchscreen path while neutralizing headless-Linux media/haptics only.
 await context.addInitScript(()=>{
   try{localStorage.setItem('cv_sound_enabled','0')}catch(_){}
   class SilentAudio{constructor(src=''){this.src=src;this.currentTime=0;this.volume=1;this.muted=false;this.paused=true}play(){this.paused=false;return Promise.resolve()}pause(){this.paused=true}addEventListener(){}removeEventListener(){}load(){}}
@@ -42,7 +42,6 @@ try{
   },null,{timeout:5000,polling:100});
   await page.waitForFunction(()=>!!window.CVWorkoutControllerV71&&!!window.CVWorkoutNumpadV73&&!!window.CVWorkoutSetGuardV74,null,{timeout:5000});
 
-  // V74 must eliminate the hydration-time null dereferences seen in V73.
   const bootErrors=[...errors];
   errors.length=0;
   console.log('CV_V74_BOOT_ERRORS',JSON.stringify(bootErrors));
@@ -52,24 +51,13 @@ try{
   await setValue('cvr_0_0','9');
   errors.length=0;
 
+  // Observe the real product only. Do not replace cvToggleSet: the V74 self-healing
+  // wrapper intentionally watches that global, so test interception can create races.
   await page.evaluate(()=>{
     window.__cvTouchTrace=[];
     ['pointerdown','touchstart','touchend','click'].forEach(type=>document.addEventListener(type,e=>{
       const t=e.target;window.__cvTouchTrace.push({type,cls:typeof t?.className==='string'?t.className:'',tag:t?.tagName||''});
     },true));
-    const baseToggle=window.cvToggleSet;
-    window.__cvToggleCalls=[];
-    const instrumented=function(){
-      const args=[...arguments];window.__cvToggleCalls.push({phase:'enter',args,at:performance.now()});
-      const out=baseToggle.apply(this,args);
-      Promise.resolve(out).then(v=>window.__cvToggleCalls.push({phase:'resolve',args,value:v,at:performance.now()})).catch(e=>window.__cvToggleCalls.push({phase:'reject',args,error:String(e?.message||e),at:performance.now()}));
-      return out;
-    };
-    // Tell the V74 MutationObserver that this diagnostic wrapper already preserves
-    // the guard contract, so it must not wrap the test wrapper a second time.
-    instrumented.__cvSetGuardV74=true;
-    instrumented.__cvSetGuardBase=baseToggle;
-    window.cvToggleSet=instrumented;
   });
 
   await page.evaluate(()=>document.querySelector('.cvSetCheck')?.scrollIntoView?.({block:'center',inline:'nearest',behavior:'instant'}));
@@ -86,7 +74,6 @@ try{
   await page.touchscreen.tap(target.x,target.y);
   await page.waitForFunction(()=>window.__cvTouchTrace?.some(x=>x.type==='click'&&String(x.cls).includes('cvSetCheck')),null,{timeout:3000});
   await page.waitForFunction(()=>window.CVWorkoutControllerV71?.diagnose?.().sessionId==='demo'&&window.cvExercises?.()?.[0]?.sets?.[0]?.completed===true,null,{timeout:5000});
-  await page.waitForFunction(()=>window.__cvToggleCalls?.some(x=>x.phase==='resolve'&&x.value===true),null,{timeout:3000});
   await page.waitForFunction(()=>{
     const btn=document.querySelector('.cvSetCheck');
     return !!btn&&!btn.disabled&&!btn.hasAttribute('aria-busy');
@@ -96,27 +83,25 @@ try{
     const s=window.cvExercises()?.[0]?.sets?.[0];
     return {
       trace:window.__cvTouchTrace,
-      calls:window.__cvToggleCalls,
       sessionId:window.CVWorkoutControllerV71?.diagnose?.().sessionId||'',
       weight:s?.weight_kg,
       reps:s?.reps,
       completed:!!s?.completed,
-      checkClass:document.querySelector('.cvSetCheck')?.className||'',
       checkDisabled:!!document.querySelector('.cvSetCheck')?.disabled,
       checkBusy:document.querySelector('.cvSetCheck')?.hasAttribute('aria-busy')||false,
       guardVersion:window.CVWorkoutSetGuardV74?.version||'',
-      guardMs:window.CVWorkoutSetGuardV74?.minLockMs||0
+      guardMs:window.CVWorkoutSetGuardV74?.minLockMs||0,
+      guarded:!!window.cvToggleSet?.__cvSetGuardV74
     };
   });
   assert.equal(result.trace.some(x=>x.type==='touchstart'&&x.cls.includes('cvSetCheck')),true,'touchstart did not reach set check');
   assert.equal(result.trace.some(x=>x.type==='click'&&x.cls.includes('cvSetCheck')),true,'click did not reach set check');
-  assert.equal(result.calls.some(x=>x.phase==='enter'),true,'cvToggleSet was not called');
-  assert.equal(result.calls.some(x=>x.phase==='resolve'&&x.value===true),true,'V74 protected cvToggleSet did not resolve true');
   assert.deepEqual({sessionId:result.sessionId,weight:result.weight,reps:result.reps,completed:result.completed},{sessionId:'demo',weight:22.5,reps:9,completed:true},'Physical set check lost session or set state');
   assert.equal(result.checkDisabled,false,'V74 left set check disabled after cooldown');
   assert.equal(result.checkBusy,false,'V74 left aria-busy after cooldown');
   assert.equal(result.guardVersion,'v74','V74 guard is not active');
   assert.equal(result.guardMs,420,'Unexpected V74 guard duration');
+  assert.equal(result.guarded,true,'Final cvToggleSet is not owned by V74 guard');
   assert.equal(errors.length,0,'Post-ready V74 errors: '+errors.join(' | '));
   console.log('CV_V74_PHYSICAL_SET_CHECK_READY_OK');
 } finally {
