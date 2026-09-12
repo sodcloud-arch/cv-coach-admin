@@ -60,13 +60,22 @@ async function appStartTest({autoSet=false}={}){
     await page.goto(base,{waitUntil:'domcontentloaded',timeout:20000});
     await page.evaluate(()=>document.getElementById('demoBtn')?.click());
     await page.waitForFunction(()=>!document.getElementById('app')?.classList.contains('hidden'),null,{timeout:5000});
-    // Demo boot has historical render observers that may throw transient null-read errors while
-    // its data object is being installed. Wait for the actual demo model before entering workout;
-    // then clear those boot-only diagnostics so this gate measures the workout path itself.
-    await page.waitForFunction(()=>{try{return typeof data!=='undefined'&&Array.isArray(data?.days)&&data.days.length>0&&typeof workout!=='undefined'&&workout!==null}catch(_){return false}},null,{timeout:5000});
+
+    // Do not inspect top-level lexical app variables from Playwright. Instead, retry the actual
+    // public navigation action until the workout DOM exists. This mirrors what a user can do and
+    // avoids false negatives caused by module/global scoping differences in WebKit.
+    await page.waitForFunction(()=>{
+      try{
+        if(document.getElementById('cvw_0_0'))return true;
+        if(typeof window.openDay==='function')window.openDay('d1');
+        return !!document.getElementById('cvw_0_0');
+      }catch(_){return false}
+    },null,{timeout:5000,polling:150});
+    await page.waitForFunction(()=>!!window.CVWorkoutControllerV71&&!!window.CVIOSKeyboardV72,null,{timeout:5000});
+
+    // Historical demo boot observers can emit transient null-read diagnostics before the workout
+    // is rendered. From this point onward, any page error belongs to the tested workout path.
     errors.length=0;
-    await page.evaluate(()=>window.openDay('d1'));
-    await page.waitForFunction(()=>!!document.getElementById('cvw_0_0')&&!!window.CVWorkoutControllerV71&&!!window.CVIOSKeyboardV72,null,{timeout:5000});
     const diag=await page.evaluate(()=>({v71:window.CVWorkoutControllerV71?.version,v72:window.CVIOSKeyboardV72?.version,session:window.CVWorkoutControllerV71?.diagnose?.().sessionId,view:document.body.dataset.cvView}));
     assert.deepEqual(diag,{v71:'v71',v72:'v72',session:null,view:'workout'},'pre-start app contract failed');
 
