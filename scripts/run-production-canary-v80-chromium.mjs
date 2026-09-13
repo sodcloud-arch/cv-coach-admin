@@ -34,8 +34,9 @@ const flowNeedle="  await startWorkoutFromCurrentView(page);\n\n  const active=a
 const flowReplacement=`  await startWorkoutFromCurrentView(page);
 
   const expectedV80Names=['Hack squat','Press banca con barra','Jalón al pecho agarre neutro','Pallof press','Dead bug'];
-  await page.locator('.cvHevyExercise').first().waitFor({state:'visible',timeout:20000});
-  const v80Cards=await page.locator('.cvHevyExercise').evaluateAll(nodes=>nodes.map(node=>({
+  const exerciseCards=page.locator('.cvHevyExercise');
+  await exerciseCards.first().waitFor({state:'visible',timeout:20000});
+  const v80Cards=await exerciseCards.evaluateAll(nodes=>nodes.map(node=>({
     name:(node.getAttribute('data-tech-name')||'').trim(),
     image:(node.getAttribute('data-tech-img')||'').trim(),
     instructions:(node.getAttribute('data-tech-instructions')||'').trim(),
@@ -48,21 +49,41 @@ const flowReplacement=`  await startWorkoutFromCurrentView(page);
     if(!card.image.startsWith('https://'))throw new Error('V80 missing technique image for '+card.name);
     if(!card.instructions)throw new Error('V80 missing instructions for '+card.name);
     if(!card.tempo)throw new Error('V80 missing tempo for '+card.name);
-    const imageResponse=await fetch(card.image,{redirect:'follow'});
-    const contentType=imageResponse.headers.get('content-type')||'';
-    if(!imageResponse.ok||!contentType.startsWith('image/'))throw new Error('V80 image HTTP failure for '+card.name+': '+imageResponse.status+' '+contentType);
   }
   console.log('CV_CANARY_V80_LIBRARY_CARDS_OK',JSON.stringify(v80Cards.map(({name,image})=>({name,image}))));
 
-  const techniqueButton=page.locator('.cvExecutionBtnV35').first();
-  await tap(page,techniqueButton,'v80-open-technique');
-  await page.locator('#cvTechBackdrop.show').waitFor({state:'visible',timeout:10000});
-  const techniqueImage=page.locator('#cvTechMedia img');
-  await techniqueImage.waitFor({state:'visible',timeout:15000});
-  const techniqueLoaded=await techniqueImage.evaluate(img=>img.complete&&img.naturalWidth>0&&img.naturalHeight>0);
-  if(!techniqueLoaded)throw new Error('V80 technique modal image did not decode');
-  console.log('CV_CANARY_V80_TECHNIQUE_MODAL_OK');
-  await tap(page,page.locator('.cvTechClose'),'v80-close-technique');
+  for(let i=0;i<expectedV80Names.length;i++){
+    const card=v80Cards[i];
+    const exerciseCard=exerciseCards.nth(i);
+    const techniqueButton=exerciseCard.locator('.cvExecutionBtnV35');
+    await tap(page,techniqueButton,'v80-open-technique-'+(i+1));
+    const backdrop=page.locator('#cvTechBackdrop.show');
+    await backdrop.waitFor({state:'visible',timeout:10000});
+    const techniqueImage=page.locator('#cvTechMedia img');
+    await techniqueImage.waitFor({state:'visible',timeout:15000});
+    await techniqueImage.evaluate(async img=>{
+      if(img.complete)return;
+      await new Promise((resolve,reject)=>{
+        const onLoad=()=>resolve();
+        const onError=()=>reject(new Error('image-error'));
+        img.addEventListener('load',onLoad,{once:true});
+        img.addEventListener('error',onError,{once:true});
+      });
+    });
+    const imageState=await techniqueImage.evaluate(img=>({
+      complete:img.complete,
+      naturalWidth:img.naturalWidth,
+      naturalHeight:img.naturalHeight,
+      src:img.currentSrc||img.src||'',
+    }));
+    if(!imageState.complete||imageState.naturalWidth<1||imageState.naturalHeight<1){
+      throw new Error('V80 technique image did not decode for '+card.name+': '+JSON.stringify(imageState));
+    }
+    console.log('CV_CANARY_V80_TECHNIQUE_OK',JSON.stringify({name:card.name,width:imageState.naturalWidth,height:imageState.naturalHeight,src:imageState.src}));
+    await tap(page,page.locator('.cvTechClose'),'v80-close-technique-'+(i+1));
+    await page.locator('#cvTechBackdrop.show').waitFor({state:'hidden',timeout:10000});
+  }
+  console.log('CV_CANARY_V80_ALL_TECHNIQUE_IMAGES_OK');
 
   const active=await latestActiveSession(athleteAccessToken,canaryClientId);`;
 code=replaceOnce(code,flowNeedle,flowReplacement,'V80 library assertions');
