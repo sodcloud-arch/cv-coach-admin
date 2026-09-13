@@ -825,7 +825,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
     'plancha':{instructions:'Mantén cabeza, tronco y pelvis alineados. Aprieta abdomen y glúteos y termina la serie si pierdes la posición lumbar.',tempo:'isométrico',rest:60}
   };
   function cvNorm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
-  function cvImage(name){return CV_BASE+(CV_FILES[cvNorm(name)]||'')}
+  function cvImage(name){const file=CV_FILES[cvNorm(name)]||'';return file?CV_BASE+file:''}
   function cvMeta(name){return DEMO_META[cvNorm(name)]||{instructions:'Ejecuta el movimiento con control, sin impulso y respetando el rango indicado por tu coach.',tempo:null,rest:90}}
   function cvTempoLabel(t){if(!t)return 'Controlado';const x=String(t).toLowerCase();if(x.includes('isom'))return 'Mantén la posición durante el tiempo indicado';if(x.includes('continuo'))return 'Movimiento continuo y controlado';const p=x.split('-').map(v=>Number(v));if(p.every(Number.isFinite)){if(p.length===4)return 'Bajada/vuelta '+p[0]+' s · pausa '+p[1]+' s · subida/tirón '+p[2]+' s'+(p[3]?' · pausa final '+p[3]+' s':'');if(p.length===3)return 'Control '+p[0]+' s · pausa '+p[1]+' s · esfuerzo '+p[2]+' s'}return String(t)}
   function cvRepsBounds(label){const m=String(label||'').match(/(\d+)\D+(\d+)/);if(m)return [Number(m[1]),Number(m[2])];const s=String(label||'').match(/\d+/);return s?[Number(s[0]),Number(s[0])]:[null,null]}
