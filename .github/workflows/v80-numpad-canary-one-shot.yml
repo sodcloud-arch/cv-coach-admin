@@ -1,0 +1,62 @@
+name: V80 Canary Numpad Patch — ONE SHOT
+on:
+  push:
+    branches: [fix/v80-canary-v73-numpad-selectors]
+    paths: [.github/workflows/v80-numpad-canary-one-shot.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/v80-canary-v73-numpad-selectors
+      - name: Patch V73 numpad selectors in canary
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/test-production-canary-v76.mjs')
+          s=p.read_text()
+          old='''async function editNumber(page,selector,value){
+            const input=page.locator(selector);
+            await tap(page,input,`edit-${selector.replace('#','')}`);
+            const panel=page.locator('#cvNumpadV73');
+            await panel.waitFor({state:'visible',timeout:10000});
+            await tap(page,panel.locator('[data-cv-key="clear"]'),'numpad-clear');
+            for(const char of String(value)){
+              const key=char==='.'?'dot':char;
+              await tap(page,panel.locator(`[data-cv-key="${key}"]`),`numpad-${key}`);
+            }
+            await tap(page,panel.locator('[data-cv-key="done"]'),'numpad-done');
+            await page.waitForFunction(({sel,expected})=>document.querySelector(sel)?.value===expected,{sel:selector,expected:String(value)},{timeout:10000});
+          }'''
+          new='''async function editNumber(page,selector,value){
+            const input=page.locator(selector);
+            await tap(page,input,`edit-${selector.replace('#','')}`);
+            const panel=page.locator('#cvNumpadV73');
+            await panel.waitFor({state:'visible',timeout:10000});
+            const back=panel.locator('[data-key="back"]');
+            for(let i=0;i<8;i++)await tap(page,back,`numpad-back-${i+1}`);
+            for(const char of String(value)){
+              const key=char==='.'?'decimal':char;
+              await tap(page,panel.locator(`[data-key="${key}"]`),`numpad-${key}`);
+            }
+            await tap(page,panel.locator('[data-pad-action="done"]'),'numpad-done');
+            await panel.waitFor({state:'hidden',timeout:10000});
+            await page.waitForFunction(({sel,expected})=>document.querySelector(sel)?.value===expected,{sel:selector,expected:String(value)},{timeout:10000});
+          }'''
+          if old not in s:
+              raise SystemExit('expected editNumber block not found')
+          if s.count(old)!=1:
+              raise SystemExit('editNumber block ambiguous')
+          p.write_text(s.replace(old,new))
+          PY
+      - name: Commit patch and remove one-shot workflow
+        run: |
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/v80-numpad-canary-one-shot.yml
+          git add scripts/test-production-canary-v76.mjs
+          git commit -m 'fix(v80): align canary with V73 numpad controls'
+          git push origin HEAD:fix/v80-canary-v73-numpad-selectors
