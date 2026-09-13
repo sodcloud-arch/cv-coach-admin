@@ -9,6 +9,7 @@ MARKER='<!-- cv-workout-set-guard-v74: single-flight-set-toggle + hydration-guar
 START_STABILITY_MARKER='<!-- cv-workout-start-stability-v76: preserve-v40-cta-during-v31-enhance -->'
 COMPACT_STABILITY_MARKER='<!-- cv-workout-compact-stability-v76: mutation-safe-v40-sync -->'
 ACTIVE_DOM_STABILITY_MARKER='<!-- cv-workout-active-dom-stability-v76: mutation-safe-v31-enhance -->'
+HOME_RANK_STABILITY_MARKER='<!-- cv-rank-home-stability-v76: mutation-safe-v61-home-decoration -->'
 SCRIPT_ID='cv-workout-set-guard-v74-js'
 
 for p in [HTML,GUARD]:
@@ -26,6 +27,7 @@ text=text.replace(MARKER,'')
 text=text.replace(START_STABILITY_MARKER,'')
 text=text.replace(COMPACT_STABILITY_MARKER,'')
 text=text.replace(ACTIVE_DOM_STABILITY_MARKER,'')
+text=text.replace(HOME_RANK_STABILITY_MARKER,'')
 
 # Boot/hydration hardening: historical post-render helpers can run before demo/real data
 # is available. Return an empty prestart exercise list until the portal is hydrated.
@@ -97,8 +99,21 @@ if old_compact in text:
 elif 'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;' not in text:
     raise SystemExit('V76 V40 active differential target missing')
 
+# V76 real physical-touch finding: V61 refresh(false) repeatedly removed and rebuilt
+# the complete Home rank card. V64/V65 MutationObservers then redecorated each new
+# node, moving VER RUTINA between geometry acquisition and the trusted WebKit touch.
+# Cache the exact rank dashboard object on the inserted card. load(false) returns the
+# same cached object, so subsequent decoration passes become true no-ops. A force
+# refresh returns a new dashboard object and still rebuilds the card exactly once.
+old_rank_home="""function decorateHome(){const c=document.getElementById('content');if(!c||cvView()!=='home'||!state.dash)return;c.querySelector('.cv61RankCard')?.remove();c.querySelector('.cv61MiniStats')?.remove();const hero=c.querySelector('.hero');if(hero){hero.insertAdjacentHTML('afterend',rankCard(state.dash)+miniStats(state.dash))}}"""
+new_rank_home="""function decorateHome(){const c=document.getElementById('content');if(!c||cvView()!=='home'||!state.dash)return;const current=c.querySelector('.cv61RankCard');if(current&&current.__cv61DashV76===state.dash)return;c.querySelector('.cv61RankCard')?.remove();c.querySelector('.cv61MiniStats')?.remove();const hero=c.querySelector('.hero');if(hero){hero.insertAdjacentHTML('afterend',rankCard(state.dash)+miniStats(state.dash));const inserted=c.querySelector('.cv61RankCard');if(inserted)inserted.__cv61DashV76=state.dash}}"""
+if old_rank_home in text:
+    text=text.replace(old_rank_home,new_rank_home,1)
+elif '__cv61DashV76' not in text:
+    raise SystemExit('V76 V61 home rank idempotence target missing')
+
 # Inject after every historical workout wrapper so V74 owns the final toggle contract.
-payload=f'\n{START_STABILITY_MARKER}\n{COMPACT_STABILITY_MARKER}\n{ACTIVE_DOM_STABILITY_MARKER}\n{MARKER}\n<script id="{SCRIPT_ID}">\n{guard}\n</script>\n'
+payload=f'\n{START_STABILITY_MARKER}\n{COMPACT_STABILITY_MARKER}\n{ACTIVE_DOM_STABILITY_MARKER}\n{HOME_RANK_STABILITY_MARKER}\n{MARKER}\n<script id="{SCRIPT_ID}">\n{guard}\n</script>\n'
 if '</body>' not in text:
     raise SystemExit('V74 body injection target missing')
 text=text.replace('</body>',payload+'</body>',1)
@@ -106,9 +121,9 @@ text=text.replace('</body>',payload+'</body>',1)
 # Final ownership / safety checks.
 if text.rfind('CVWorkoutSetGuardV74') <= text.rfind('window.cvToggleSet='):
     raise SystemExit('V74 is not the final set-toggle owner')
-for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,ACTIVE_DOM_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;",'cvBadgeTextV76','cvHeroSignatureV76',"live&&live.textContent!=='LISTO PARA INICIAR'",'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;']:
+for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,ACTIVE_DOM_STABILITY_MARKER,HOME_RANK_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;",'cvBadgeTextV76','cvHeroSignatureV76',"live&&live.textContent!=='LISTO PARA INICIAR'",'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;','__cv61DashV76']:
     if token not in text:
         raise SystemExit(f'V74 stable artifact missing: {token}')
 
 HTML.write_text(text,encoding='utf-8')
-print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","mutation-safe V31 active workout v76","mutation-safe V40 compact sync v76"],"bytes":%d}'%len(text.encode('utf-8')))
+print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","mutation-safe V31 active workout v76","mutation-safe V40 compact sync v76","mutation-safe V61 home rank v76"],"bytes":%d}'%len(text.encode('utf-8')))
