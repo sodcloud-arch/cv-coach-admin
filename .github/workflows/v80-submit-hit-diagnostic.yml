@@ -1,0 +1,72 @@
+name: V80 Submit Hit Target Diagnostic
+
+on:
+  push:
+    branches:
+      - diag/v80-submit-hit-target
+    paths:
+      - .github/workflows/v80-submit-hit-diagnostic.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: diag/v80-submit-hit-target
+
+      - name: Add hit-target diagnostics locally
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/test-production-canary-v76.mjs')
+          t=p.read_text(encoding='utf-8')
+          old="""        const hit=document.elementFromPoint(cx,cy);
+        const style=getComputedStyle(el);
+        return {
+"""
+          new="""        const hit=document.elementFromPoint(cx,cy);
+        const style=getComputedStyle(el);
+        const hitStyle=hit?getComputedStyle(hit):null;
+        const hitRect=hit?.getBoundingClientRect?.();
+        const hitChain=[];
+        for(let node=hit,depth=0;node&&depth<6;node=node.parentElement,depth++){
+          const ns=getComputedStyle(node),nr=node.getBoundingClientRect();
+          hitChain.push({tag:node.tagName,id:node.id||'',className:typeof node.className==='string'?node.className:'',text:(node.textContent||'').trim().slice(0,80),position:ns.position,zIndex:ns.zIndex,pointerEvents:ns.pointerEvents,rect:{x:nr.x,y:nr.y,width:nr.width,height:nr.height}});
+        }
+        return {
+"""
+          if old not in t: raise SystemExit('tap diagnostic anchor missing')
+          t=t.replace(old,new,1)
+          old2="""          hitOk:Boolean(hit&&(hit===el||el.contains(hit))),
+          text:(el.textContent||'').trim().slice(0,80),
+"""
+          new2="""          hitOk:Boolean(hit&&(hit===el||el.contains(hit))),
+          hit:hit?{tag:hit.tagName,id:hit.id||'',className:typeof hit.className==='string'?hit.className:'',text:(hit.textContent||'').trim().slice(0,80),position:hitStyle?.position||'',zIndex:hitStyle?.zIndex||'',pointerEvents:hitStyle?.pointerEvents||'',rect:hitRect?{x:hitRect.x,y:hitRect.y,width:hitRect.width,height:hitRect.height}:null}:null,
+          hitChain,
+          text:(el.textContent||'').trim().slice(0,80),
+"""
+          if old2 not in t: raise SystemExit('tap diagnostic return anchor missing')
+          p.write_text(t.replace(old2,new2,1),encoding='utf-8')
+          PY
+
+      - name: Install Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run Chromium diagnostic
+        shell: bash
+        env:
+          DEBUG: pw:browser
+        run: |
+          set -euo pipefail
+          node scripts/run-production-canary-v80-chromium.mjs
