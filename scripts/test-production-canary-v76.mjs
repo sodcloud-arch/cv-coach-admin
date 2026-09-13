@@ -315,9 +315,8 @@ try{
   await tap(page,finish,'finish-workout');
 
   await page.locator('#cvFeedbackFinish').waitFor({state:'visible',timeout:10000});
-  await page.locator('#cvFeedbackEffort').evaluate(el=>{el.value='6';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
-  await page.locator('#cvFeedbackFatigue').evaluate(el=>{el.value='3';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
-  await page.locator('#cvFeedbackPain').evaluate(el=>{el.value='0';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
+  await tap(page,page.locator('#cvFeedbackDifficulty button[data-level=\"3\"]'),'feedback-difficulty-3');
+  await tap(page,page.locator('#cvFeedbackPainChoice button[data-pain=\"0\"]'),'feedback-pain-no');
   await page.locator('#cvFeedbackNotes').fill(`CV_CANARY_V76 run=${RUN_ID}`);
   await tap(page,page.locator('#cvFeedbackFinish'),'submit-feedback');
 
