@@ -7,6 +7,7 @@ on:
       - '.github/workflows/production-canary-v76.yml'
       - '.github/workflows/production-canary-v76-contract.yml'
       - 'scripts/test-production-canary-v76.mjs'
+      - 'scripts/run-production-canary-v80-chromium.mjs'
       - 'scripts/test-production-canary-v76-contract.py'
       - 'supabase/functions/cv-canary-auth-v76/**'
       - 'supabase/migrations/**'
@@ -16,6 +17,7 @@ on:
       - '.github/workflows/production-canary-v76.yml'
       - '.github/workflows/production-canary-v76-contract.yml'
       - 'scripts/test-production-canary-v76.mjs'
+      - 'scripts/run-production-canary-v80-chromium.mjs'
       - 'scripts/test-production-canary-v76-contract.py'
       - 'supabase/functions/cv-canary-auth-v76/**'
       - 'supabase/migrations/**'
@@ -31,9 +33,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Validate V76 architecture contract
+      - name: Validate V76 architecture contract + V80 wrapper
         shell: bash
         run: |
           set -euo pipefail
           python scripts/test-production-canary-v76-contract.py
           node --check scripts/test-production-canary-v76.mjs
+          node --check scripts/run-production-canary-v80-chromium.mjs
