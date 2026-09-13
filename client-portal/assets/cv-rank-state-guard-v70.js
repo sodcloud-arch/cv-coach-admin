@@ -50,35 +50,37 @@
     return {title:'RANGO SEGURO',msg:`Mantienes el mínimo de ${min}% esta semana.`,color:'#42bfff',score};
   }
   function rankAsset(d){return `./assets/ranks/cv-rank-${d?.rank?.rank_key||'bronze'}-v61.webp?v=70`}
+  function setHTMLIfChanged(el,html){if(!el||el.innerHTML===html)return false;el.innerHTML=html;return true}
+  function setAttrIfChanged(el,name,value){if(!el)return false;const next=String(value);if(el.getAttribute(name)===next)return false;el.setAttribute(name,next);return true}
 
   function updateWorkout(d){
     const hud=document.querySelector('#content .cv64WorkoutRankHud');if(!hud)return;
     if(!d){
       hud.classList.add('cv70Syncing');
-      const meta=hud.querySelector('.cv64WorkoutMeta');if(meta)meta.innerHTML='<b>— CV</b><span>Sincronizando progreso…</span>';
-      const state=hud.querySelector('.cv64WorkoutState');if(state)state.innerHTML='<b>SINCRONIZANDO</b><span>Conectando CV Rank</span>';
+      setHTMLIfChanged(hud.querySelector('.cv64WorkoutMeta'),'<b>— CV</b><span>Sincronizando progreso…</span>');
+      setHTMLIfChanged(hud.querySelector('.cv64WorkoutState'),'<b>SINCRONIZANDO</b><span>Conectando CV Rank</span>');
       return;
     }
     hud.classList.remove('cv70Syncing');
     const r=d.rank||{},lvl=Number(d.current_level||1),rating=Number(d.cv_rating||0),remaining=Number(d.rating_to_next_level||0),pct=Math.max(0,Math.min(100,Number(d.level_progress_pct||0))),st=rankState(d);
     hud.style.setProperty('--r',r.color_primary||'#c47a3a');hud.style.setProperty('--r2',r.color_secondary||'#6e351e');hud.style.setProperty('--state',st.color);
-    const img=hud.querySelector('.cv64WorkoutBadge img');if(img){img.src=rankAsset(d);img.alt=`Insignia ${r.rank_name||'BRONCE'}`}
-    const strong=hud.querySelector('.cv64WorkoutCopy strong');if(strong)strong.innerHTML=`${esc(r.rank_name||'BRONCE')} <em>· NIVEL ${lvl}</em>`;
-    const fill=hud.querySelector('.cv64WorkoutBar i');if(fill)fill.style.width=pct+'%';
-    const meta=hud.querySelector('.cv64WorkoutMeta');if(meta)meta.innerHTML=`<b>${rating.toLocaleString('es-CL',{maximumFractionDigits:2})} CV</b><span>${lvl>=26?'Rango máximo':remaining.toLocaleString('es-CL',{maximumFractionDigits:2})+' CV para Nivel '+(lvl+1)}</span>`;
-    const state=hud.querySelector('.cv64WorkoutState');if(state)state.innerHTML=`<b>${st.title}</b><span>Disciplina ${st.score}%</span>`;
+    const img=hud.querySelector('.cv64WorkoutBadge img');if(img){setAttrIfChanged(img,'src',rankAsset(d));setAttrIfChanged(img,'alt',`Insignia ${r.rank_name||'BRONCE'}`)}
+    setHTMLIfChanged(hud.querySelector('.cv64WorkoutCopy strong'),`${esc(r.rank_name||'BRONCE')} <em>· NIVEL ${lvl}</em>`);
+    const fill=hud.querySelector('.cv64WorkoutBar i');if(fill&&fill.style.width!==pct+'%')fill.style.width=pct+'%';
+    setHTMLIfChanged(hud.querySelector('.cv64WorkoutMeta'),`<b>${rating.toLocaleString('es-CL',{maximumFractionDigits:2})} CV</b><span>${lvl>=26?'Rango máximo':remaining.toLocaleString('es-CL',{maximumFractionDigits:2})+' CV para Nivel '+(lvl+1)}</span>`);
+    setHTMLIfChanged(hud.querySelector('.cv64WorkoutState'),`<b>${st.title}</b><span>Disciplina ${st.score}%</span>`);
   }
 
   function updateHome(d){
     const card=document.querySelector('#content .cv61RankCard');if(!card||!d?.tutorial_completed)return;
     const r=d.rank||{},lvl=Number(d.current_level||1),rating=Number(d.cv_rating||0),remaining=Number(d.rating_to_next_level||0),pct=Math.max(0,Math.min(100,Number(d.level_progress_pct||0))),st=rankState(d);
     card.style.setProperty('--r',r.color_primary||'#c47a3a');card.style.setProperty('--r2',r.color_secondary||'#6e351e');
-    const img=card.querySelector('.cv61Badge img');if(img){img.src=rankAsset(d);img.alt=`Insignia ${r.rank_name||'BRONCE'}`}
-    const title=card.querySelector('.cv61Title');if(title)title.innerHTML=`RANGO <b>${esc(r.rank_name||'BRONCE')}</b><span class="cv64TitleLevel">NIVEL ${lvl}</span>`;
-    const fill=card.querySelector('.cv61Bar i');if(fill)fill.style.width=pct+'%';
-    const meta=card.querySelector('.cv61Meta');if(meta)meta.innerHTML=`<b>${rating.toLocaleString('es-CL',{maximumFractionDigits:2})} CV</b><span>${lvl>=26?'Rango máximo':remaining.toLocaleString('es-CL',{maximumFractionDigits:2})+' CV para Nivel '+(lvl+1)}</span>`;
-    const state=card.querySelector('.cv64State');if(state){state.style.setProperty('--state',st.color);state.innerHTML=`<strong>${st.title}</strong><span>${st.msg}</span>`}
-    const next=card.querySelector('.cv61Next');if(next&&lvl<26){const nextName=d.next_rank?.rank_name||d.next_rank?.name||'SIGUIENTE';const min=Number(d.next_rank?.min_level||lvl+1),n=Math.max(1,min-lvl);next.innerHTML=`<strong>PRÓXIMO RANGO · ${esc(nextName)}</strong><span>${n} ascenso${n===1?'':'s'} restante${n===1?'':'s'} · Disciplina ${st.score}%</span>`}
+    const img=card.querySelector('.cv61Badge img');if(img){setAttrIfChanged(img,'src',rankAsset(d));setAttrIfChanged(img,'alt',`Insignia ${r.rank_name||'BRONCE'}`)}
+    setHTMLIfChanged(card.querySelector('.cv61Title'),`RANGO <b>${esc(r.rank_name||'BRONCE')}</b><span class="cv64TitleLevel">NIVEL ${lvl}</span>`);
+    const fill=card.querySelector('.cv61Bar i');if(fill&&fill.style.width!==pct+'%')fill.style.width=pct+'%';
+    setHTMLIfChanged(card.querySelector('.cv61Meta'),`<b>${rating.toLocaleString('es-CL',{maximumFractionDigits:2})} CV</b><span>${lvl>=26?'Rango máximo':remaining.toLocaleString('es-CL',{maximumFractionDigits:2})+' CV para Nivel '+(lvl+1)}</span>`);
+    const state=card.querySelector('.cv64State');if(state){state.style.setProperty('--state',st.color);setHTMLIfChanged(state,`<strong>${st.title}</strong><span>${st.msg}</span>`)}
+    const next=card.querySelector('.cv61Next');if(next&&lvl<26){const nextName=d.next_rank?.rank_name||d.next_rank?.name||'SIGUIENTE';const min=Number(d.next_rank?.min_level||lvl+1),n=Math.max(1,min-lvl);setHTMLIfChanged(next,`<strong>PRÓXIMO RANGO · ${esc(nextName)}</strong><span>${n} ascenso${n===1?'':'s'} restante${n===1?'':'s'} · Disciplina ${st.score}%</span>`)}
   }
 
   async function refresh(){
@@ -96,9 +98,20 @@
     }finally{running=false}
   }
   function schedule(ms=80){clearTimeout(timer);timer=setTimeout(refresh,ms)}
+  function rankSurfaceAdded(node){
+    if(!(node instanceof Element))return false;
+    return node.matches?.('.cv64WorkoutRankHud,.cv61RankCard')||!!node.querySelector?.('.cv64WorkoutRankHud,.cv61RankCard');
+  }
   document.addEventListener('cv:rendered',()=>schedule(40));
   window.addEventListener('pageshow',()=>schedule(120));
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule(120)});
-  new MutationObserver(()=>schedule(90)).observe(document.documentElement,{childList:true,subtree:true});
+  const rankMountObserver=new MutationObserver(records=>{
+    for(const record of records){
+      for(const node of record.addedNodes){
+        if(rankSurfaceAdded(node)){schedule(30);return}
+      }
+    }
+  });
+  rankMountObserver.observe(document.getElementById('content')||document.body,{childList:true,subtree:true});
   schedule(180);
 })();
