@@ -111,6 +111,18 @@ elif legacy_compact_v76 in text:
 elif 'copy.dataset.cvCompactSigV76=compactSigV76;' not in text:
     raise SystemExit('V76 V40 active signature target missing')
 
+# V76 production-canary active-session finding: the historical V40 one-second tick
+# still rebuilt the compact statistics span with innerHTML on every tick. That write
+# wakes both the V40 character-data/child-list observer and V31 child-list observer,
+# creating continuous DOM churn only after a workout starts. The tick now owns time
+# only; semantic workout statistics remain owned by renderCompactTopV40/applyCompactV40.
+old_tick="""  function bootTickV40(){if(compactTickV40)return;compactTickV40=setInterval(()=>{if(document.body.classList.contains('cvWorkoutActiveV40')){refreshTimerV40();const s=stateV40(),copy=document.querySelector('.cvWorkoutCompactCopyV40 span:not(.cvWorkoutCompactProgressV40)');if(copy){const em=copy.querySelector('em'),time=em?.textContent||elapsedV40(),d=workoutDayV40();copy.innerHTML='<b>'+s.doneSets+'/'+s.totalSets+'</b> series · '+Math.round(s.volume).toLocaleString('es-CL')+' kg·reps · <em id=\"cvCompactTimerV40\">'+time+'</em> · '+s.pct+'%'}const fill=document.querySelector('.cvWorkoutCompactProgressV40 i');if(fill)fill.style.width=s.pct+'%'}},1000)}"""
+new_tick="""  function bootTickV40(){if(compactTickV40)return;compactTickV40=setInterval(()=>{if(!document.body.classList.contains('cvWorkoutActiveV40'))return;const el=document.getElementById('cvCompactTimerV40'),time=elapsedV40();if(el&&el.textContent!==time)el.textContent=time},1000)}"""
+if old_tick in text:
+    text=text.replace(old_tick,new_tick,1)
+elif new_tick not in text:
+    raise SystemExit('V76 V40 active tick stability target missing')
+
 # V76 real physical-touch finding: V61 is an external runtime asset. Its refresh(false)
 # repeatedly removed and rebuilt the complete Home rank card. V64/V65 observers then
 # redecorated each replacement, moving VER RUTINA between hit-test and trusted touch.
@@ -134,13 +146,15 @@ text=text.replace('</body>',payload+'</body>',1)
 # Final ownership / safety checks.
 if text.rfind('CVWorkoutSetGuardV74') <= text.rfind('window.cvToggleSet='):
     raise SystemExit('V74 is not the final set-toggle owner')
-for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,ACTIVE_DOM_STABILITY_MARKER,HOME_RANK_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;",'cvBadgeTextV76','cvHeroSignatureV76',"live&&live.textContent!=='LISTO PARA INICIAR'","const compactSigV76=[name,s.doneSets,s.totalSets,Math.round(s.volume),s.pct].join('|');",'copy.dataset.cvCompactSigV76=compactSigV76;']:
+for token in [MARKER,START_STABILITY_MARKER,COMPACT_STABILITY_MARKER,ACTIVE_DOM_STABILITY_MARKER,HOME_RANK_STABILITY_MARKER,SCRIPT_ID,'CVWorkoutSetGuardV74','cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save','if(!data||!workout?.dayId||!Array.isArray(data.days))return [];',"if(h.querySelector('.cvWorkoutStartV40'))return;",'cvBadgeTextV76','cvHeroSignatureV76',"live&&live.textContent!=='LISTO PARA INICIAR'","const compactSigV76=[name,s.doneSets,s.totalSets,Math.round(s.volume),s.pct].join('|');",'copy.dataset.cvCompactSigV76=compactSigV76;',"if(el&&el.textContent!==time)el.textContent=time"]:
     if token not in text:
         raise SystemExit(f'V74 stable artifact missing: {token}')
 if 'if(copy.innerHTML!==compactHtmlV76)copy.innerHTML=compactHtmlV76;' in text:
     raise SystemExit('V76 unstable V40 innerHTML comparator survived final build')
+if old_tick in text:
+    raise SystemExit('V76 unstable V40 one-second innerHTML tick survived final build')
 if '__cv61DashV76' not in rank_text:
     raise SystemExit('V76 V61 rank asset stability contract missing')
 
 HTML.write_text(text,encoding='utf-8')
-print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","mutation-safe V31 active workout v76","semantic-signature V40 compact sync v76","mutation-safe V61 home rank v76"],"bytes":%d}'%len(text.encode('utf-8')))
+print('{"patches":["single-flight set toggle v74","420ms double-tap suppression v74","pre-hydration exercise guard v74","stable pre-start CTA ownership v76","mutation-safe V31 active workout v76","semantic-signature V40 compact sync v76","mutation-safe V40 active tick v76","mutation-safe V61 home rank v76"],"bytes":%d}'%len(text.encode('utf-8')))
