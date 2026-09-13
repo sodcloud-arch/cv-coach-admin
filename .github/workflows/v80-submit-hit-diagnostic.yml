@@ -1,4 +1,4 @@
-name: V80 Submit Hit Target Diagnostic
+name: V80 Submit Hit Diagnostic Patch ONE SHOT
 
 on:
   push:
@@ -8,19 +8,17 @@ on:
       - .github/workflows/v80-submit-hit-diagnostic.yml
 
 permissions:
-  contents: read
-  id-token: write
+  contents: write
 
 jobs:
-  diagnose:
+  patch:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
           ref: diag/v80-submit-hit-target
 
-      - name: Add hit-target diagnostics locally
+      - name: Add persistent hit-target diagnostics to canary
         shell: bash
         run: |
           python - <<'PY'
@@ -37,17 +35,13 @@ jobs:
           p.write_text(t.replace(old2,new2,1),encoding='utf-8')
           PY
 
-      - name: Install Chromium
+      - name: Commit diagnostic improvement and remove one-shot workflow
         shell: bash
         run: |
           set -euo pipefail
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-
-      - name: Run Chromium diagnostic
-        shell: bash
-        env:
-          DEBUG: pw:browser
-        run: |
-          set -euo pipefail
-          node scripts/run-production-canary-v80-chromium.mjs
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/test-production-canary-v76.mjs
+          git rm .github/workflows/v80-submit-hit-diagnostic.yml
+          git commit -m 'test(v80): report obstructing hit target in touch diagnostics'
+          git push origin HEAD:diag/v80-submit-hit-target
