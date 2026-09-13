@@ -27,31 +27,12 @@ jobs:
           from pathlib import Path
           p=Path('scripts/test-production-canary-v76.mjs')
           t=p.read_text(encoding='utf-8')
-          old="""        const hit=document.elementFromPoint(cx,cy);
-        const style=getComputedStyle(el);
-        return {
-"""
-          new="""        const hit=document.elementFromPoint(cx,cy);
-        const style=getComputedStyle(el);
-        const hitStyle=hit?getComputedStyle(hit):null;
-        const hitRect=hit?.getBoundingClientRect?.();
-        const hitChain=[];
-        for(let node=hit,depth=0;node&&depth<6;node=node.parentElement,depth++){
-          const ns=getComputedStyle(node),nr=node.getBoundingClientRect();
-          hitChain.push({tag:node.tagName,id:node.id||'',className:typeof node.className==='string'?node.className:'',text:(node.textContent||'').trim().slice(0,80),position:ns.position,zIndex:ns.zIndex,pointerEvents:ns.pointerEvents,rect:{x:nr.x,y:nr.y,width:nr.width,height:nr.height}});
-        }
-        return {
-"""
+          old="        const hit=document.elementFromPoint(cx,cy);\n        const style=getComputedStyle(el);\n        return {\n"
+          new="        const hit=document.elementFromPoint(cx,cy);\n        const style=getComputedStyle(el);\n        const hitStyle=hit?getComputedStyle(hit):null;\n        const hitRect=hit?.getBoundingClientRect?.();\n        const hitChain=[];\n        for(let node=hit,depth=0;node&&depth<6;node=node.parentElement,depth++){\n          const ns=getComputedStyle(node),nr=node.getBoundingClientRect();\n          hitChain.push({tag:node.tagName,id:node.id||'',className:typeof node.className==='string'?node.className:'',text:(node.textContent||'').trim().slice(0,80),position:ns.position,zIndex:ns.zIndex,pointerEvents:ns.pointerEvents,rect:{x:nr.x,y:nr.y,width:nr.width,height:nr.height}});\n        }\n        return {\n"
           if old not in t: raise SystemExit('tap diagnostic anchor missing')
           t=t.replace(old,new,1)
-          old2="""          hitOk:Boolean(hit&&(hit===el||el.contains(hit))),
-          text:(el.textContent||'').trim().slice(0,80),
-"""
-          new2="""          hitOk:Boolean(hit&&(hit===el||el.contains(hit))),
-          hit:hit?{tag:hit.tagName,id:hit.id||'',className:typeof hit.className==='string'?hit.className:'',text:(hit.textContent||'').trim().slice(0,80),position:hitStyle?.position||'',zIndex:hitStyle?.zIndex||'',pointerEvents:hitStyle?.pointerEvents||'',rect:hitRect?{x:hitRect.x,y:hitRect.y,width:hitRect.width,height:hitRect.height}:null}:null,
-          hitChain,
-          text:(el.textContent||'').trim().slice(0,80),
-"""
+          old2="          hitOk:Boolean(hit&&(hit===el||el.contains(hit))),\n          text:(el.textContent||'').trim().slice(0,80),\n"
+          new2="          hitOk:Boolean(hit&&(hit===el||el.contains(hit))),\n          hit:hit?{tag:hit.tagName,id:hit.id||'',className:typeof hit.className==='string'?hit.className:'',text:(hit.textContent||'').trim().slice(0,80),position:hitStyle?.position||'',zIndex:hitStyle?.zIndex||'',pointerEvents:hitStyle?.pointerEvents||'',rect:hitRect?{x:hitRect.x,y:hitRect.y,width:hitRect.width,height:hitRect.height}:null}:null,\n          hitChain,\n          text:(el.textContent||'').trim().slice(0,80),\n"
           if old2 not in t: raise SystemExit('tap diagnostic return anchor missing')
           p.write_text(t.replace(old2,new2,1),encoding='utf-8')
           PY
