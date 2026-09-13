@@ -60,7 +60,7 @@ old_v40 = """  const baseRender=window.render;
 new_v40 = """  let compactSyncQueuedV44=false;
   function queueCompactV44(){if(compactSyncQueuedV44)return;compactSyncQueuedV44=true;requestAnimationFrame(()=>{compactSyncQueuedV44=false;applyCompactV40()})}
   const compactObserverV44=new MutationObserver(queueCompactV44);
-  compactObserverV44.observe(document.getElementById('content')||document.body,{childList:true,subtree:true,characterData:true});
+  compactObserverV44.observe(document.getElementById('content')||document.body,{childList:true,subtree:true});
   document.addEventListener('click',event=>{if(event.target.closest('.cvSetCheck,.cvAddSet'))setTimeout(queueCompactV44,0)},true);
   document.addEventListener('focusin',event=>{
 """
@@ -157,6 +157,7 @@ required = [
     "cvPremiumDecorObserver",
     "queueAthleteEnhance",
     "compactObserverV44",
+    "compactObserverV44.observe(document.getElementById('content')||document.body,{childList:true,subtree:true});",
     "cv:set-state",
     "cv:set-added",
     marker_v44,
@@ -172,6 +173,7 @@ forbidden = [
     "const baseRender=window.render;window.render=function(){const r=baseRender.apply(this,arguments);requestAnimationFrame(decorateCards);return r};",
     "if(typeof window.cvToggleSet==='function'){const baseToggle=window.cvToggleSet;window.cvToggleSet=async function(){const r=await baseToggle.apply(this,arguments);requestAnimationFrame(enhance);return r}}",
     "if(typeof window.startWorkout==='function'){const baseStart=window.startWorkout;window.startWorkout=async function(){const result=await baseStart.apply(this,arguments);requestAnimationFrame(applyCompactV40);return result}}",
+    "compactObserverV44.observe(document.getElementById('content')||document.body,{childList:true,subtree:true,characterData:true});",
     "const oldToggle=window.cvToggleSet;",
     "const oldAdd=window.cvAddSet;",
     "Wrap it here so visual feedback cannot be overwritten",
@@ -196,6 +198,7 @@ for patch in [
     "v23 visual wrapper removed",
     "v31 workout visual wrappers removed",
     "v40 compact visual wrappers removed",
+    "v40 compact observer excludes timer characterData v76",
     "v21 set feedback wrappers replaced by events",
     "v32 visual rest wrapper replaced by set-state event",
     "canonical set-state/set-added event bus",
@@ -205,4 +208,4 @@ for patch in [
         patches.append(patch)
 metadata["patches"] = patches
 BUILD.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-7:]}, ensure_ascii=False))
+print(json.dumps({"sha256": sha, "bytes": metadata["bytes"], "patches": metadata["patches"][-8:]}, ensure_ascii=False))
