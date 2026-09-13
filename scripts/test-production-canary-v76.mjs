@@ -72,12 +72,21 @@ async function tap(page,locator,label='target'){
         const cy=r.top+r.height/2;
         const hit=document.elementFromPoint(cx,cy);
         const style=getComputedStyle(el);
+        const hitStyle=hit?getComputedStyle(hit):null;
+        const hitRect=hit?.getBoundingClientRect?.();
+        const hitChain=[];
+        for(let node=hit,depth=0;node&&depth<6;node=node.parentElement,depth++){
+          const ns=getComputedStyle(node),nr=node.getBoundingClientRect();
+          hitChain.push({tag:node.tagName,id:node.id||'',className:typeof node.className==='string'?node.className:'',text:(node.textContent||'').trim().slice(0,80),position:ns.position,zIndex:ns.zIndex,pointerEvents:ns.pointerEvents,rect:{x:nr.x,y:nr.y,width:nr.width,height:nr.height}});
+        }
         return {
           connected:true,
           rect:{x:r.x,y:r.y,width:r.width,height:r.height},
           center:{x:cx,y:cy},
           viewport:{width:window.innerWidth,height:window.innerHeight},
           hitOk:Boolean(hit&&(hit===el||el.contains(hit))),
+          hit:hit?{tag:hit.tagName,id:hit.id||'',className:typeof hit.className==='string'?hit.className:'',text:(hit.textContent||'').trim().slice(0,80),position:hitStyle?.position||'',zIndex:hitStyle?.zIndex||'',pointerEvents:hitStyle?.pointerEvents||'',rect:hitRect?{x:hitRect.x,y:hitRect.y,width:hitRect.width,height:hitRect.height}:null}:null,
+          hitChain,
           text:(el.textContent||'').trim().slice(0,80),
           className:typeof el.className==='string'?el.className:'',
           visibility:style.visibility,
