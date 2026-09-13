@@ -1,10 +1,11 @@
-name: V80 Canary Feedback Patch — ONE SHOT
+name: V80 Canary Feedback Patch ONE SHOT
 
 on:
   push:
-    branches: [fix/v80-canary-v48-feedback]
+    branches:
+      - fix/v80-canary-v48-feedback
     paths:
-      - '.github/workflows/v80-feedback-canary-one-shot.yml'
+      - .github/workflows/v80-feedback-canary-one-shot.yml
 
 permissions:
   contents: write
@@ -22,26 +23,15 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('scripts/test-production-canary-v76.mjs')
-          t=p.read_text(encoding='utf-8')
-          old="""  await page.locator('#cvFeedbackFinish').waitFor({state:'visible',timeout:10000});
-  await page.locator('#cvFeedbackEffort').evaluate(el=>{el.value='6';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
-  await page.locator('#cvFeedbackFatigue').evaluate(el=>{el.value='3';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
-  await page.locator('#cvFeedbackPain').evaluate(el=>{el.value='0';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});
-  await page.locator('#cvFeedbackNotes').fill(`CV_CANARY_V76 run=${RUN_ID}`);
-  await tap(page,page.locator('#cvFeedbackFinish'),'submit-feedback');
-"""
-          new="""  await page.locator('#cvFeedbackFinish').waitFor({state:'visible',timeout:10000});
-  await tap(page,page.locator('#cvFeedbackDifficulty button[data-level=\"3\"]'),'feedback-difficulty-3');
-  await tap(page,page.locator('#cvFeedbackPainChoice button[data-pain=\"0\"]'),'feedback-pain-no');
-  await page.locator('#cvFeedbackNotes').fill(`CV_CANARY_V76 run=${RUN_ID}`);
-  await tap(page,page.locator('#cvFeedbackFinish'),'submit-feedback');
-"""
+          p = Path('scripts/test-production-canary-v76.mjs')
+          t = p.read_text(encoding='utf-8')
+          old = "  await page.locator('#cvFeedbackFinish').waitFor({state:'visible',timeout:10000});\n" + "  await page.locator('#cvFeedbackEffort').evaluate(el=>{el.value='6';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});\n" + "  await page.locator('#cvFeedbackFatigue').evaluate(el=>{el.value='3';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});\n" + "  await page.locator('#cvFeedbackPain').evaluate(el=>{el.value='0';el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))});\n" + "  await page.locator('#cvFeedbackNotes').fill(`CV_CANARY_V76 run=${RUN_ID}`);\n" + "  await tap(page,page.locator('#cvFeedbackFinish'),'submit-feedback');\n"
+          new = "  await page.locator('#cvFeedbackFinish').waitFor({state:'visible',timeout:10000});\n" + "  await tap(page,page.locator('#cvFeedbackDifficulty button[data-level=\\\"3\\\"]'),'feedback-difficulty-3');\n" + "  await tap(page,page.locator('#cvFeedbackPainChoice button[data-pain=\\\"0\\\"]'),'feedback-pain-no');\n" + "  await page.locator('#cvFeedbackNotes').fill(`CV_CANARY_V76 run=${RUN_ID}`);\n" + "  await tap(page,page.locator('#cvFeedbackFinish'),'submit-feedback');\n"
           if old not in t:
               raise SystemExit('legacy feedback block not found')
           if new in t:
               raise SystemExit('new feedback block already present')
-          p.write_text(t.replace(old,new,1),encoding='utf-8')
+          p.write_text(t.replace(old, new, 1), encoding='utf-8')
           PY
 
       - name: Commit patch and remove one-shot workflow
