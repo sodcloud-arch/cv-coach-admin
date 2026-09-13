@@ -1,0 +1,73 @@
+name: CV Coach Built Runtime Static V76
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/inspect-built-runtime-v76.py'
+      - '.github/workflows/client-runtime-static-v76.yml'
+      - 'client-portal/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-built-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build canonical client through V74
+        shell: bash
+        run: |
+          set -euo pipefail
+          python client-portal/stabilize.py
+          python client-portal/consolidate_runtime.py
+          python client-portal/consolidate_session_runtime.py
+          python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
+          python client-portal/upgrade_client_v49.py
+          python client-portal/upgrade_client_v50.py
+          python client-portal/upgrade_client_v51.py
+          python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
+          python client-portal/upgrade_client_v54.py
+          python scripts/test-mobile-workout-v54.py
+          python client-portal/upgrade_client_v55.py
+          python scripts/test-workout-sound-v55.py
+          python client-portal/upgrade_client_v56.py
+          python scripts/test-set-toggle-runtime-v56.py
+          python client-portal/upgrade_client_v57.py
+          python scripts/test-client-modules-v57.py
+          python scripts/test-client-module-e2e-v58.py
+          python client-portal/upgrade_client_v59.py
+          python scripts/test-coach-client-loop-v59.py
+          python client-portal/upgrade_client_v60.py
+          python client-portal/repair_client_v60.py
+          python scripts/test-cv-rank-system-v60.py
+          python client-portal/upgrade_client_v61.py
+          python scripts/test-cv-rank-engine-v61.py
+          python scripts/test-cv-rank-ui-v64.py
+          python scripts/test-cv-rank-ui-v65.py
+          python client-portal/upgrade_client_v67.py
+          python scripts/test-cv-rank-audio-v67.py
+          python client-portal/upgrade_client_v68.py
+          python scripts/test-cv-rank-cinematic-v68.py
+          python client-portal/upgrade_client_v69.py
+          python scripts/test-cv-runtime-stability-v69.py
+          python client-portal/upgrade_client_v74.py
+          python scripts/test-workout-controller-v71.py
+          node --check client-portal/assets/cv-rank-v61.js
+          node --check client-portal/assets/cv-runtime-stability-v69.js
+          node --check client-portal/assets/cv-workout-controller-v71.js
+          node --check client-portal/assets/cv-workout-numpad-v73.js
+          node --check client-portal/assets/cv-workout-set-guard-v74.js
+          test "$(wc -c < client-portal/stable/index.html)" -gt 50000
+
+      - name: Inspect final built runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/inspect-built-runtime-v76.py
