@@ -20,6 +20,8 @@ required_script = [
     'ACTIONS_ID_TOKEN_REQUEST_TOKEN',
     'cv-coach-production-canary-v76',
     'verifyOtp',
+    "typeof sb!=='undefined'",
+    'CV_CANARY_V76_SINGLE_AUTH_CLIENT_OK',
     'startWorkoutFromCurrentView',
     'button[onclick*="startWorkout"]',
     'elementFromPoint',
@@ -93,6 +95,8 @@ assert 'scrollIntoViewIfNeeded' not in script, 'canary must use raw geometry/hit
 assert '.click()' not in script, 'critical canary UI actions must remain physical touchscreen taps'
 assert 'async function athleteAuth(page)' not in script, 'backend verification must not depend on a live WebKit page'
 assert 'await athleteRest(page' not in script, 'REST polling must remain browser-independent'
+assert 'window.supabase.createClient(base,key' not in script, 'canary must reuse the portal Supabase client instead of creating a competing auth client'
+assert 'new Error().stack' not in script, 'lightweight production probe must not capture a stack for every timer/RAF callback'
 assert 'workflow_dispatch:' in workflow
 assert 'schedule:' in workflow
 
