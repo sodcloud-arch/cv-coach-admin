@@ -140,12 +140,14 @@ async function editNumber(page,selector,value){
   await tap(page,input,`edit-${selector.replace('#','')}`);
   const panel=page.locator('#cvNumpadV73');
   await panel.waitFor({state:'visible',timeout:10000});
-  await tap(page,panel.locator('[data-cv-key="clear"]'),'numpad-clear');
+  const back=panel.locator('[data-key="back"]');
+  for(let i=0;i<8;i++)await tap(page,back,`numpad-back-${i+1}`);
   for(const char of String(value)){
-    const key=char==='.'?'dot':char;
-    await tap(page,panel.locator(`[data-cv-key="${key}"]`),`numpad-${key}`);
+    const key=char==='.'?'decimal':char;
+    await tap(page,panel.locator(`[data-key="${key}"]`),`numpad-${key}`);
   }
-  await tap(page,panel.locator('[data-cv-key="done"]'),'numpad-done');
+  await tap(page,panel.locator('[data-pad-action="done"]'),'numpad-done');
+  await panel.waitFor({state:'hidden',timeout:10000});
   await page.waitForFunction(({sel,expected})=>document.querySelector(sel)?.value===expected,{sel:selector,expected:String(value)},{timeout:10000});
 }
 
