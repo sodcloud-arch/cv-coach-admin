@@ -34,6 +34,17 @@ const flowNeedle="  await startWorkoutFromCurrentView(page);\n\n  const active=a
 const flowReplacement=`  await startWorkoutFromCurrentView(page);
 
   const expectedV80Names=['Hack squat','Press banca con barra','Jalón al pecho agarre neutro','Pallof press','Dead bug'];
+  await page.waitForFunction(expectedNames=>{
+    const cards=Array.from(document.querySelectorAll('.cvHevyExercise'));
+    if(cards.length!==expectedNames.length)return false;
+    return cards.every((node,index)=>{
+      const name=(node.getAttribute('data-tech-name')||'').trim();
+      const image=(node.getAttribute('data-tech-img')||'').trim();
+      return name===expectedNames[index]&&image.startsWith('https://');
+    });
+  },expectedV80Names,{timeout:25000});
+  console.log('CV_CANARY_V80_LIVE_EXERCISES_READY');
+
   const exerciseCards=page.locator('.cvHevyExercise');
   await exerciseCards.first().waitFor({state:'visible',timeout:20000});
   const v80Cards=await exerciseCards.evaluateAll(nodes=>nodes.map(node=>({
