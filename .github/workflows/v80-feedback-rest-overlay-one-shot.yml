@@ -1,0 +1,74 @@
+name: V80 Feedback Rest Overlay Patch ONE SHOT
+
+on:
+  push:
+    branches:
+      - fix/v80-feedback-rest-overlay
+    paths:
+      - .github/workflows/v80-feedback-rest-overlay-one-shot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/v80-feedback-rest-overlay
+
+      - name: Patch feedback/rest coexistence
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('client-portal/upgrade_feedback_v48.py')
+          t=p.read_text(encoding='utf-8')
+
+          css_anchor="/* V48 · cierre de sesión simple y orientado a adherencia */\n.cvFeedbackCardV48{"
+          css_repl="/* V48 · cierre de sesión simple y orientado a adherencia */\n.cvFeedbackBackdrop{z-index:420!important}\nbody.cvFeedbackOpenV80 #cvRestVisualV32{visibility:hidden!important;pointer-events:none!important}\n.cvFeedbackCardV48{"
+          if css_anchor not in t:
+              raise SystemExit('V48 CSS anchor missing')
+          t=t.replace(css_anchor,css_repl,1)
+
+          close_anchor="NEW_FEEDBACK_JS = r'''function cvCloseWorkoutFeedback(){document.getElementById('cvWorkoutFeedbackBackdrop')?.remove()}\n"
+          close_repl="NEW_FEEDBACK_JS = r'''function cvFeedbackRestGuardV80(active,restoreRest=true){const rest=document.getElementById('cvRestVisualV32');document.body.classList.toggle('cvFeedbackOpenV80',!!active);if(active){rest?.setAttribute('aria-hidden','true');return}rest?.removeAttribute('aria-hidden');if(!restoreRest)rest?.classList.add('hidden')}\nfunction cvCloseWorkoutFeedback(options={}){const restoreRest=options.restoreRest!==false;document.getElementById('cvWorkoutFeedbackBackdrop')?.remove();cvFeedbackRestGuardV80(false,restoreRest)}\n"
+          if close_anchor not in t:
+              raise SystemExit('V48 close anchor missing')
+          t=t.replace(close_anchor,close_repl,1)
+
+          finish_anchor="clearInterval(timerHandle);cvCloseWorkoutFeedback();workout=null;await loadReal();view='home';render();cvShowWorkoutResult(r||{});"
+          finish_repl="clearInterval(timerHandle);cvCloseWorkoutFeedback({restoreRest:false});workout=null;await loadReal();view='home';render();cvShowWorkoutResult(r||{});"
+          if finish_anchor not in t:
+              raise SystemExit('V48 finish anchor missing')
+          t=t.replace(finish_anchor,finish_repl,1)
+
+          append_anchor="  document.body.appendChild(modal);\n  modal.querySelectorAll('#cvFeedbackDifficulty button')"
+          append_repl="  document.body.appendChild(modal);cvFeedbackRestGuardV80(true);\n  modal.querySelectorAll('#cvFeedbackDifficulty button')"
+          if append_anchor not in t:
+              raise SystemExit('V48 modal append anchor missing')
+          t=t.replace(append_anchor,append_repl,1)
+
+          p.write_text(t,encoding='utf-8')
+          PY
+
+      - name: Static guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'cvFeedbackBackdrop{z-index:420!important}' client-portal/upgrade_feedback_v48.py
+          grep -q 'cvFeedbackOpenV80 #cvRestVisualV32' client-portal/upgrade_feedback_v48.py
+          grep -q 'cvFeedbackRestGuardV80(true)' client-portal/upgrade_feedback_v48.py
+          grep -q 'cvCloseWorkoutFeedback({restoreRest:false})' client-portal/upgrade_feedback_v48.py
+
+      - name: Commit patch and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'CV Coach Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client-portal/upgrade_feedback_v48.py
+          git rm .github/workflows/v80-feedback-rest-overlay-one-shot.yml
+          git commit -m 'fix(v80): keep rest timer behind workout feedback'
+          git push origin HEAD:fix/v80-feedback-rest-overlay
