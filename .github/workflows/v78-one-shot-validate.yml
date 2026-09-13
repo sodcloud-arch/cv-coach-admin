@@ -1,0 +1,33 @@
+name: CV Coach V78 One-Shot Validate
+
+on:
+  push:
+    branches:
+      - feature/v78-exercise-library-control-center
+    paths:
+      - .github/workflows/v78-one-shot-validate.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: node --check admin-assets/v78-library.js
+      - name: Index contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          tag='<script src="/admin-assets/v78-library.js"></script>'
+          assert s.count(tag)==1, f'Expected exactly one V78 tag, got {s.count(tag)}'
+          assert s.index(tag) < s.index('</body>')
+          print('V78 index contract OK')
+          PY
+      - name: Migration contract
+        run: |
+          grep -q "exercise_library_reviews" supabase/migrations/202609131530_exercise_library_control_center_v78.sql
+          grep -q "manage_exercise_library_backend" supabase/migrations/202609131530_exercise_library_control_center_v78.sql
