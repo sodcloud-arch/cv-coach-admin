@@ -28,6 +28,9 @@ client_deploy = read(".github/workflows/deploy-cv-coach-client-production.yml")
 vercel = read("vercel.json")
 edge_program = read("supabase/functions/generate-ai-program/index.ts")
 programmable_exercise_v81 = read("supabase/migrations/202609132330_programmable_exercise_contract_v81.sql")
+adaptive_progression_v83 = read("supabase/migrations/202609140300_adaptive_progression_system_v83.sql")
+progression_admin_v83 = read("admin-assets/cv-progression-admin-v83.js")
+progression_patch_v83 = read("scripts/upgrade_admin_progression_v83.py")
 
 require(admin, "client_url:'https://cv-coach-roan.vercel.app'", "public client URL")
 require(admin, "'/functions/v1/publish-program'", "secure program publication")
@@ -68,6 +71,33 @@ require(programmable_exercise_v81, "trg_guard_exercise_review_state_v81", "exerc
 require(programmable_exercise_v81, "trg_program_exercise_programmable_v81", "program assignment hard gate")
 require(programmable_exercise_v81, "Exercise is used by an active or draft program; replace it there before deactivation", "in-use deactivation guard")
 require(programmable_exercise_v81, "V81 invariant failed: draft/active program contains a non-programmable exercise", "migration drift assertion")
+
+# V83: adaptive progression remains deterministic, bounded and coach-controlled.
+for marker, label in (
+    ("private.progression_recommendation_v83", "canonical reps/time progression engine"),
+    ("'build_time'", "time progression action"),
+    ("training_adaptation_reviews", "adaptive block review persistence"),
+    ("deload_recommended", "deload recommendation state"),
+    ("private.compute_training_adaptation_v83", "adaptive block-state engine"),
+    ("trg_progression_suggestion_guard_v83", "review hard guard"),
+    ("review_progression_suggestion_v83", "audited progression review RPC"),
+    ("Modified load exceeds V83 safe ceiling", "coach load ceiling"),
+    ("Modified duration exceeds V83 safe bounds", "coach duration ceiling"),
+    ("trg_attach_time_progression_v83", "time progression session attachment"),
+    ("trg_apply_time_progression_to_set_v83", "time suggestion application"),
+    ("get_progression_center_v83", "coach progression center RPC"),
+):
+    require(adaptive_progression_v83, marker, label)
+for marker, label in (
+    ("CV_ADMIN_PROGRESSION_V83_READY", "V83 Admin module"),
+    ("review_progression_suggestion_v83", "V83 Admin review flow"),
+    ("DELOAD RECOMENDADO", "V83 Admin deload state"),
+    ("AUMENTAR TIEMPO", "V83 Admin time progression"),
+):
+    require(progression_admin_v83, marker, label)
+require(progression_patch_v83, 'data-v="progression"', "V83 Admin navigation patch")
+require(admin_deploy, "upgrade_admin_progression_v83.py", "V83 Admin deploy build")
+require(admin_deploy, "PUBLIC_ADMIN_V83_OK", "V83 public deploy verification")
 
 forbid(admin, "cv-coach-sodcloud-1237.vercel.app", "protected client domain")
 
