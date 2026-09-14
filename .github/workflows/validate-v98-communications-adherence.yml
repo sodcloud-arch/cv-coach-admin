@@ -1,0 +1,95 @@
+name: CV Coach V98 Communications Adherence Contracts
+
+on:
+  push:
+    branches:
+      - main
+      - feature/v98-communications-adherence-intelligence
+    paths:
+      - "admin-assets/cv-communications-adherence-v98.js"
+      - "scripts/upgrade_admin_communications_v98.py"
+      - "scripts/test-admin-communications-v98.py"
+      - "supabase/migrations/202609141735_communications_adherence_intelligence_v98.sql"
+      - "supabase/migrations/202609141745_communications_adherence_intelligence_v98_1.sql"
+      - "supabase/migrations/202609141755_communications_adherence_intelligence_v98_2.sql"
+      - ".github/workflows/validate-v98-communications-adherence.yml"
+      - ".github/workflows/deploy-cv-coach-admin-production.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "admin-assets/cv-communications-adherence-v98.js"
+      - "scripts/upgrade_admin_communications_v98.py"
+      - "scripts/test-admin-communications-v98.py"
+      - "supabase/migrations/202609141735_communications_adherence_intelligence_v98.sql"
+      - "supabase/migrations/202609141745_communications_adherence_intelligence_v98_1.sql"
+      - "supabase/migrations/202609141755_communications_adherence_intelligence_v98_2.sql"
+      - ".github/workflows/validate-v98-communications-adherence.yml"
+      - ".github/workflows/deploy-cv-coach-admin-production.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v98:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate V98 JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check admin-assets/cv-communications-adherence-v98.js
+          grep -q 'CV_ADMIN_COMMUNICATIONS_ADHERENCE_V98_READY' admin-assets/cv-communications-adherence-v98.js
+          grep -q 'YA LO ENVIÉ · REGISTRAR CONTACTO' admin-assets/cv-communications-adherence-v98.js
+          grep -q 'mark_adherence_followup_contacted_v98' admin-assets/cv-communications-adherence-v98.js
+          ! grep -Eqi '(auto.?send.?=.?true|auto.?dispatch.?=.?true)' admin-assets/cv-communications-adherence-v98.js
+
+      - name: Validate V98 Admin installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/upgrade_admin_communications_v98.py
+          python scripts/test-admin-communications-v98.py
+          grep -q 'cv-admin-communications-adherence-v98' index.html
+          grep -q '/admin-assets/cv-communications-adherence-v98.js' index.html
+
+      - name: Validate V98 backend contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='supabase/migrations/202609141735_communications_adherence_intelligence_v98.sql'
+          hard='supabase/migrations/202609141745_communications_adherence_intelligence_v98_1.sql'
+          fix='supabase/migrations/202609141755_communications_adherence_intelligence_v98_2.sql'
+          grep -q 'get_adherence_communication_center_v98' "$base"
+          grep -q 'prepare_adherence_followup_v98' "$base"
+          grep -q 'mark_adherence_followup_contacted_v98' "$base"
+          grep -q 'refresh_adherence_followup_outcomes_v98' "$base"
+          grep -q "ws.status in ('completed','partial')" "$fix"
+          grep -q "'abandoned_sessions_reset_clock',false" "$fix"
+          grep -q 'quiet_hours_checked' "$hard"
+          grep -q 'future_workout_timestamps_excluded' "$hard"
+          grep -q "interval '7 days'" "$hard"
+          grep -q "'learning_ready',r.sample_size>=3" "$base"
+          grep -q "'auto_send',false" "$base"
+          grep -q "'draft_creation_is_not_contact',true" "$base"
+          grep -q 'manual_contact_confirmation_required' "$base"
+          grep -q "upper(coalesce(p.risk_level,'GREEN')) <> 'RED'" "$base"
+
+      - name: Validate no provider dispatch mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          files='supabase/migrations/202609141735_communications_adherence_intelligence_v98.sql supabase/migrations/202609141745_communications_adherence_intelligence_v98_1.sql supabase/migrations/202609141755_communications_adherence_intelligence_v98_2.sql admin-assets/cv-communications-adherence-v98.js'
+          ! grep -Eqi 'dispatch_enabled[[:space:]]*=[[:space:]]*true' $files
+          ! grep -Eqi 'update[[:space:]]+public\.communication_provider_config' $files
+          ! grep -Eqi 'insert[[:space:]]+into[[:space:]]+public\.communication_provider_config' $files
+          ! grep -Eqi '(send_whatsapp|dispatch_whatsapp|provider_dispatch\()' $files
+
+      - name: Diff hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          ! git grep -nE '^(<<<<<<< |>>>>>>> |=======$)' -- ':!*.md'

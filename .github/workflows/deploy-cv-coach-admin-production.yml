@@ -17,6 +17,8 @@ on:
       - "scripts/test-admin-mesocycle-intelligence-v85.py"
       - "scripts/upgrade_admin_coach_intelligence_v86.py"
       - "scripts/test-admin-coach-intelligence-v86.py"
+      - "scripts/upgrade_admin_communications_v98.py"
+      - "scripts/test-admin-communications-v98.py"
       - "supabase/migrations/**"
       - ".github/workflows/deploy-cv-coach-admin-production.yml"
   workflow_dispatch:
@@ -38,7 +40,7 @@ jobs:
     steps:
       - name: Checkout canonical main
         uses: actions/checkout@v4
-      - name: Build and test Admin through Coach Intelligence V86
+      - name: Build and test Admin through Communications & Adherence V98
         shell: bash
         run: |
           set -euo pipefail
@@ -66,6 +68,10 @@ jobs:
           grep -q 'cv-admin-coach-intelligence-v86' index.html
           grep -q 'data-v="intelligence"' index.html
           node --check admin-assets/cv-coach-intelligence-admin-v86.js
+          python scripts/upgrade_admin_communications_v98.py
+          python scripts/test-admin-communications-v98.py
+          grep -q 'cv-admin-communications-adherence-v98' index.html
+          node --check admin-assets/cv-communications-adherence-v98.js
       - name: Check Vercel credential
         id: auth
         shell: bash
@@ -92,7 +98,7 @@ jobs:
       - name: Deploy canonical production
         if: steps.auth.outputs.available == 'true'
         run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-      - name: Verify public Admin alias through Coach Intelligence V86
+      - name: Verify public Admin alias through Communications & Adherence V98
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
@@ -106,7 +112,9 @@ jobs:
             adaptive_js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-adaptive-programming-admin-v84.js || true)"
             mesocycle_js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-mesocycle-intelligence-admin-v85.js || true)"
             intelligence_js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-coach-intelligence-admin-v86.js || true)"
-            if [[ "$body" == *"CV Coach"* && "$body" == *"COACH ADMIN"* && "$body" == *"cv-admin-rank-v62"* && "$body" == *"data-v=\"ranking\""* && "$body" == *"cv-admin-progression-v83"* && "$body" == *"data-v=\"progression\""* && "$body" == *"cv-admin-adaptive-programming-v84"* && "$body" == *"TENDENCIAS V84"* && "$body" == *"cv-admin-mesocycle-intelligence-v85"* && "$body" == *"cv-admin-coach-intelligence-v86"* && "$body" == *"data-v=\"intelligence\""* && "$rank_js_status" == "200" && "$rank_css_status" == "200" && "$progression_js_status" == "200" && "$adaptive_js_status" == "200" && "$mesocycle_js_status" == "200" && "$intelligence_js_status" == "200" ]]; then
+            adherence_js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-communications-adherence-v98.js || true)"
+            adherence_js="$(curl --fail --silent --show-error --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-communications-adherence-v98.js || true)"
+            if [[ "$body" == *"CV Coach"* && "$body" == *"COACH ADMIN"* && "$body" == *"cv-admin-rank-v62"* && "$body" == *"data-v=\"ranking\""* && "$body" == *"cv-admin-progression-v83"* && "$body" == *"data-v=\"progression\""* && "$body" == *"cv-admin-adaptive-programming-v84"* && "$body" == *"TENDENCIAS V84"* && "$body" == *"cv-admin-mesocycle-intelligence-v85"* && "$body" == *"cv-admin-coach-intelligence-v86"* && "$body" == *"data-v=\"intelligence\""* && "$body" == *"cv-admin-communications-adherence-v98"* && "$adherence_js" == *"CV_ADMIN_COMMUNICATIONS_ADHERENCE_V98_READY"* && "$rank_js_status" == "200" && "$rank_css_status" == "200" && "$progression_js_status" == "200" && "$adaptive_js_status" == "200" && "$mesocycle_js_status" == "200" && "$intelligence_js_status" == "200" && "$adherence_js_status" == "200" ]]; then
               grep -qi '^content-security-policy:' "$headers"
               grep -qi '^x-content-type-options: nosniff' "$headers"
               grep -qi '^x-frame-options: DENY' "$headers"
@@ -114,12 +122,13 @@ jobs:
               echo 'PUBLIC_ADMIN_V84_OK'
               echo 'PUBLIC_ADMIN_V85_OK'
               echo 'PUBLIC_ADMIN_V86_OK'
+              echo 'PUBLIC_ADMIN_V98_OK'
               rm -f "$headers"
               exit 0
             fi
             rm -f "$headers"; sleep 3
           done
-          echo 'Public Admin V86 verification failed' >&2; exit 1
+          echo 'Public Admin V98 verification failed' >&2; exit 1
       - name: Credential blocker marker
         if: steps.auth.outputs.available != 'true'
         run: |
