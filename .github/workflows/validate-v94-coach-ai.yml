@@ -1,0 +1,69 @@
+name: CV Coach V94 Coach AI Contracts
+
+on:
+  push:
+    paths:
+      - 'admin-assets/coach-ai-command-center-v94.js'
+      - 'admin-assets/v78-library.js'
+      - 'supabase/migrations/202609141545_coach_ai_command_center_v94.sql'
+      - 'supabase/migrations/202609141550_coach_ai_command_center_v94_1.sql'
+      - '.github/workflows/validate-v94-coach-ai.yml'
+  pull_request:
+    paths:
+      - 'admin-assets/coach-ai-command-center-v94.js'
+      - 'admin-assets/v78-library.js'
+      - 'supabase/migrations/202609141545_coach_ai_command_center_v94.sql'
+      - 'supabase/migrations/202609141550_coach_ai_command_center_v94_1.sql'
+      - '.github/workflows/validate-v94-coach-ai.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v94:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Validate V94 JavaScript
+        run: |
+          set -euo pipefail
+          node --check admin-assets/coach-ai-command-center-v94.js
+          node --check admin-assets/v78-library.js
+      - name: Validate backend contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='supabase/migrations/202609141545_coach_ai_command_center_v94.sql'
+          patch='supabase/migrations/202609141550_coach_ai_command_center_v94_1.sql'
+          grep -q 'get_coach_ai_command_center_v94' "$base"
+          grep -q 'get_coach_intelligence_dashboard_v86' "$base"
+          grep -q 'get_client_lifecycle_center_v93' "$base"
+          grep -q 'recommendation_only' "$base"
+          grep -q 'read_only_aggregate' "$base"
+          grep -q 'no_synthetic_identity' "$base"
+          grep -q 'auto_program_edit' "$base"
+          grep -q 'V94.1_RISK_ROUTING' "$patch"
+          grep -q 'review_training_signals' "$patch"
+          if grep -Eqi 'insert into public\.|update public\.|delete from public\.|publish_program_backend|apply_ai_program_generation' "$base" "$patch"; then
+            echo 'V94 command center must remain read-only' >&2
+            exit 1
+          fi
+      - name: Validate Admin integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          js='admin-assets/coach-ai-command-center-v94.js'
+          boot='admin-assets/v78-library.js'
+          grep -q "VIEW='coach-ai'" "$js"
+          grep -q 'get_coach_ai_command_center_v94' "$js"
+          grep -q 'COACH AI' "$js"
+          grep -q 'ABRIR FICHA' "$js"
+          grep -q 'Coach AI' "$js"
+          grep -q '/admin-assets/client-lifecycle-admin-v93.js' "$boot"
+          grep -q '/admin-assets/coach-ai-command-center-v94.js' "$boot"
+          grep -q '/admin-assets/v78-library-original.js' "$boot"
+      - name: Diff hygiene
+        run: git diff --check HEAD~1 HEAD
