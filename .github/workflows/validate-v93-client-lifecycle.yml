@@ -1,0 +1,61 @@
+name: CV Coach V93 Client Lifecycle Contracts
+
+on:
+  push:
+    paths:
+      - 'admin-assets/client-lifecycle-admin-v93.js'
+      - 'admin-assets/v78-library.js'
+      - 'supabase/migrations/202609141515_client_lifecycle_control_v93.sql'
+      - '.github/workflows/validate-v93-client-lifecycle.yml'
+  pull_request:
+    paths:
+      - 'admin-assets/client-lifecycle-admin-v93.js'
+      - 'admin-assets/v78-library.js'
+      - 'supabase/migrations/202609141515_client_lifecycle_control_v93.sql'
+      - '.github/workflows/validate-v93-client-lifecycle.yml'
+
+jobs:
+  validate-v93:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Validate V93 JavaScript
+        run: |
+          node --check admin-assets/client-lifecycle-admin-v93.js
+          node --check admin-assets/v78-library.js
+      - name: Validate lifecycle contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          sql='supabase/migrations/202609141515_client_lifecycle_control_v93.sql'
+          js='admin-assets/client-lifecycle-admin-v93.js'
+          boot='admin-assets/v78-library.js'
+          test -f "$sql"
+          test -f "$js"
+          grep -q 'get_client_lifecycle_center_v93' "$sql"
+          grep -q 'CLIENT_LIFECYCLE_CONTROL_V93' "$sql"
+          grep -q 'read_only_aggregate' "$sql"
+          grep -q 'no_auto_publish' "$sql"
+          grep -q "VIEW = 'lifecycle'" "$js"
+          grep -q 'provision-client' "$js"
+          grep -q 'clientDetail' "$js"
+          grep -q 'programEditor' "$js"
+          grep -q 'REGENERAR' "$js"
+          grep -q '/admin-assets/cv12-cutover-admin-v92.js' "$boot"
+          grep -q '/admin-assets/client-lifecycle-admin-v93.js' "$boot"
+          if grep -Eqi 'insert into|update public\.|delete from|publish_program_backend|apply_ai_program_generation' "$sql"; then
+            echo 'V93 lifecycle aggregate must remain read-only' >&2
+            exit 1
+          fi
+      - name: Validate bootstrap preserves V78
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s admin-assets/v78-library-original.js
+          grep -q '/admin-assets/v78-library-original.js' admin-assets/v78-library.js
+          grep -q '/admin-assets/cv12-cutover-admin-v92.js' admin-assets/v78-library.js
+          grep -q '/admin-assets/client-lifecycle-admin-v93.js' admin-assets/v78-library.js
+      - name: Diff hygiene
+        run: git diff --check HEAD~1 HEAD
