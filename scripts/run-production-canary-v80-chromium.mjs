@@ -99,6 +99,17 @@ const flowReplacement=`  await startWorkoutFromCurrentView(page);
   const active=await latestActiveSession(athleteAccessToken,canaryClientId);`;
 code=replaceOnce(code,flowNeedle,flowReplacement,'V80 library assertions');
 
+const verifyNeedle="  const verification=await control('verify',{expected_weight:EXPECTED_WEIGHT,expected_reps:EXPECTED_REPS});";
+const verifyReplacement=`  const verifyResponse=await fetch(BASE+'/rest/v1/rpc/verify_production_canary_v80',{
+    method:'POST',
+    headers:{apikey:KEY,Authorization:'Bearer '+athleteAccessToken,'Content-Type':'application/json'},
+    body:JSON.stringify({p_run_id:RUN_ID,p_expected_weight:EXPECTED_WEIGHT,p_expected_reps:EXPECTED_REPS}),
+  });
+  const verification=await verifyResponse.json().catch(()=>({}));
+  if(!verifyResponse.ok||verification?.error)throw new Error('V80 canonical verify: '+(verification?.error||verifyResponse.status));
+  if(!verification?.feedback_v2_ok)throw new Error('V80 canonical feedback contract incomplete');`;
+code=replaceOnce(code,verifyNeedle,verifyReplacement,'V80 canonical feedback verifier');
+
 await writeFile(generatedUrl,code,'utf8');
 try{
   await import(`${generatedUrl.href}?run=${Date.now()}`);
