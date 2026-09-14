@@ -53,7 +53,7 @@
       modifiedAction=prompt('Acción que quieres ejecutar como coach:',x.effective_action||x.recommended_action||'');
       if(modifiedAction===null)return;
       modifiedAction=clean(modifiedAction);if(!modifiedAction){alert('Debes escribir la acción modificada.');return;}
-      modifiedCode='custom_coach_action';
+      modifiedCode=clean(x.effective_action_code||x.recommended_action_code)||'custom_coach_action';
       note=prompt('Nota del coach (opcional):','')||null;
     }else if(decision==='REJECTED'){
       note=prompt('Motivo del rechazo:','');if(note===null)return;note=clean(note);if(!note){alert('Debes indicar el motivo del rechazo.');return;}
