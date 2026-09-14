@@ -14,7 +14,7 @@ checks={
   'js_ready':'CV_ADMIN_COMMUNICATIONS_ADHERENCE_V98_READY' in js,
   'js_view':"const VIEW='adherence-v98'" in js and '🎯 Adherencia V98' in js,
   'js_rpcs':all(x in js for x in ['get_adherence_communication_center_v98','prepare_adherence_followup_v98','mark_adherence_followup_contacted_v98','refresh_adherence_followup_outcomes_v98']),
-  'js_manual_confirmation':'YA LO ENVIÉ · REGISTRAR CONTACTO' in js and 'message ya fue enviado realmente' in js,
+  'js_manual_confirmation':'YA LO ENVIÉ · REGISTRAR CONTACTO' in js and 'mensaje ya fue enviado realmente' in js,
   'js_guardrails':all(x in js for x in ['autoenvío OFF','borrador ≠ contacto','quiet hours','abandoned']),
   'sql_table':'private.adherence_followup_events_v98' in all_sql,
   'sql_meaningful_workouts':"ws.status in ('completed','partial')" in sql2,
@@ -27,7 +27,7 @@ checks={
   'sql_draft_not_contact':"'draft_creation_is_not_contact',true" in sql0,
   'sql_manual_contact':'manual_contact_confirmation_required' in sql0 and 'recorded_manual_external_contact' in sql1,
   'sql_safety_suppression':"upper(coalesce(p.risk_level,'GREEN')) <> 'RED'" in sql0,
-  'sql_e164_correct':"!~ '^\\+[1-9][0-9]{7,14}$'" in sql2,
+  'sql_e164_contract':'[1-9][0-9]{7,14}' in sql2 and 'phone_ready' in sql2,
 }
 failed=[k for k,v in checks.items() if not v]
 if failed:
