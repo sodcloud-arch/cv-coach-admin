@@ -1,0 +1,48 @@
+name: CV Coach V86 Coach Intelligence Contracts
+
+on:
+  pull_request:
+    paths:
+      - "admin-assets/cv-coach-intelligence-admin-v86.js"
+      - "scripts/upgrade_admin_coach_intelligence_v86.py"
+      - "scripts/test-admin-coach-intelligence-v86.py"
+      - "supabase/migrations/202609140120_coach_intelligence_dashboard_v86.sql"
+      - ".github/workflows/validate-v86-coach-intelligence.yml"
+      - ".github/workflows/deploy-cv-coach-admin-production.yml"
+  push:
+    branches: [feature/v86-coach-intelligence-dashboard]
+    paths:
+      - "admin-assets/cv-coach-intelligence-admin-v86.js"
+      - "scripts/upgrade_admin_coach_intelligence_v86.py"
+      - "scripts/test-admin-coach-intelligence-v86.py"
+      - "supabase/migrations/202609140120_coach_intelligence_dashboard_v86.sql"
+      - ".github/workflows/validate-v86-coach-intelligence.yml"
+      - ".github/workflows/deploy-cv-coach-admin-production.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v86:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild admin chain through V86
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/upgrade_admin_rank_v62.py
+          python scripts/test-cv-rank-admin-v62.py
+          python scripts/upgrade_admin_progression_v83.py
+          python scripts/test-admin-progression-v83.py
+          python scripts/upgrade_admin_adaptive_programming_v84.py
+          python scripts/test-admin-adaptive-programming-v84.py
+          python scripts/upgrade_admin_mesocycle_intelligence_v85.py
+          python scripts/test-admin-mesocycle-intelligence-v85.py
+          python scripts/upgrade_admin_coach_intelligence_v86.py
+          python scripts/test-admin-coach-intelligence-v86.py
+          node --check admin-assets/cv-coach-intelligence-admin-v86.js
+          grep -q 'data-v="intelligence"' index.html
+          grep -q 'cv-admin-coach-intelligence-v86' index.html
+          echo CV_V86_CONTRACT_OK
