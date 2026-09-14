@@ -35,6 +35,12 @@ async function authorize(req: Request) {
   if (payload.workflow_ref !== WORKFLOW_REF) throw new Error("workflow_not_allowed");
 }
 
+async function rpc(name: string, args: Record<string, unknown>) {
+  const { data, error } = await sb.rpc(name, args);
+  if (error) throw new Error(`${name}:${error.message}`);
+  return data;
+}
+
 Deno.serve(async (req) => {
   try {
     if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -43,12 +49,23 @@ Deno.serve(async (req) => {
     const runId = String(body?.run_id || "");
     if (!/^[A-Za-z0-9._:-]{1,120}$/.test(runId)) throw new Error("invalid_run_id");
 
-    const { data, error } = await sb.rpc("run_adaptive_programming_e2e_v84", { p_run_id: runId });
-    if (error) throw new Error(`adaptive_e2e:${error.message}`);
-    if (!data || data.ok !== true || data.contract !== "CV_V84_ADAPTIVE_PROGRAMMING_E2E_OK") {
-      throw new Error("adaptive_e2e_contract_failed");
+    const progression = await rpc("run_adaptive_programming_e2e_v84", { p_run_id: runId });
+    if (!progression || progression.ok !== true || progression.contract !== "CV_V84_ADAPTIVE_PROGRAMMING_E2E_OK") {
+      throw new Error("adaptive_progression_e2e_contract_failed");
     }
-    return json(data);
+
+    const draft = await rpc("run_adaptive_draft_e2e_v84", { p_run_id: runId });
+    if (!draft || draft.ok !== true || draft.contract !== "CV_V84_ADAPTIVE_DRAFT_E2E_OK") {
+      throw new Error("adaptive_draft_e2e_contract_failed");
+    }
+
+    return json({
+      ...progression,
+      contract: "CV_V84_ADAPTIVE_PROGRAMMING_FULL_E2E_OK",
+      progression_contract: progression.contract,
+      draft_contract: draft.contract,
+      draft,
+    });
   } catch (error) {
     console.error("CV_ADAPTIVE_CANARY_V84_ERROR", String(error));
     return json({ error: String(error instanceof Error ? error.message : error) }, 401);
