@@ -16,7 +16,7 @@
     const c=$('#content');c.innerHTML='<div class="card muted">Cargando Coach Intelligence V86…</div>';
     const d=await intelligence(),s=d?.summary||{},attention=Array.isArray(d?.attention)?d.attention:[],alerts=Array.isArray(d?.alerts)?d.alerts:[],progressions=Array.isArray(d?.progressions)?d.progressions:[],adaptations=Array.isArray(d?.adaptations)?d.adaptations:[],pilots=Array.isArray(d?.pilots)?d.pilots:[];
     const priority=attention.filter(x=>['CRITICAL','HIGH','MEDIUM'].includes(String(x.priority||'').toUpperCase()));
-    c.innerHTML=`<div class="head"><div><div class="ey">V86 · COACH INTELLIGENCE</div><h1 class="title">Centro de decisiones</h1><div class="muted">Una sola vista para priorizar clientes, bloques, progresiones, alertas y pilotos. Recomendación בלבד: nunca edita ni publica automáticamente.</div></div><div class="headActions"><button id="v86Refresh" class="btn small">↻ ACTUALIZAR</button><button id="v86Progression" class="btn primary small">CENTRO DE PROGRESIÓN</button></div></div>
+    c.innerHTML=`<div class="head"><div><div class="ey">V86 · COACH INTELLIGENCE</div><h1 class="title">Centro de decisiones</h1><div class="muted">Una sola vista para priorizar clientes, bloques, progresiones, alertas y pilotos. Solo recomienda: nunca edita ni publica automáticamente.</div></div><div class="headActions"><button id="v86Refresh" class="btn small">↻ ACTUALIZAR</button><button id="v86Progression" class="btn primary small">CENTRO DE PROGRESIÓN</button></div></div>
       <div class="kpis">
         <div class="kpi"><div class="l">Clientes nativos</div><div class="n">${esc(s.native_clients??0)}</div></div>
         <div class="kpi"><div class="l">Alta atención</div><div class="n">${esc(s.high_attention??0)}</div></div>
