@@ -1,0 +1,70 @@
+name: CV Coach V96 Action Outcome Intelligence Contracts
+
+on:
+  push:
+    paths:
+      - 'admin-assets/coach-outcome-intelligence-v96.js'
+      - 'admin-assets/v78-library.js'
+      - 'supabase/migrations/202609141630_action_outcome_intelligence_v96.sql'
+      - 'supabase/migrations/202609141635_action_outcome_intelligence_v96_1.sql'
+      - '.github/workflows/validate-v96-action-outcome-intelligence.yml'
+  pull_request:
+    paths:
+      - 'admin-assets/coach-outcome-intelligence-v96.js'
+      - 'admin-assets/v78-library.js'
+      - 'supabase/migrations/202609141630_action_outcome_intelligence_v96.sql'
+      - 'supabase/migrations/202609141635_action_outcome_intelligence_v96_1.sql'
+      - '.github/workflows/validate-v96-action-outcome-intelligence.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v96:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Validate V96 JavaScript
+        run: |
+          set -euo pipefail
+          node --check admin-assets/coach-outcome-intelligence-v96.js
+          node --check admin-assets/v78-library.js
+      - name: Validate backend contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='supabase/migrations/202609141630_action_outcome_intelligence_v96.sql'
+          patch='supabase/migrations/202609141635_action_outcome_intelligence_v96_1.sql'
+          grep -q 'coach_action_outcome_events_v96' "$base"
+          grep -q 'compute_coach_action_outcome_v96' "$base"
+          grep -q 'reconcile_coach_action_outcome_v96' "$base"
+          grep -q 'reconcile_due_coach_action_outcomes_v96' "$base" "$patch"
+          grep -q 'get_coach_outcome_intelligence_v96' "$base" "$patch"
+          grep -q 'system_reconciled' "$base"
+          grep -q 'WAITING_EVIDENCE' "$base"
+          grep -q 'single_training_session_is_not_enough' "$base"
+          grep -q 'correlation_not_causation' "$base"
+          grep -q "no_auto_publish}','true'" "$patch"
+          if grep -Eqi 'insert into public\.|update public\.|delete from public\.|publish_program_backend|apply_ai_program_generation' "$base" "$patch"; then
+            echo 'V96 may mutate only private outcome/audit metadata' >&2
+            exit 1
+          fi
+      - name: Validate Admin integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          js='admin-assets/coach-outcome-intelligence-v96.js'
+          boot='admin-assets/v78-library.js'
+          grep -q "VIEW='outcome-intelligence'" "$js"
+          grep -q 'get_coach_outcome_intelligence_v96' "$js"
+          grep -q 'reconcile_due_coach_action_outcomes_v96' "$js"
+          grep -q 'CV_ADMIN_ACTION_OUTCOME_INTELLIGENCE_V96_READY' "$js"
+          grep -q '↗ Resultados' "$js"
+          grep -q '/admin-assets/coach-action-workspace-v95.js' "$boot"
+          grep -q '/admin-assets/coach-outcome-intelligence-v96.js' "$boot"
+          grep -q '/admin-assets/v78-library-original.js' "$boot"
+      - name: Diff hygiene
+        run: git diff --check HEAD~1 HEAD
