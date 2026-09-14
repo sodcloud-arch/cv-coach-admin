@@ -1,0 +1,41 @@
+name: CV Coach V90 CV12 Cutover Orchestrator Contracts
+
+on:
+  push:
+    paths:
+      - 'supabase/migrations/202609141425_v90_cv12_cutover_orchestrator.sql'
+      - '.github/workflows/validate-v90-cv12-cutover-orchestrator.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/202609141425_v90_cv12_cutover_orchestrator.sql'
+      - '.github/workflows/validate-v90-cv12-cutover-orchestrator.yml'
+
+jobs:
+  validate-v90:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate V90 cutover contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          file='supabase/migrations/202609141425_v90_cv12_cutover_orchestrator.sql'
+          test -f "$file"
+          grep -q 'execute_cv12_native_cutover_v90' "$file"
+          grep -q 'rollback_cv12_native_cutover_v90' "$file"
+          grep -q 'CV12_NATIVE_CUTOVER_ORCHESTRATOR_V90' "$file"
+          grep -q 'get_cv12_cutover_readiness_v89' "$file"
+          grep -q 'cv12_cutover_audit_v90' "$file"
+          grep -q 'idempotency_key' "$file"
+          grep -q 'Real native active client identity required' "$file"
+          grep -q 'Pilot already linked to another native client' "$file"
+          grep -q "event_emission_deferred',true" "$file"
+          grep -q "auto_publish',false" "$file"
+          grep -q "auto_program_edit',false" "$file"
+          grep -q "native_sessions_created',false" "$file"
+          grep -q "native_programs_created',false" "$file"
+          grep -q "legacy_source_preserved',true" "$file"
+          if grep -Eq 'insert into public\.workout_sessions|insert into public\.programs|delete from public\.legacy_cv12|truncate .*legacy_cv12|private\.enqueue_event' "$file"; then
+            echo 'V90 must not create native workout/program data, destroy legacy data, or emit an unowned event' >&2
+            exit 1
+          fi
