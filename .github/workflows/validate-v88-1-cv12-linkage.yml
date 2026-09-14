@@ -1,0 +1,41 @@
+name: CV Coach V88.1 Stable CV12 Linkage
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609140545_cv12_native_read_bridge_v88_1.sql"
+      - ".github/workflows/validate-v88-1-cv12-linkage.yml"
+  push:
+    branches: [feature/v88-cv12-native-read-bridge]
+    paths:
+      - "supabase/migrations/202609140545_cv12_native_read_bridge_v88_1.sql"
+      - ".github/workflows/validate-v88-1-cv12-linkage.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v88-1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate V88.1 linkage semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          sql=supabase/migrations/202609140545_cv12_native_read_bridge_v88_1.sql
+          grep -q 'p.client_id=v_client_id' "$sql"
+          grep -q 'p.linked_at is not null' "$sql"
+          grep -q "'link_contract','client_id+linked_at'" "$sql"
+          grep -q "'read_only',true" "$sql"
+          grep -q "'copied_to_native_workout_sessions',false" "$sql"
+          if grep -q "p.status='linked'" "$sql"; then
+            echo 'V88.1 must not depend on mutable readiness status for identity linkage' >&2
+            exit 1
+          fi
+          if grep -Eiq 'insert[[:space:]]+into[[:space:]]+public\.workout_sessions|delete[[:space:]]+from[[:space:]]+public\.legacy_cv12' "$sql"; then
+            echo 'V88.1 must remain read-only toward training history' >&2
+            exit 1
+          fi
+          echo CV_V88_1_STABLE_LINKAGE_CONTRACT_OK

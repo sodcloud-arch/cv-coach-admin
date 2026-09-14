@@ -1,0 +1,42 @@
+name: CV Coach V88 CV12 Native Read Bridge Contracts
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609140535_cv12_native_read_bridge_v88.sql"
+      - ".github/workflows/validate-v88-cv12-native-read-bridge.yml"
+  push:
+    branches: [feature/v88-cv12-native-read-bridge]
+    paths:
+      - "supabase/migrations/202609140535_cv12_native_read_bridge_v88.sql"
+      - ".github/workflows/validate-v88-cv12-native-read-bridge.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v88:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate V88 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          sql=supabase/migrations/202609140535_cv12_native_read_bridge_v88.sql
+          grep -q 'get_client_training_history_native_v88' "$sql"
+          grep -q 'get_client_training_history(p_limit integer default 20)' "$sql"
+          grep -q 'legacy_cv12_sessions_v87' "$sql"
+          grep -q "'source','cv12_legacy'" "$sql"
+          grep -q "'read_only',true" "$sql"
+          grep -q "'copied_to_native_workout_sessions',false" "$sql"
+          grep -q "'auto_publish',false" "$sql"
+          grep -q "'auto_program_edit',false" "$sql"
+          grep -q 'unlink_cv12_pilot_native_v88' "$sql"
+          grep -q "native_data_deleted',false" "$sql"
+          if grep -Eiq 'insert[[:space:]]+into[[:space:]]+public\.workout_sessions|delete[[:space:]]+from[[:space:]]+public\.legacy_cv12' "$sql"; then
+            echo 'V88 must remain read-only toward legacy/native workout history' >&2
+            exit 1
+          fi
+          echo CV_V88_NATIVE_READ_BRIDGE_CONTRACT_OK
