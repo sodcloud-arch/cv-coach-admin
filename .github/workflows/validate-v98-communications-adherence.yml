@@ -91,5 +91,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff --check HEAD~1 HEAD || true
-          ! git grep -nE '<<<<<<<|=======|>>>>>>>' -- ':!*.md'
+          git diff --check
+          ! git grep -nE '^(<<<<<<< |>>>>>>> |=======$)' -- ':!*.md'
