@@ -1,0 +1,54 @@
+name: CV Coach V84 Adaptive Programming Contracts
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v84:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate V84 source contracts
+        run: python scripts/validate-v84-contracts.py
+      - name: Build Admin through V84
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/upgrade_admin_rank_v62.py
+          python scripts/test-cv-rank-admin-v62.py
+          python scripts/upgrade_admin_progression_v83.py
+          python scripts/test-admin-progression-v83.py
+          python scripts/upgrade_admin_adaptive_programming_v84.py
+          python scripts/test-admin-adaptive-programming-v84.py
+          grep -q 'cv-admin-rank-v62' index.html
+          grep -q 'cv-admin-progression-v83' index.html
+          grep -q 'cv-admin-adaptive-programming-v84' index.html
+          grep -q 'TENDENCIAS V84' index.html
+      - name: Validate V84 JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check admin-assets/cv-adaptive-programming-admin-v84.js
+          node --check scripts/test-adaptive-programming-e2e-v84.mjs
+      - name: Validate generated Admin inline JavaScript
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('index.html').read_text(encoding='utf-8')
+          start=html.find('<script>');end=html.find('</script>',start)
+          if start<0 or end<=start: raise SystemExit('Inline Admin script not found')
+          Path('/tmp/cv-coach-admin-v84-inline.js').write_text(html[start+len('<script>'):end],encoding='utf-8')
+          PY
+          node --check /tmp/cv-coach-admin-v84-inline.js
+      - name: Diff hygiene
+        run: git diff --check
