@@ -49,17 +49,19 @@ begin
     end if;
   end if;
 
-  if tg_op = 'UPDATE' and old.active = true and new.active = false then
-    if exists (
-      select 1
-      from public.program_exercises pe
-      join public.program_days pd on pd.id = pe.program_day_id
-      join public.programs pr on pr.id = pd.program_id
-      where pe.exercise_id = new.id
-        and pe.active = true
-        and pr.status in ('draft'::public.program_status, 'active'::public.program_status)
-    ) then
-      raise exception 'Exercise is used by an active or draft program; replace it there before deactivation';
+  if tg_op = 'UPDATE' then
+    if old.active = true and new.active = false then
+      if exists (
+        select 1
+        from public.program_exercises pe
+        join public.program_days pd on pd.id = pe.program_day_id
+        join public.programs pr on pr.id = pd.program_id
+        where pe.exercise_id = new.id
+          and pe.active = true
+          and pr.status in ('draft'::public.program_status, 'active'::public.program_status)
+      ) then
+        raise exception 'Exercise is used by an active or draft program; replace it there before deactivation';
+      end if;
     end if;
   end if;
 
@@ -82,20 +84,31 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_exercise_id uuid := case when tg_op = 'DELETE' then old.exercise_id else new.exercise_id end;
+  v_exercise_id uuid;
 begin
+  if tg_op = 'DELETE' then
+    v_exercise_id := old.exercise_id;
+  else
+    v_exercise_id := new.exercise_id;
+  end if;
+
   if exists (
     select 1
     from public.exercises e
     where e.id = v_exercise_id
       and e.active = true
   ) then
-    if tg_op = 'DELETE' or new.qa_status <> 'approved' then
+    if tg_op = 'DELETE' then
+      raise exception 'Deactivate exercise before removing QA approval';
+    end if;
+    if new.qa_status <> 'approved' then
       raise exception 'Deactivate exercise before removing QA approval';
     end if;
   end if;
 
-  if tg_op = 'DELETE' then return old; end if;
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
   return new;
 end;
 $$;
