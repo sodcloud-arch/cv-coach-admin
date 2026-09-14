@@ -1,0 +1,39 @@
+name: CV Coach V93.1 V84 Canary Idempotency
+
+on:
+  push:
+    paths:
+      - 'supabase/migrations/202609141530_v93_1_v84_canary_idempotency.sql'
+      - '.github/workflows/validate-v93-1-v84-canary-idempotency.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/202609141530_v93_1_v84_canary_idempotency.sql'
+      - '.github/workflows/validate-v93-1-v84-canary-idempotency.yml'
+
+jobs:
+  validate-v93-1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate canary-only idempotency contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          f='supabase/migrations/202609141530_v93_1_v84_canary_idempotency.sql'
+          test -f "$f"
+          grep -q "label='production-v76'" "$f"
+          grep -q 'pg_advisory_xact_lock' "$f"
+          grep -q "status='abandoned'::public.workout_session_status" "$f"
+          grep -q "client_id=v_client" "$f"
+          grep -q "program_day_id=v_day" "$f"
+          grep -q "status='in_progress'::public.workout_session_status" "$f"
+          grep -q "errcode='CV084'" "$f"
+          grep -q "stale_in_progress_tolerated" "$f"
+          grep -q "service_role required" "$f"
+          grep -q "rollback_v84_e2e" "$f"
+          if grep -Eqi 'delete from public\.workout_sessions|truncate|drop table|alter table' "$f"; then
+            echo 'V93.1 canary hardening must not destructively rewrite workout data' >&2
+            exit 1
+          fi
+      - name: Diff hygiene
+        run: git diff --check
