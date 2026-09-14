@@ -1,0 +1,74 @@
+name: CV Coach V92 Admin Integration
+
+on:
+  push:
+    branches:
+      - feature/v92-cv12-admin-operations
+    paths:
+      - 'admin-assets/cv12-cutover-admin-v92.js'
+      - 'supabase/migrations/202609141435_cv12_cutover_admin_v92.sql'
+      - '.github/workflows/v92-wire-admin.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-wire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/v92-cv12-admin-operations
+          fetch-depth: 0
+
+      - name: Validate V92 JavaScript syntax
+        run: node --check admin-assets/cv12-cutover-admin-v92.js
+
+      - name: Validate backend contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'get_cv12_cutover_audit_v92' supabase/migrations/202609141435_cv12_cutover_admin_v92.sql
+          grep -q 'execute_cv12_native_cutover_v90' admin-assets/cv12-cutover-admin-v92.js
+          grep -q 'rollback_cv12_native_cutover_v90' admin-assets/cv12-cutover-admin-v92.js
+          grep -q 'resolve_cv12_native_client_v91' admin-assets/cv12-cutover-admin-v92.js
+          grep -q 'get_cv12_cutover_control_v91' admin-assets/cv12-cutover-admin-v92.js
+          grep -q "word: 'VINCULAR'" admin-assets/cv12-cutover-admin-v92.js
+          grep -q "word: 'DESVINCULAR'" admin-assets/cv12-cutover-admin-v92.js
+
+      - name: Wire V92 into existing admin asset loader
+        shell: bash
+        run: |
+          set -euo pipefail
+          MARKER='CV Coach V92 — Admin Module Loader'
+          if ! grep -q "$MARKER" admin-assets/v78-library.js; then
+            cat >> admin-assets/v78-library.js <<'EOF'
+
+/* CV Coach V92 — Admin Module Loader */
+(() => {
+  if (document.getElementById('cv-v92-cutover-script')) return;
+  const script = document.createElement('script');
+  script.id = 'cv-v92-cutover-script';
+  script.src = '/admin-assets/cv12-cutover-admin-v92.js';
+  script.async = false;
+  document.head.appendChild(script);
+})();
+EOF
+          fi
+          grep -q '/admin-assets/cv12-cutover-admin-v92.js' admin-assets/v78-library.js
+
+      - name: Commit loader wiring when required
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- admin-assets/v78-library.js; then
+            echo 'V92 loader already wired.'
+            exit 0
+          fi
+          git config user.name 'cv-coach-autopilot'
+          git config user.email 'sodcloud@gmail.com'
+          git add admin-assets/v78-library.js
+          git commit -m 'V92: load CV12 migrations module from admin'
+          git push origin HEAD:feature/v92-cv12-admin-operations
