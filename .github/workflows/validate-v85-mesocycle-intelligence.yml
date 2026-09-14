@@ -1,0 +1,50 @@
+name: CV Coach V85 Mesocycle Intelligence Contracts
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [feature/v85-mesocycle-intelligence]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v85:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Admin V62 → V83 → V84 → V85
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/upgrade_admin_rank_v62.py
+          python scripts/upgrade_admin_progression_v83.py
+          python scripts/upgrade_admin_adaptive_programming_v84.py
+          python scripts/upgrade_admin_mesocycle_intelligence_v85.py
+          python scripts/test-admin-mesocycle-intelligence-v85.py
+          node --check admin-assets/cv-mesocycle-intelligence-admin-v85.js
+          grep -q 'cv-admin-mesocycle-intelligence-v85' index.html
+      - name: Validate V85 AI memory source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/upgrade_generate_ai_program_v85.py
+          grep -q 'MESOCYCLE_INTELLIGENCE_V85_CONTEXT' supabase/functions/generate-ai-program/index.ts
+          grep -q 'mesocycle_intelligence: mesocycleMemory' supabase/functions/generate-ai-program/index.ts
+          grep -q 'Un pico aislado' supabase/functions/generate-ai-program/index.ts
+      - name: Validate V85 SQL contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=supabase/migrations/202609140345_mesocycle_intelligence_v85.sql
+          grep -q 'compute_mesocycle_intelligence_v85' "$f"
+          grep -q 'get_client_training_trends_v85' "$f"
+          grep -q 'get_v85_pilot_readiness' "$f"
+          grep -q "'mesocycle_intelligence'" "$f"
+          grep -q "'cv-coach-ai-program-v85'" "$f"
+          grep -q "'observed_only',true" "$f"
+          grep -q "'auto_publish',false" "$f"
+          echo CV_V85_MESOCYCLE_INTELLIGENCE_CONTRACTS_OK
