@@ -14,13 +14,11 @@
       const ex=exs?.[i],s=ex?.sets?.[j];
       if(!s)return null;
       const unit=ex.prescription_unit||'reps';
-      const w=document.getElementById('cvw_'+i+'_'+j),r=document.getElementById('cvr_'+i+'_'+j),ri=document.getElementById('cvri_'+i+'_'+j);
+      const w=document.getElementById('cvw_'+i+'_'+j),r=document.getElementById('cvr_'+i+'_'+j);
       const wt=unit==='reps'&&w&&w.value!==''?Number(w.value):null;
       const target=r&&r.value!==''?Number(r.value):null;
-      const rir=ri&&ri.value!==''?Number(ri.value):null;
       if(wt!=null&&!Number.isFinite(wt))return null;
       if(target!=null&&(!Number.isFinite(target)||target<0))return null;
-      if(rir!=null&&(!Number.isFinite(rir)||rir<0||rir>10))return null;
       s.weight_kg=unit==='reps'?wt:null;
       if(unit==='seconds'){
         s.duration_seconds=target==null?null:Math.round(target);
@@ -29,8 +27,7 @@
         s.reps=target==null?null:Math.round(target);
         s.duration_seconds=null;
       }
-      s.rir=rir;
-      return {ex,s,unit,weight_kg:s.weight_kg,reps:s.reps,duration_seconds:s.duration_seconds,rir,target}
+      return {ex,s,unit,weight_kg:s.weight_kg,reps:s.reps,duration_seconds:s.duration_seconds,rir:s.rir??null,target}
     };
     bridge.__cvSetInputBridgeV80=true;
     window.cvSetFromInputs=bridge;
