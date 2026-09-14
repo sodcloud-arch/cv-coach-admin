@@ -7,6 +7,36 @@
   let renderInstalled=null;
   const NUMPAD_SELECTOR='input[id^="cvw_"],input[id^="cvr_"]';
 
+  function ensureSetInputBridge(){
+    if(typeof window.cvSetFromInputs==='function')return window.cvSetFromInputs;
+    const bridge=function(i,j){
+      const exs=typeof window.cvExercises==='function'?(window.cvExercises()||[]):[];
+      const ex=exs?.[i],s=ex?.sets?.[j];
+      if(!s)return null;
+      const unit=ex.prescription_unit||'reps';
+      const w=document.getElementById('cvw_'+i+'_'+j),r=document.getElementById('cvr_'+i+'_'+j),ri=document.getElementById('cvri_'+i+'_'+j);
+      const wt=unit==='reps'&&w&&w.value!==''?Number(w.value):null;
+      const target=r&&r.value!==''?Number(r.value):null;
+      const rir=ri&&ri.value!==''?Number(ri.value):null;
+      if(wt!=null&&!Number.isFinite(wt))return null;
+      if(target!=null&&(!Number.isFinite(target)||target<0))return null;
+      if(rir!=null&&(!Number.isFinite(rir)||rir<0||rir>10))return null;
+      s.weight_kg=unit==='reps'?wt:null;
+      if(unit==='seconds'){
+        s.duration_seconds=target==null?null:Math.round(target);
+        s.reps=null;
+      }else{
+        s.reps=target==null?null:Math.round(target);
+        s.duration_seconds=null;
+      }
+      s.rir=rir;
+      return {ex,s,unit,weight_kg:s.weight_kg,reps:s.reps,duration_seconds:s.duration_seconds,rir,target}
+    };
+    bridge.__cvSetInputBridgeV80=true;
+    window.cvSetFromInputs=bridge;
+    return bridge
+  }
+
   function key(i,j){return String(i)+':'+String(j)}
   function rowFor(i,j){
     const input=document.getElementById('cvw_'+i+'_'+j)||document.getElementById('cvr_'+i+'_'+j);
@@ -69,6 +99,7 @@
   }
 
   function install(){
+    ensureSetInputBridge();
     ensureStyle();
     installRenderOwnership();
     enforceNumpadOwnership(document);
@@ -110,6 +141,7 @@
     }
   });
   observer.observe(document.getElementById('content')||document.body,{childList:true,subtree:true});
+  ensureSetInputBridge();
   install();
   setTimeout(install,250);
   setTimeout(install,1200);
@@ -117,5 +149,5 @@
   document.addEventListener('pointerdown',e=>{if(e.target instanceof HTMLInputElement)ownInput(e.target)},true);
   document.addEventListener('touchstart',e=>{if(e.target instanceof HTMLInputElement)ownInput(e.target)},{capture:true,passive:true});
   window.addEventListener('pageshow',()=>{install();enforceNumpadOwnership(document)});
-  window.CVWorkoutSetGuardV74={version:VERSION,minLockMs:MIN_LOCK_MS,pending,install,enforceNumpadOwnership};
+  window.CVWorkoutSetGuardV74={version:VERSION,minLockMs:MIN_LOCK_MS,pending,install,enforceNumpadOwnership,ensureSetInputBridge};
 })();
