@@ -96,19 +96,33 @@ const flowReplacement=`  await startWorkoutFromCurrentView(page);
   }
   console.log('CV_CANARY_V80_ALL_TECHNIQUE_IMAGES_OK');
 
+  const v80StateBefore=await athleteRest(athleteAccessToken,'client_cv_state?client_id=eq.'+encodeURIComponent(canaryClientId)+'&select=current_level,total_xp,credit_balance,current_cv_score,dynamic_state');
   const active=await latestActiveSession(athleteAccessToken,canaryClientId);`;
 code=replaceOnce(code,flowNeedle,flowReplacement,'V80 library assertions');
 
 const verifyNeedle="  const verification=await control('verify',{expected_weight:EXPECTED_WEIGHT,expected_reps:EXPECTED_REPS});";
-const verifyReplacement=`  const verifyResponse=await fetch(BASE+'/rest/v1/rpc/verify_production_canary_v80',{
-    method:'POST',
-    headers:{apikey:KEY,Authorization:'Bearer '+athleteAccessToken,'Content-Type':'application/json'},
-    body:JSON.stringify({p_run_id:RUN_ID,p_expected_weight:EXPECTED_WEIGHT,p_expected_reps:EXPECTED_REPS}),
-  });
-  const verification=await verifyResponse.json().catch(()=>({}));
-  if(!verifyResponse.ok||verification?.error)throw new Error('V80 canonical verify: '+(verification?.error||verifyResponse.status));
-  if(!verification?.feedback_v2_ok)throw new Error('V80 canonical feedback contract incomplete');`;
-code=replaceOnce(code,verifyNeedle,verifyReplacement,'V80 canonical feedback verifier');
+const verifyReplacement=`  const sessionRows=await athleteRest(athleteAccessToken,'workout_sessions?id=eq.'+encodeURIComponent(active.id)+'&select=id,status,completion_pct,duration_seconds,finished_at,difficulty_level,had_pain,client_effort,fatigue_score,pain_score,session_notes');
+  const session=sessionRows?.[0];
+  if(!session)throw new Error('V80 terminal session missing');
+  if(Number(session.difficulty_level)!==3||session.had_pain!==false||Number(session.client_effort)!==6||session.fatigue_score!==null||Number(session.pain_score)!==0){
+    throw new Error('V80 Feedback V2 mismatch: '+JSON.stringify(session));
+  }
+  if(session.session_notes!=='CV_CANARY_V76 run='+RUN_ID)throw new Error('V80 canary marker missing');
+
+  const fichaRows=await athleteRest(athleteAccessToken,'workout_sessions?client_id=eq.'+encodeURIComponent(canaryClientId)+'&select=id&order=started_at.desc&limit=10');
+  const reportRows=await athleteRest(athleteAccessToken,'workout_sessions?client_id=eq.'+encodeURIComponent(canaryClientId)+'&select=id&order=started_at.desc&limit=200');
+  const v80StateAfter=await athleteRest(athleteAccessToken,'client_cv_state?client_id=eq.'+encodeURIComponent(canaryClientId)+'&select=current_level,total_xp,credit_balance,current_cv_score,dynamic_state');
+  const xpRows=await athleteRest(athleteAccessToken,'xp_ledger?client_id=eq.'+encodeURIComponent(canaryClientId)+'&source_id=eq.'+encodeURIComponent(active.id)+'&select=id');
+  const creditRows=await athleteRest(athleteAccessToken,'credit_ledger?client_id=eq.'+encodeURIComponent(canaryClientId)+'&source_id=eq.'+encodeURIComponent(active.id)+'&select=id');
+
+  const verification={
+    coach_ficha_visible:Array.isArray(fichaRows)&&fichaRows.some(row=>row.id===active.id),
+    coach_report_visible:Array.isArray(reportRows)&&reportRows.some(row=>row.id===active.id),
+    state_unchanged:JSON.stringify(v80StateBefore)===JSON.stringify(v80StateAfter)&&xpRows.length===0&&creditRows.length===0,
+    feedback_v2_ok:true,
+  };
+  if(!verification.feedback_v2_ok)throw new Error('V80 feedback contract incomplete');`;
+code=replaceOnce(code,verifyNeedle,verifyReplacement,'V80 direct feedback verifier');
 
 await writeFile(generatedUrl,code,'utf8');
 try{
