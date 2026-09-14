@@ -1,0 +1,66 @@
+name: CV Coach V97 Decision Learning Contracts
+
+on:
+  push:
+    paths:
+      - 'admin-assets/coach-ai-command-center-v94.js'
+      - 'supabase/migrations/202609141700_decision_learning_feedback_v97.sql'
+      - '.github/workflows/validate-v97-decision-learning.yml'
+  pull_request:
+    paths:
+      - 'admin-assets/coach-ai-command-center-v94.js'
+      - 'supabase/migrations/202609141700_decision_learning_feedback_v97.sql'
+      - '.github/workflows/validate-v97-decision-learning.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v97:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Validate Coach AI JavaScript
+        run: |
+          set -euo pipefail
+          node --check admin-assets/coach-ai-command-center-v94.js
+      - name: Validate V97 backend contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          f='supabase/migrations/202609141700_decision_learning_feedback_v97.sql'
+          grep -q 'DECISION_LEARNING_FEEDBACK_V97' "$f"
+          grep -q 'coach_action_outcome_events_v96' "$f"
+          grep -q "sample_size,3" "$f"
+          grep -q "minimum_sample_size',3" "$f"
+          grep -q "max_absolute_score_adjustment',12" "$f"
+          grep -q "recommended_action_code_is_immutable',true" "$f"
+          grep -q "negative_safety_adjustment_forbidden',true" "$f"
+          grep -q "historical_association_not_causality',true" "$f"
+          grep -q "decision_learning_cannot_change_action_code',true" "$f"
+          grep -q "decision_learning_cannot_override_safety',true" "$f"
+          grep -q "auto_publish',false" "$f"
+          grep -q "auto_program_edit',false" "$f"
+          grep -q "auto_message',false" "$f"
+          grep -q "auto_billing_mutation',false" "$f"
+          if grep -Eqi 'insert into public\.|update public\.|delete from public\.|publish_program_backend|apply_ai_program_generation' "$f"; then
+            echo 'V97 must remain read-only over operational client/training/program/billing state' >&2
+            exit 1
+          fi
+      - name: Validate V97 Admin visibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          js='admin-assets/coach-ai-command-center-v94.js'
+          grep -q 'V97 · DECISION LEARNING FEEDBACK' "$js"
+          grep -q 'APRENDIZAJE HISTÓRICO' "$js"
+          grep -q 'Aprendizaje aplicado' "$js"
+          grep -q 'CV_ADMIN_DECISION_LEARNING_V97_READY' "$js"
+          grep -q 'muestra n=' "$js"
+          grep -q 'correlación ≠ causalidad' "$js"
+          grep -q 'seguridad nunca puede ser rebajada' "$js"
+      - name: Diff hygiene
+        run: git diff --check HEAD~1 HEAD
