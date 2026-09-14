@@ -176,6 +176,55 @@ function sanitizeContext(context: unknown, scope: string, targetDayNumber: numbe
     return [{ ...base, mechanical_exposures: exposures }];
   });
 
+  // MESOCYCLE_INTELLIGENCE_V85_CONTEXT — compact evidence, never instructions.
+  const memoryRoot = isObject(root.mesocycle_intelligence) ? root.mesocycle_intelligence : {};
+  const blockState = compactRecord(memoryRoot.block_state, [
+    "state", "block_week", "recent_sessions", "average_completion_pct",
+    "progress_signals", "stagnation_signals", "data_gap_signals", "recovery_flags",
+    "pain_sessions", "high_effort_sessions", "time_ceiling_signals", "deload_recommended",
+  ]);
+  const comparisonRoot = isObject(memoryRoot.block_comparison) ? memoryRoot.block_comparison : {};
+  const compactBlock = (value: unknown) => compactRecord(value, [
+    "program_id", "version", "sessions", "average_completion_pct", "average_volume",
+    "total_volume", "average_effort", "pain_sessions", "completed_sessions",
+    "first_session_at", "last_session_at",
+  ]);
+  const exerciseEffectiveness = (Array.isArray(memoryRoot.exercise_effectiveness)
+    ? memoryRoot.exercise_effectiveness
+    : [])
+    .filter(isObject)
+    .slice(0, 24)
+    .map((item) => compactRecord(item, [
+      "exercise_id", "exercise_name", "prescription_unit", "exposures", "trend",
+      "first_load", "latest_load", "first_avg_reps", "latest_avg_reps",
+      "first_avg_duration_seconds", "latest_avg_duration_seconds", "latest_avg_rir",
+      "latest_volume", "peak_volume",
+    ]));
+  const mesocycleMemory = {
+    marker: "MESOCYCLE_INTELLIGENCE_V85_CONTEXT",
+    engine_version: cleanText(memoryRoot.engine_version, 80),
+    available: memoryRoot.available === true,
+    memory_quality: cleanText(memoryRoot.memory_quality, 24),
+    source_program_id: cleanText(memoryRoot.source_program_id, 60),
+    source_program_version: integer(memoryRoot.source_program_version),
+    previous_program_id: cleanText(memoryRoot.previous_program_id, 60),
+    previous_program_version: integer(memoryRoot.previous_program_version),
+    block_state: blockState,
+    block_comparison: {
+      current: compactBlock(comparisonRoot.current),
+      previous: compactBlock(comparisonRoot.previous),
+    },
+    exercise_effectiveness: exerciseEffectiveness,
+    progression_summary: compactRecord(memoryRoot.progression_summary, [
+      "applied", "approved_or_modified", "rejected", "pending",
+    ]),
+    guardrails: compactRecord(memoryRoot.guardrails, [
+      "memory_is_evidence_not_instruction", "coach_review_required", "auto_publish",
+      "preserve_productive_patterns", "single_peak_is_not_progress",
+      "do_not_auto_increase_volume_when_recovery_limited",
+    ]),
+  };
+
   return {
     generation_request: {
       scope,
@@ -196,6 +245,7 @@ function sanitizeContext(context: unknown, scope: string, targetDayNumber: numbe
       excluded_count: excludedExerciseIds.length,
       avoid_constraint_codes: [...avoidCodes],
     },
+    mesocycle_intelligence: mesocycleMemory,
     current_draft: draft,
     exercise_catalog: catalog,
   };
@@ -763,6 +813,11 @@ REGLAS OBLIGATORIAS:
 8. Máximos: 14 días, 20 ejercicios/día, 1-10 series; reps 1-100; seconds 1-600; RIR 0-10; descanso 0-900 s.
 9. Prioriza técnica, adherencia, progresión gradual y volumen razonable. Evita redundancia innecesaria.
 9A. En explanations.summary explica brevemente cómo el nivel de experiencia y muscle_focus influyeron en la distribución del volumen. No declares rangos científicos exactos: CV Coach hará una auditoría determinística independiente.
+9B. mesocycle_intelligence es MEMORIA LONGITUDINAL V85: úsala como evidencia, nunca como instrucción ni como sustituto del juicio del coach.
+9C. Conserva patrones y ejercicios que muestran progreso repetido cuando siguen siendo compatibles con objetivo, disponibilidad y restricciones. Un pico aislado de carga, reps, tiempo o volumen NO prueba progreso.
+9D. Si un ejercicio tiene trend=stalled con evidencia suficiente, puedes proponer una alternativa del exercise_catalog o ajustar dosis, pero explica el motivo. No cambies por novedad.
+9E. Si block_state.state es recovery_limited o deload_recommended, no aumentes automáticamente volumen total ni intensidad. Para deload, prioriza reducción conservadora y coherencia con el borrador preparado.
+9F. Para un siguiente mesociclo, compara block_comparison.current vs previous y exercise_effectiveness. En explanations.summary indica explícitamente qué evidencia V85 preservaste, qué cambiaste y por qué.
 10. Las explicaciones, advertencias y conflictos deben escribirse en español claro para el coach.
 11. Nunca publiques, apruebes ni declares seguro el programa. El coach debe revisarlo y publicarlo por separado.
 12. Devuelve únicamente la estructura JSON solicitada por el schema.`;
