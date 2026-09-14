@@ -95,6 +95,7 @@ jobs:
               grep -qi '^content-security-policy:' "$headers"
               grep -qi '^x-content-type-options: nosniff' "$headers"
               grep -qi '^x-frame-options: DENY' "$headers"
+              echo 'PUBLIC_ADMIN_V83_OK'
               echo 'PUBLIC_ADMIN_V84_OK'
               rm -f "$headers"
               exit 0
