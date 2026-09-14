@@ -1,4 +1,4 @@
-/* CV Coach Admin Bootstrap — V78 preserved + V92 module */
+/* CV Coach Admin Bootstrap — V78 preserved + V92 + V93 modules */
 (() => {
   const load = (id, src, onload) => {
     const existing = document.getElementById(id);
@@ -16,6 +16,8 @@
   };
 
   load('cv-v78-library-original-script', '/admin-assets/v78-library-original.js', () => {
-    load('cv-v92-cutover-script', '/admin-assets/cv12-cutover-admin-v92.js');
+    load('cv-v92-cutover-script', '/admin-assets/cv12-cutover-admin-v92.js', () => {
+      load('cv-v93-lifecycle-script', '/admin-assets/client-lifecycle-admin-v93.js');
+    });
   });
 })();
