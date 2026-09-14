@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: Validate V93 JavaScript
         run: |
           node --check admin-assets/client-lifecycle-admin-v93.js
