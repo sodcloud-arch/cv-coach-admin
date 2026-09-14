@@ -9,6 +9,8 @@ on:
       - "admin-assets/**"
       - "scripts/upgrade_admin_rank_v62.py"
       - "scripts/test-cv-rank-admin-v62.py"
+      - "scripts/upgrade_admin_progression_v83.py"
+      - "scripts/test-admin-progression-v83.py"
       - "supabase/migrations/**"
       - ".github/workflows/deploy-cv-coach-admin-production.yml"
   workflow_dispatch:
@@ -30,7 +32,7 @@ jobs:
     steps:
       - name: Checkout canonical main
         uses: actions/checkout@v4
-      - name: Build and test Admin Rank V62
+      - name: Build and test Admin Rank V62 + Progression V83
         shell: bash
         run: |
           set -euo pipefail
@@ -39,6 +41,11 @@ jobs:
           grep -q 'cv-admin-rank-v62' index.html
           grep -q 'data-v="ranking"' index.html
           node --check admin-assets/cv-rank-admin-v62.js
+          python scripts/upgrade_admin_progression_v83.py
+          python scripts/test-admin-progression-v83.py
+          grep -q 'cv-admin-progression-v83' index.html
+          grep -q 'data-v="progression"' index.html
+          node --check admin-assets/cv-progression-admin-v83.js
       - name: Check Vercel credential
         id: auth
         shell: bash
@@ -65,7 +72,7 @@ jobs:
       - name: Deploy canonical production
         if: steps.auth.outputs.available == 'true'
         run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-      - name: Verify public Admin alias — Rank V62
+      - name: Verify public Admin alias — Rank V62 + Progression V83
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
@@ -73,19 +80,20 @@ jobs:
           for attempt in 1 2 3 4 5 6 7 8; do
             headers="$(mktemp)"
             body="$(curl --fail --silent --show-error --location --max-time 20 -D "$headers" https://cv-coach-admin.vercel.app || true)"
-            js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-rank-admin-v62.js || true)"
-            css_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-rank-admin-v62.css || true)"
-            if [[ "$body" == *"CV Coach"* && "$body" == *"COACH ADMIN"* && "$body" == *"cv-admin-rank-v62"* && "$body" == *"data-v=\"ranking\""* && "$js_status" == "200" && "$css_status" == "200" ]]; then
+            rank_js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-rank-admin-v62.js || true)"
+            rank_css_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-rank-admin-v62.css || true)"
+            progression_js_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-admin.vercel.app/admin-assets/cv-progression-admin-v83.js || true)"
+            if [[ "$body" == *"CV Coach"* && "$body" == *"COACH ADMIN"* && "$body" == *"cv-admin-rank-v62"* && "$body" == *"data-v=\"ranking\""* && "$body" == *"cv-admin-progression-v83"* && "$body" == *"data-v=\"progression\""* && "$rank_js_status" == "200" && "$rank_css_status" == "200" && "$progression_js_status" == "200" ]]; then
               grep -qi '^content-security-policy:' "$headers"
               grep -qi '^x-content-type-options: nosniff' "$headers"
               grep -qi '^x-frame-options: DENY' "$headers"
-              echo 'PUBLIC_ADMIN_RANK_V62_OK'
+              echo 'PUBLIC_ADMIN_V83_OK'
               rm -f "$headers"
               exit 0
             fi
             rm -f "$headers"; sleep 3
           done
-          echo 'Public Admin Rank V62 verification failed' >&2; exit 1
+          echo 'Public Admin V83 verification failed' >&2; exit 1
       - name: Credential blocker marker
         if: steps.auth.outputs.available != 'true'
         run: |
