@@ -27,6 +27,7 @@ admin_deploy = read(".github/workflows/deploy-cv-coach-admin-production.yml")
 client_deploy = read(".github/workflows/deploy-cv-coach-client-production.yml")
 vercel = read("vercel.json")
 edge_program = read("supabase/functions/generate-ai-program/index.ts")
+programmable_exercise_v81 = read("supabase/migrations/202609132330_programmable_exercise_contract_v81.sql")
 
 require(admin, "client_url:'https://cv-coach-roan.vercel.app'", "public client URL")
 require(admin, "'/functions/v1/publish-program'", "secure program publication")
@@ -56,6 +57,18 @@ require(edge_program, "cv-safety-audit-v1", "deterministic safety audit")
 require(edge_program, "time_learning", "client-specific time learning")
 require(edge_program, "weekly_availability", "legacy onboarding frequency alias")
 require(edge_program, "session_duration_minutes", "legacy onboarding duration alias")
+
+# V81: exercise programming safety is enforced below every UI/AI caller.
+require(programmable_exercise_v81, "alter column active set default false", "new exercises default to staging")
+require(programmable_exercise_v81, "private.is_exercise_programmable", "canonical programmable exercise predicate")
+require(programmable_exercise_v81, "e.active = true", "programmable active requirement")
+require(programmable_exercise_v81, "r.qa_status = 'approved'", "programmable QA requirement")
+require(programmable_exercise_v81, "trg_guard_exercise_active_state_v81", "exercise activation invariant trigger")
+require(programmable_exercise_v81, "trg_guard_exercise_review_state_v81", "exercise QA invariant trigger")
+require(programmable_exercise_v81, "trg_program_exercise_programmable_v81", "program assignment hard gate")
+require(programmable_exercise_v81, "Exercise is used by an active or draft program; replace it there before deactivation", "in-use deactivation guard")
+require(programmable_exercise_v81, "V81 invariant failed: draft/active program contains a non-programmable exercise", "migration drift assertion")
+
 forbid(admin, "cv-coach-sodcloud-1237.vercel.app", "protected client domain")
 
 for marker in (
