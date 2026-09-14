@@ -100,7 +100,7 @@ jobs:
               if script.strip():(out/f'{i:03d}.js').write_text(script,encoding='utf-8')
           PY
           for f in /tmp/cv-client-inline/*.js; do node --check "$f"; done
-      - name: Build and validate Admin Rank V62
+      - name: Build and validate Admin Rank V62 + Progression V83
         shell: bash
         run: |
           set -euo pipefail
@@ -109,6 +109,11 @@ jobs:
           grep -q 'cv-admin-rank-v62' index.html
           grep -q 'data-v="ranking"' index.html
           node --check admin-assets/cv-rank-admin-v62.js
+          python scripts/upgrade_admin_progression_v83.py
+          python scripts/test-admin-progression-v83.py
+          grep -q 'cv-admin-progression-v83' index.html
+          grep -q 'data-v="progression"' index.html
+          node --check admin-assets/cv-progression-admin-v83.js
       - name: Validate Admin inline JavaScript
         shell: bash
         run: |
