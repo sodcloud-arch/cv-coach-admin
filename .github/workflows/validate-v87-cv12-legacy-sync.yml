@@ -1,0 +1,46 @@
+name: CV Coach V87 CV12 Legacy Sync Contracts
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609140145_cv12_legacy_sync_v87.sql"
+      - "supabase/migrations/202609140146_cv12_legacy_sync_rpc_v87.sql"
+      - ".github/workflows/validate-v87-cv12-legacy-sync.yml"
+  push:
+    branches: [feature/v87-cv12-legacy-sync]
+    paths:
+      - "supabase/migrations/202609140145_cv12_legacy_sync_v87.sql"
+      - "supabase/migrations/202609140146_cv12_legacy_sync_rpc_v87.sql"
+      - ".github/workflows/validate-v87-cv12-legacy-sync.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v87:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate V87 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=supabase/migrations/202609140145_cv12_legacy_sync_v87.sql
+          rpc=supabase/migrations/202609140146_cv12_legacy_sync_rpc_v87.sql
+          grep -q 'legacy_cv12_sessions_v87' "$base"
+          grep -q 'legacy_cv12_exercise_logs_v87' "$base"
+          grep -q 'legacy_cv12_measurements_v87' "$base"
+          grep -q 'refresh_cv12_pilot_baseline_v87' "$base"
+          grep -q 'get_cv12_native_cutover_plan_v87' "$base"
+          grep -q 'link_cv12_pilot_native_v87' "$base"
+          grep -q 'native_auth_identity_required' "$base"
+          grep -q 'sync_cv12_legacy_v87' "$rpc"
+          grep -q 'to service_role' "$rpc"
+          grep -q 'idempotent' "$rpc"
+          grep -q "auto_publish',false" "$base"
+          grep -q "auto_program_edit',false" "$base"
+          if grep -q 'grant execute on function public.sync_cv12_legacy_v87.*authenticated' "$rpc"; then
+            echo 'V87 sync RPC must not be executable by authenticated clients' >&2; exit 1
+          fi
+          echo CV_V87_LEGACY_SYNC_CONTRACT_OK
