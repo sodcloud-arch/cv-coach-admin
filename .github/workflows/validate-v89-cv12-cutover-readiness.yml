@@ -1,0 +1,41 @@
+name: CV Coach V89 CV12 Cutover Readiness Contracts
+
+on:
+  push:
+    paths:
+      - 'supabase/migrations/202609141410_v89_cv12_cutover_readiness.sql'
+      - '.github/workflows/validate-v89-cv12-cutover-readiness.yml'
+  pull_request:
+    paths:
+      - 'supabase/migrations/202609141410_v89_cv12_cutover_readiness.sql'
+      - '.github/workflows/validate-v89-cv12-cutover-readiness.yml'
+
+jobs:
+  validate-v89:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate V89 safety contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          file='supabase/migrations/202609141410_v89_cv12_cutover_readiness.sql'
+          test -f "$file"
+          grep -q "CV12_CUTOVER_READINESS_V89" "$file"
+          grep -q "technical_ready_for_native_identity" "$file"
+          grep -q "ready_for_real_cutover" "$file"
+          grep -q "longitudinal_ai_ready" "$file"
+          grep -q "synthetic_identity_forbidden" "$file"
+          grep -q "unresolved_mappings_block_account_cutover" "$file"
+          grep -q "Press de hombros con mancuernas" "$file"
+          grep -q "press-militar-mancuernas" "$file"
+          grep -q "Crunch en colchoneta" "$file"
+          grep -q "Curl de bíceps con mancuernas" "$file"
+          grep -q "Elevación lateral de pierna en colchoneta" "$file"
+          grep -q "auto_publish',false" "$file"
+          grep -q "auto_program_edit',false" "$file"
+          grep -q "legacy_source_preserved',true" "$file"
+          if grep -Eq "insert into public\.workout_sessions|delete from public\.legacy_cv12|truncate .*legacy_cv12" "$file"; then
+            echo 'V89 must not copy to native workout sessions or destroy legacy history' >&2
+            exit 1
+          fi
