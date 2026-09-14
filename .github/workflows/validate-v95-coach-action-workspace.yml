@@ -1,0 +1,74 @@
+name: CV Coach V95 Coach Action Workspace Contracts
+
+on:
+  push:
+    paths:
+      - 'admin-assets/coach-action-workspace-v95.js'
+      - 'admin-assets/v78-library.js'
+      - 'supabase/migrations/202609141600_coach_action_workspace_v95.sql'
+      - '.github/workflows/validate-v95-coach-action-workspace.yml'
+  pull_request:
+    paths:
+      - 'admin-assets/coach-action-workspace-v95.js'
+      - 'admin-assets/v78-library.js'
+      - 'supabase/migrations/202609141600_coach_action_workspace_v95.sql'
+      - '.github/workflows/validate-v95-coach-action-workspace.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v95:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Validate V95 JavaScript
+        run: |
+          set -euo pipefail
+          node --check admin-assets/coach-action-workspace-v95.js
+          node --check admin-assets/v78-library.js
+      - name: Validate backend contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          sql='supabase/migrations/202609141600_coach_action_workspace_v95.sql'
+          grep -q 'private.coach_action_workspace_v95' "$sql"
+          grep -q 'get_coach_action_workspace_v95' "$sql"
+          grep -q 'decide_coach_action_v95' "$sql"
+          grep -q 'start_coach_action_v95' "$sql"
+          grep -q 'complete_coach_action_v95' "$sql"
+          grep -q 'get_coach_ai_command_center_v94' "$sql"
+          grep -q "handoff_only',true" "$sql"
+          grep -q "side_effect_executed',false" "$sql"
+          grep -q "completion_verification='coach_reported'" "$sql"
+          grep -q "'auto_publish',false" "$sql"
+          grep -q "'auto_program_edit',false" "$sql"
+          grep -q "'auto_message',false" "$sql"
+          grep -q "'auto_billing_mutation',false" "$sql"
+          if grep -Eqi 'publish_program_backend|apply_ai_program_generation|send.*message|charge|payment_intent|update public\.programs|insert into public\.programs|delete from public\.programs|update public\.workout_sessions|insert into public\.workout_sessions' "$sql"; then
+            echo 'V95 must not execute sensitive client/training/program/billing side effects' >&2
+            exit 1
+          fi
+      - name: Validate Admin integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          js='admin-assets/coach-action-workspace-v95.js'
+          boot='admin-assets/v78-library.js'
+          grep -q "VIEW='action-workspace'" "$js"
+          grep -q 'get_coach_action_workspace_v95' "$js"
+          grep -q 'decide_coach_action_v95' "$js"
+          grep -q 'start_coach_action_v95' "$js"
+          grep -q 'complete_coach_action_v95' "$js"
+          grep -q 'ACEPTAR' "$js"
+          grep -q 'MODIFICAR' "$js"
+          grep -q 'RECHAZAR' "$js"
+          grep -q 'MARCAR COMPLETADA' "$js"
+          grep -q '/admin-assets/coach-ai-command-center-v94.js' "$boot"
+          grep -q '/admin-assets/coach-action-workspace-v95.js' "$boot"
+          grep -q '/admin-assets/v78-library-original.js' "$boot"
+      - name: Diff hygiene
+        run: git diff --check HEAD~1 HEAD
