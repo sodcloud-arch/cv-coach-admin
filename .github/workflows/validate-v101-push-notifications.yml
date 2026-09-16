@@ -1,0 +1,92 @@
+name: Validate V101 Push Notifications OS
+
+on:
+  pull_request:
+    paths:
+      - 'client-portal/sw.js'
+      - 'client-portal/assets/cv-push-v101.js'
+      - 'client-portal/upgrade_client_v101.py'
+      - 'scripts/test-client-push-v101.py'
+      - 'supabase/migrations/20260916170259_push_notifications_os_v101.sql'
+      - 'supabase/functions/push-dispatch-v101/**'
+      - '.github/workflows/validate-v101-push-notifications.yml'
+      - '.github/workflows/deploy-cv-coach-client-production.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client-portal/sw.js'
+      - 'client-portal/assets/cv-push-v101.js'
+      - 'client-portal/upgrade_client_v101.py'
+      - 'scripts/test-client-push-v101.py'
+      - 'supabase/migrations/20260916170259_push_notifications_os_v101.sql'
+      - 'supabase/functions/push-dispatch-v101/**'
+      - '.github/workflows/validate-v101-push-notifications.yml'
+      - '.github/workflows/deploy-cv-coach-client-production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v101:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: JavaScript and Service Worker syntax
+        run: |
+          set -euo pipefail
+          node --check client-portal/assets/cv-push-v101.js
+          node --check client-portal/sw.js
+
+      - name: Patch stable client with V101
+        run: |
+          set -euo pipefail
+          python client-portal/upgrade_client_v101.py
+          grep -q 'cv-client-push-v101: explicit-consent + web-push + preferences' client-portal/stable/index.html
+          grep -q './assets/cv-push-v101.js' client-portal/stable/index.html
+
+      - name: V101 functional contracts
+        run: |
+          set -euo pipefail
+          python scripts/test-client-push-v101.py
+
+      - name: Backend security contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          MIG='supabase/migrations/20260916170259_push_notifications_os_v101.sql'
+          EDGE='supabase/functions/push-dispatch-v101/index.ts'
+          grep -q 'after insert on public.notifications' "$MIG"
+          grep -q 'for update skip locked' "$MIG"
+          grep -q "metadata->>'push_disabled'" "$MIG"
+          grep -q 'workout_reminder_time is not null' "$MIG"
+          grep -q 'cv_push_vapid_public_v101' "$MIG"
+          grep -q 'cv_push_vapid_private_v101' "$MIG"
+          grep -q 'cv_push_dispatch_token_v101' "$MIG"
+          grep -q "grant execute on function public.get_push_dispatch_config_v101() to service_role" "$MIG"
+          grep -q 'web-push@3.6.7' "$EDGE"
+          grep -q 'DISPATCH_AUTH_FAILED' "$EDGE"
+          grep -q 'auth.getUser(token)' "$EDGE"
+          grep -q 'QUIET_HOURS_ACTIVE' "$EDGE"
+          if grep -qiE 'whatsapp_opt_in|Peach' "$MIG" client-portal/assets/cv-push-v101.js; then
+            echo 'Push V101 must remain independent from WhatsApp/Peach' >&2; exit 1
+          fi
+          if grep -q 'cv_push_vapid_private_v101' client-portal/assets/cv-push-v101.js client-portal/sw.js; then
+            echo 'Private VAPID secret reference leaked to client runtime' >&2; exit 1
+          fi
+          if grep -q 'cv_push_dispatch_token_v101' client-portal/assets/cv-push-v101.js client-portal/sw.js; then
+            echo 'Dispatcher secret reference leaked to client runtime' >&2; exit 1
+          fi
+
+      - name: Diff hygiene
+        run: |
+          set -euo pipefail
+          git diff --check HEAD~1 HEAD
+          if git grep -nE '^(<<<<<<<|=======|>>>>>>>)' -- ':!*.md'; then
+            echo 'Git conflict marker detected' >&2; exit 1
+          fi
