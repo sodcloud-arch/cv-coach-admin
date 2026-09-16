@@ -57,8 +57,8 @@ for token in [
 ]:
     if token not in text:
         raise SystemExit(f'V102 client contract missing: {token}')
-if text.count('CV_EXERCISE_SCREEN_V102_READY') != 2:
-    raise SystemExit('V102 ready marker must exist once in source string and once in console expression')
+if text.count('CV_EXERCISE_SCREEN_V102_READY') != 1:
+    raise SystemExit('V102 ready marker must exist exactly once in the inlined runtime')
 if text.count(START) != 1 or text.count(END) != 1:
     raise SystemExit('V102 inline runtime must be injected exactly once')
 
