@@ -15,6 +15,15 @@ const page=await context.newPage();
 const errors=[];
 page.on('pageerror',e=>errors.push(String(e?.message||e)));
 
+async function touchElement(locator,label){
+  const box=await locator.boundingBox();
+  assert.ok(box&&box.width>0&&box.height>0,`${label} has no touchable box`);
+  const x=box.x+box.width/2;
+  const y=box.y+box.height/2;
+  assert.ok(x>=0&&x<=390&&y>=0&&y<=844,`${label} is outside the mobile viewport: ${JSON.stringify(box)}`);
+  await page.touchscreen.tap(x,y);
+}
+
 await page.route('**/rest/v1/rpc/get_exercise_technique_v103',async route=>{
   let name='Ejercicio';
   try{name=route.request().postDataJSON()?.p_name||name}catch(_){/* noop */}
@@ -92,7 +101,7 @@ try{
   assert.equal(pre.sharesTitleRow,true,'Detail link is not beside the exercise title');
   assert.equal(pre.buttonVisible,true,'Detail link is not visible');
 
-  await page.locator('.cvDetailsLinkV103').first().click();
+  await touchElement(page.locator('.cvDetailsLinkV103').first(),'Ver detalles');
   await page.waitForFunction(()=>{
     const backdrop=document.getElementById('cvTechniqueDetailsV103');
     const content=backdrop?.querySelector('#cvV103Content')?.textContent||'';
@@ -130,7 +139,7 @@ try{
   assert.ok(state.seconds.some(x=>x.includes('2')),'Tempo seconds are not visible');
   assert.equal(errors.length,0,'Browser errors: '+errors.join(' | '));
 
-  await page.locator('#cvTechniqueDetailsV103 .cvTechClose').click();
+  await touchElement(page.locator('#cvTechniqueDetailsV103 .cvTechClose'),'Cerrar detalles');
   await page.waitForFunction(()=>!document.getElementById('cvTechniqueDetailsV103')?.classList.contains('show'),null,{timeout:2000});
 
   console.log('CV_V103_BROWSER_STATE',JSON.stringify(state));
