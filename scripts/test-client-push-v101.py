@@ -1,6 +1,5 @@
 from pathlib import Path
 import re
-import sys
 
 ROOT=Path(__file__).resolve().parents[1]
 HTML=ROOT/'client-portal'/'stable'/'index.html'
@@ -19,7 +18,7 @@ sw=SW.read_text(encoding='utf-8')
 mig=MIG.read_text(encoding='utf-8')
 edge=EDGE.read_text(encoding='utf-8')
 
-required_html=['cv-client-push-v101: explicit-consent + web-push + preferences','./assets/cv-push-v101.js']
+required_html=['cv-client-push-v101: explicit-consent + web-push + preferences','./assets/cv-push-v101.js',"'/routine':'routine'"]
 required_asset=[
     'CV_CLIENT_PUSH_V101_READY','Notification.requestPermission()','pushManager.subscribe',
     'userVisibleOnly:true','register_push_subscription_v101','disable_push_subscription_v101',
@@ -32,7 +31,8 @@ required_mig=[
     'enqueue_notification_push_v101','get_push_center_v101','register_push_subscription_v101',
     'enqueue_push_test_v101','claim_push_dispatch_v101','finish_push_dispatch_v101',
     'enqueue_workout_reminders_v101','cv_push_dispatch_v101','cv_workout_reminders_v101',
-    "workout_reminder_time is not null","metadata->>'push_disabled'"
+    "workout_reminder_time is not null","metadata->>'push_disabled'",
+    'workout_reminder_time time without time zone,'
 ]
 required_edge=['PUSH_NOTIFICATIONS_OS_V101','web-push@3.6.7','get_push_dispatch_config_v101','dispatch_token','sendNotification','QUIET_HOURS_ACTIVE','claim_push_notification_v101']
 
@@ -68,9 +68,15 @@ for forbidden in ['whatsapp_opt_in','Peach','peach']:
     if forbidden in mig or forbidden in asset:
         raise SystemExit(f'V101 push unexpectedly coupled to WhatsApp: {forbidden}')
 
-# No automatic workout reminder time is allowed.
-if re.search(r'workout_reminder_time\s+time[^\n]*default\s+',mig,re.I):
+# No automatic workout reminder time is allowed in the persisted preference schema.
+pref_match=re.search(r'create table if not exists public\.push_preferences_v101\s*\((.*?)\n\);',mig,re.S|re.I)
+if not pref_match:
+    raise SystemExit('V101 push preference table definition missing')
+pref_sql=pref_match.group(1)
+if re.search(r'workout_reminder_time\s+time[^\n]*default\s+',pref_sql,re.I):
     raise SystemExit('V101 invented a default workout reminder time')
+if 'workout_reminder_time time without time zone,' not in pref_sql:
+    raise SystemExit('V101 workout reminder must remain nullable/explicit')
 
 # Dispatcher must retain custom scheduled authentication despite verify_jwt=false deployment.
 if "String(body.dispatch_token" not in edge or "DISPATCH_AUTH_FAILED" not in edge:
