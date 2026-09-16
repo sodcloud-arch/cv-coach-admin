@@ -2,11 +2,14 @@
 'use strict';
 
 const CV_EXERCISE_SCREEN_V102_READY='CV_EXERCISE_SCREEN_V102_READY';
-const CONTRACT_REVISION='V102.1_ACTIVE_FOCUS';
+const CONTRACT_REVISION='V102.2_SELF_CONTAINED_FOCUS';
+const PREVIOUS_CONTRACT_REVISION='V102.1_ACTIVE_FOCUS';
+const LEGACY_ACTIVE_CLASS='cvWorkoutActiveV40';
 const QUERY_KEY='cv_v102';
 const STORAGE_KEY='cv_v102_experiment';
 const ROOT_CLASS='cvExerciseScreenV102Root';
 const BODY_CLASS='cvExerciseScreenV102';
+const READY_CLASS='cvV102WorkoutReady';
 const CARD_CLASS='cvExerciseScreenCardV102';
 const EXPANDED_CLASS='cvV102Expanded';
 const COLLAPSED_CLASS='cvV102Collapsed';
@@ -15,7 +18,7 @@ const STYLE_ID='cv-exercise-screen-v102-style';
 let observer=null;
 let scheduled=false;
 let lastCurrentKey=null;
-let hasAppliedActiveState=false;
+let hasAppliedFocusState=false;
 
 function resolveExperiment(){
   try{
@@ -29,38 +32,38 @@ function resolveExperiment(){
 
 function css(){return `
 html.${ROOT_CLASS}{scroll-snap-type:y proximity;scroll-padding-top:128px}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}{scroll-snap-align:start;scroll-snap-stop:normal;scroll-margin-top:128px!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .cvExecutionBtnV35{display:none!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .cvExerciseTitleRowV35{display:block!important;margin:0!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .cvExerciseTitleRowV35 h3{margin:1px 0 6px!important;cursor:default!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .cvExerciseTitleRowV35 h3:after,
-body.${BODY_CLASS}.cvWorkoutActiveV40 .exerciseTop h3:after{display:none!important;content:none!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${LEGACY_MAIN_CLASS}{display:none!important}
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}{scroll-snap-align:start;scroll-snap-stop:normal;scroll-margin-top:128px!important}
+body.${BODY_CLASS}.${READY_CLASS} .cvExecutionBtnV35{display:none!important}
+body.${BODY_CLASS}.${READY_CLASS} .cvExerciseTitleRowV35{display:block!important;margin:0!important}
+body.${BODY_CLASS}.${READY_CLASS} .cvExerciseTitleRowV35 h3{margin:1px 0 6px!important;cursor:default!important}
+body.${BODY_CLASS}.${READY_CLASS} .cvExerciseTitleRowV35 h3:after,
+body.${BODY_CLASS}.${READY_CLASS} .exerciseTop h3:after{display:none!important;content:none!important}
+body.${BODY_CLASS}.${READY_CLASS} .${LEGACY_MAIN_CLASS}{display:none!important}
 
-/* Only the active exercise owns the workout canvas. */
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}{opacity:1!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS}{
+/* V102.2 owns exercise focus once the workout cards exist; no legacy started-state dependency. */
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}{opacity:1!important}
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS}{
   padding:12px 12px!important;
   min-height:0!important;
   opacity:.84!important;
   transform:none!important;
   box-shadow:0 9px 22px rgba(0,0,0,.18)!important;
 }
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS} .exerciseTop{margin:0!important;align-items:center!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS} .exerciseTop h3{font-size:21px!important;line-height:1.04!important;margin:0 0 4px!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS} .cvPrescription{margin:0!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS} .cvPrescriptionChip{min-height:21px!important;font-size:7.4px!important;padding:0 6px!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS}>.exerciseMedia,
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvRestText,
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvSetsHead,
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvSetRows,
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvAddSet,
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvExerciseProgress{display:none!important}
-body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS} .cvExerciseStatusV31{margin-top:1px!important}
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS} .exerciseTop{margin:0!important;align-items:center!important}
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS} .exerciseTop h3{font-size:21px!important;line-height:1.04!important;margin:0 0 4px!important}
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS} .cvPrescription{margin:0!important}
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS} .cvPrescriptionChip{min-height:21px!important;font-size:7.4px!important;padding:0 6px!important}
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS}>.exerciseMedia,
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvRestText,
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvSetsHead,
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvSetRows,
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvAddSet,
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvExerciseProgress{display:none!important}
+body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS} .cvExerciseStatusV31{margin-top:1px!important}
 
 @media(max-width:699px){
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}{padding:14px 12px 14px!important}
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia{
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}{padding:14px 12px 14px!important}
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia{
     display:grid!important;
     place-items:center!important;
     width:100%!important;
@@ -75,8 +78,8 @@ body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS} .cvExerc
     background:#030608!important;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 10px 26px rgba(0,0,0,.22)!important;
   }
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia:after{display:none!important;content:none!important}
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia .photo{
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia:after{display:none!important;content:none!important}
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia .photo{
     display:block!important;
     width:100%!important;
     height:100%!important;
@@ -90,31 +93,31 @@ body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS} .cvExerc
     border-radius:0!important;
     background:#030608!important;
   }
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia .cvV102MediaFallback{
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia .cvV102MediaFallback{
     width:100%;height:100%;display:grid;place-items:center;text-align:center;padding:24px;
     color:#7f8c94;font-size:10px;font-weight:800;letter-spacing:.03em;line-height:1.45;
     background:radial-gradient(circle at 50% 45%,#11191e,#040708 70%);
   }
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia .cvV102MediaFallback b{
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia .cvV102MediaFallback b{
     display:block;margin-bottom:5px;color:#dce2e5;font:900 28px/1 'Barlow Condensed',sans-serif;
   }
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.cvRestText{margin-left:0!important;margin-top:2px!important;margin-bottom:9px!important}
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.cvSetsHead,
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.cvSetRows,
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.cvAddSet{width:100%!important;margin-left:0!important;margin-right:0!important}
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS} .exerciseTop{margin-bottom:0!important}
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.cvRestText{margin-left:0!important;margin-top:2px!important;margin-bottom:9px!important}
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.cvSetsHead,
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.cvSetRows,
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.cvAddSet{width:100%!important;margin-left:0!important;margin-right:0!important}
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS} .exerciseTop{margin-bottom:0!important}
 }
 
 @media(max-width:390px){
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia{
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia{
     height:min(232px,63vw)!important;
     min-height:min(232px,63vw)!important;
   }
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS} .exerciseTop h3{font-size:20px!important}
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${COLLAPSED_CLASS} .exerciseTop h3{font-size:20px!important}
 }
 
 @media(max-width:350px){
-  body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia{
+  body.${BODY_CLASS}.${READY_CLASS} .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia{
     height:min(216px,63vw)!important;
     min-height:min(216px,63vw)!important;
   }
@@ -168,8 +171,8 @@ function ensureMedia(card,title){
   return media;
 }
 
-function isWorkoutActive(){
-  return document.body?.classList.contains('cvWorkoutActiveV40')===true;
+function isFocusReady(){
+  return document.body?.classList.contains(READY_CLASS)===true;
 }
 
 function resolveCurrent(cards){
@@ -187,7 +190,7 @@ function upgradeCard(card,index,currentCard){
   card.classList.add(CARD_CLASS);
   card.dataset.cvV102Index=String(index+1);
 
-  const active=isWorkoutActive();
+  const active=isFocusReady();
   const expanded=active&&card===currentCard;
   card.classList.toggle(EXPANDED_CLASS,expanded);
   card.classList.toggle(COLLAPSED_CLASS,active&&!expanded);
@@ -223,11 +226,11 @@ function upgradeCard(card,index,currentCard){
 }
 
 function maybeAdvance(cards,currentCard){
-  if(!isWorkoutActive()||!currentCard)return;
+  if(!isFocusReady()||!currentCard)return;
   const index=cards.indexOf(currentCard);
   const key=cardKey(currentCard,index);
-  if(!hasAppliedActiveState){
-    hasAppliedActiveState=true;
+  if(!hasAppliedFocusState){
+    hasAppliedFocusState=true;
     lastCurrentKey=key;
     return;
   }
@@ -243,20 +246,23 @@ function clearFocusState(cards){
     card.classList.remove(EXPANDED_CLASS,COLLAPSED_CLASS);
     card.removeAttribute('aria-expanded');
   });
-  hasAppliedActiveState=false;
+  document.body?.classList.remove(READY_CLASS);
+  if(document.body?.dataset)delete document.body.dataset.cvV102;
+  hasAppliedFocusState=false;
   lastCurrentKey=null;
 }
 
 function apply(){
   scheduled=false;
   if(!document.body?.classList.contains(BODY_CLASS))return;
-  if(!document.body.classList.contains('cvFastWorkout'))return;
   const cards=[...document.querySelectorAll('.cvHevyExercise,.workoutExercise')];
-  if(!cards.length)return;
-  if(!isWorkoutActive()){
+  const ready=document.body.classList.contains('cvFastWorkout')&&cards.length>0;
+  if(!ready){
     clearFocusState(cards);
     return;
   }
+  document.body.classList.add(READY_CLASS);
+  document.body.dataset.cvV102='102.2';
   const currentCard=resolveCurrent(cards);
   cards.forEach((card,index)=>upgradeCard(card,index,currentCard));
   maybeAdvance(cards,currentCard);
@@ -281,7 +287,8 @@ function enable(){
 
 function disable(){
   document.documentElement.classList.remove(ROOT_CLASS);
-  document.body?.classList.remove(BODY_CLASS);
+  document.body?.classList.remove(BODY_CLASS,READY_CLASS);
+  if(document.body?.dataset)delete document.body.dataset.cvV102;
   observer?.disconnect();observer=null;
   const cards=[...document.querySelectorAll(`.${CARD_CLASS}`)];
   clearFocusState(cards);
@@ -291,8 +298,11 @@ const enabled=resolveExperiment();
 if(enabled)enable();
 
 window.CVExerciseScreenV102={
-  version:'102.1',
+  version:'102.2',
+  previous_version:'102.1',
   contract_revision:CONTRACT_REVISION,
+  legacy_contract_revision:PREVIOUS_CONTRACT_REVISION,
+  legacy_active_class:LEGACY_ACTIVE_CLASS,
   ready:true,
   enabled,
   enableExperiment(){localStorage.setItem(STORAGE_KEY,'1');location.reload()},
