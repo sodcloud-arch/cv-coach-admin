@@ -9,11 +9,13 @@ on:
     paths:
       - 'client-portal/**'
       - 'scripts/test-mobile-exercise-v102.py'
+      - 'scripts/test-mobile-exercise-v102-browser.mjs'
       - '.github/workflows/validate-v102-mobile-exercise.yml'
   pull_request:
     paths:
       - 'client-portal/**'
       - 'scripts/test-mobile-exercise-v102.py'
+      - 'scripts/test-mobile-exercise-v102-browser.mjs'
       - '.github/workflows/validate-v102-mobile-exercise.yml'
   workflow_dispatch:
 
@@ -23,7 +25,7 @@ permissions:
 jobs:
   validate-v102:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,6 +81,22 @@ jobs:
           grep -q 'cvV102Collapsed' client-portal/stable/index.html
           grep -q "document.body.dataset.cvV102='102.2'" client-portal/stable/index.html
           grep -q "QUERY_KEY='cv_v102'" client-portal/stable/index.html
+
+      - name: Install Playwright WebKit
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Execute V102.2 mobile browser behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 4173 --directory client-portal/stable >/tmp/cv-v102-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 0.5; done
+          CV_TEST_URL=http://127.0.0.1:4173 node scripts/test-mobile-exercise-v102-browser.mjs
 
       - name: Diff hygiene
         run: git diff --check
