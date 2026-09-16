@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import subprocess
+import sys
 
 ROOT=Path(__file__).resolve().parent
 HTML=ROOT/'stable'/'index.html'
@@ -39,3 +40,9 @@ if text.count('./assets/cv-push-v101.js') != 1:
 
 HTML.write_text(text,encoding='utf-8')
 print('CV_CLIENT_PUSH_V101_PATCHED')
+
+# V102 is intentionally chained after V101 so the existing production build
+# can carry the opt-in mobile exercise experiment without replacing older logic.
+next_upgrade=ROOT/'upgrade_client_v102.py'
+if next_upgrade.exists():
+    subprocess.run([sys.executable,str(next_upgrade)],check=True)
