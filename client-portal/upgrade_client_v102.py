@@ -8,6 +8,7 @@ ASSET=ROOT/'assets'/'cv-exercise-screen-v102.js'
 MARKER='<!-- cv-exercise-screen-v102: opt-in-inline-media + mobile-fit + proximity-snap -->'
 START='<!-- cv-exercise-screen-v102-inline-start -->'
 END='<!-- cv-exercise-screen-v102-inline-end -->'
+BUILD_GATE_REVISION='V102.3_PRODUCTION_WEBKIT_GATE'
 
 for path in [HTML,ASSET]:
     if not path.exists() or path.stat().st_size < 300:
@@ -78,3 +79,4 @@ if text.count(START) != 1 or text.count(END) != 1:
 
 HTML.write_text(text,encoding='utf-8')
 print('CV_CLIENT_EXERCISE_SCREEN_V102_2_PATCHED')
+print(BUILD_GATE_REVISION)
