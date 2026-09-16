@@ -1,0 +1,112 @@
+name: Validate V103 Exercise Details
+
+on:
+  push:
+    branches:
+      - 'feat/v103*'
+      - 'fix/v103*'
+      - main
+    paths:
+      - 'client-portal/**'
+      - 'scripts/test-exercise-details-v103-browser.mjs'
+      - 'supabase/migrations/*v103*.sql'
+      - '.github/workflows/validate-v103-exercise-details.yml'
+  pull_request:
+    paths:
+      - 'client-portal/**'
+      - 'scripts/test-exercise-details-v103-browser.mjs'
+      - 'supabase/migrations/*v103*.sql'
+      - '.github/workflows/validate-v103-exercise-details.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v103:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build canonical client through V103
+        shell: bash
+        run: |
+          set -euo pipefail
+          python client-portal/stabilize.py
+          python client-portal/consolidate_runtime.py
+          python client-portal/consolidate_session_runtime.py
+          python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
+          python client-portal/upgrade_client_v49.py
+          python client-portal/upgrade_client_v50.py
+          python client-portal/upgrade_client_v51.py
+          python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
+          python client-portal/upgrade_client_v54.py
+          python client-portal/upgrade_client_v55.py
+          python client-portal/upgrade_client_v56.py
+          python client-portal/upgrade_client_v57.py
+          python client-portal/upgrade_client_v59.py
+          python client-portal/upgrade_client_v60.py
+          python client-portal/repair_client_v60.py
+          python client-portal/upgrade_client_v61.py
+          python client-portal/upgrade_client_v67.py
+          python client-portal/upgrade_client_v68.py
+          python client-portal/upgrade_client_v69.py
+          python client-portal/upgrade_client_v74.py
+          python client-portal/upgrade_client_v101.py
+          python client-portal/upgrade_client_v102.py
+          python client-portal/upgrade_client_v103.py
+
+      - name: Validate V103 JavaScript
+        run: node --check client-portal/assets/cv-exercise-details-v103.js
+
+      - name: Validate V103 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'CV_EXERCISE_DETAILS_V103_READY' client-portal/stable/index.html
+          grep -q 'cv-exercise-details-v103: explicit-link + structured-technique-sheet' client-portal/stable/index.html
+          grep -q 'cvDetailsLinkV103' client-portal/stable/index.html
+          grep -q 'Ver detalles' client-portal/stable/index.html
+          grep -q 'get_exercise_technique_v103' client-portal/stable/index.html
+          grep -q 'Agarre, separación y postura' client-portal/stable/index.html
+          grep -q 'Tiempos de ejecución' client-portal/stable/index.html
+          grep -q 'Ejecución paso a paso' client-portal/stable/index.html
+          grep -q 'Errores frecuentes' client-portal/stable/index.html
+          grep -q 'technique_details jsonb' supabase/migrations/20260916171800_exercise_technique_details_v103.sql
+          grep -q "slug = 'jalon-al-pecho'" supabase/migrations/20260916171800_exercise_technique_details_v103.sql
+          grep -q 'grant execute on function public.get_exercise_technique_v103(text) to anon, authenticated' supabase/migrations/20260916171800_exercise_technique_details_v103.sql
+
+      - name: Preserve V102 and prior runtime contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'CV_EXERCISE_SCREEN_V102_READY' client-portal/stable/index.html
+          grep -q 'V102.2_SELF_CONTAINED_FOCUS' client-portal/stable/index.html
+          grep -q 'cvV102WorkoutReady' client-portal/stable/index.html
+          grep -q 'CVWorkoutControllerV71' client-portal/stable/index.html
+          grep -q 'CVWorkoutNumpadV73' client-portal/stable/index.html
+          grep -q 'CVWorkoutSetGuardV74' client-portal/stable/index.html
+          grep -q 'cv-client-push-v101: explicit-consent + web-push + preferences' client-portal/stable/index.html
+
+      - name: Install Playwright WebKit
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Execute V103 mobile browser behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 4173 --directory client-portal/stable >/tmp/cv-v103-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in {1..20}; do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 0.5; done
+          CV_TEST_URL=http://127.0.0.1:4173 node scripts/test-exercise-details-v103-browser.mjs
+
+      - name: Diff hygiene
+        run: git diff --check
