@@ -9,6 +9,15 @@ const page=await context.newPage();
 const errors=[];
 page.on('pageerror',e=>errors.push(String(e?.message||e)));
 
+async function touchElement(locator,label){
+  const box=await locator.boundingBox();
+  assert.ok(box&&box.width>0&&box.height>0,`${label} has no touchable box`);
+  const x=box.x+box.width/2;
+  const y=box.y+box.height/2;
+  assert.ok(x>=0&&x<=390&&y>=0&&y<=844,`${label} is outside the mobile viewport: ${JSON.stringify(box)}`);
+  await page.touchscreen.tap(x,y);
+}
+
 try{
   await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(()=>window.CVExerciseScreenV102?.version==='102.2'&&window.CVExerciseDetailsV103?.version==='103',null,{timeout:10000});
@@ -36,7 +45,7 @@ try{
     if(button)button.dataset.cvDetailsIndex='0';
   });
 
-  await page.locator('.cvDetailsLinkV103').first().click();
+  await touchElement(page.locator('.cvDetailsLinkV103').first(),'Ver detalles');
   await page.waitForFunction(()=>{
     const b=document.getElementById('cvTechniqueDetailsV103');
     const text=b?.querySelector('#cvV103Content')?.textContent||'';
