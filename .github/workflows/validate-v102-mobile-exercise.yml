@@ -1,0 +1,77 @@
+name: Validate V102 Mobile Exercise Screen
+
+on:
+  push:
+    branches:
+      - 'feat/v102-mobile-exercise-screen'
+      - main
+    paths:
+      - 'client-portal/**'
+      - 'scripts/test-mobile-exercise-v102.py'
+      - '.github/workflows/validate-v102-mobile-exercise.yml'
+  pull_request:
+    paths:
+      - 'client-portal/**'
+      - 'scripts/test-mobile-exercise-v102.py'
+      - '.github/workflows/validate-v102-mobile-exercise.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v102:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build canonical client through V102
+        shell: bash
+        run: |
+          set -euo pipefail
+          python client-portal/stabilize.py
+          python client-portal/consolidate_runtime.py
+          python client-portal/consolidate_session_runtime.py
+          python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
+          python client-portal/upgrade_client_v49.py
+          python client-portal/upgrade_client_v50.py
+          python client-portal/upgrade_client_v51.py
+          python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
+          python client-portal/upgrade_client_v54.py
+          python client-portal/upgrade_client_v55.py
+          python client-portal/upgrade_client_v56.py
+          python client-portal/upgrade_client_v57.py
+          python client-portal/upgrade_client_v59.py
+          python client-portal/upgrade_client_v60.py
+          python client-portal/repair_client_v60.py
+          python client-portal/upgrade_client_v61.py
+          python client-portal/upgrade_client_v67.py
+          python client-portal/upgrade_client_v68.py
+          python client-portal/upgrade_client_v69.py
+          python client-portal/upgrade_client_v74.py
+          python client-portal/upgrade_client_v101.py
+
+      - name: Validate V102 JavaScript
+        run: node --check client-portal/assets/cv-exercise-screen-v102.js
+
+      - name: Validate mobile exercise contracts
+        run: python scripts/test-mobile-exercise-v102.py
+
+      - name: Preserve prior client contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'CVWorkoutControllerV71' client-portal/stable/index.html
+          grep -q 'CVWorkoutNumpadV73' client-portal/stable/index.html
+          grep -q 'CVWorkoutSetGuardV74' client-portal/stable/index.html
+          grep -q 'cv-client-push-v101: explicit-consent + web-push + preferences' client-portal/stable/index.html
+          grep -q 'cv-exercise-screen-v102: opt-in-inline-media + mobile-fit + proximity-snap' client-portal/stable/index.html
+          grep -q 'CV_EXERCISE_SCREEN_V102_READY' client-portal/stable/index.html
+          grep -q "QUERY_KEY='cv_v102'" client-portal/stable/index.html
+
+      - name: Diff hygiene
+        run: git diff --check
