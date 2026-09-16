@@ -43,9 +43,10 @@ jobs:
           node --check client-portal/assets/cv-push-v101.js
           node --check client-portal/sw.js
 
-      - name: Patch stable client with V101
+      - name: Build stable base and patch V101
         run: |
           set -euo pipefail
+          python client-portal/stabilize.py
           python client-portal/upgrade_client_v101.py
           grep -q 'cv-client-push-v101: explicit-consent + web-push + preferences' client-portal/stable/index.html
           grep -q './assets/cv-push-v101.js' client-portal/stable/index.html
