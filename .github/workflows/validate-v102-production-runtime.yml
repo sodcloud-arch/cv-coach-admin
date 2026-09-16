@@ -1,0 +1,57 @@
+name: CV Coach V102 Production Runtime
+
+on:
+  workflow_run:
+    workflows: ['CV Coach Client Production Deploy']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cv-coach-v102-production-runtime
+  cancel-in-progress: true
+
+jobs:
+  production-runtime:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout deployed revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Wait for canonical alias to expose V102.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..24}; do
+            body="$(curl --fail --silent --show-error --location --max-time 20 "https://cv-coach-roan.vercel.app/?cv_v102=1&v=1023" || true)"
+            if [[ "$body" == *"V102.2_SELF_CONTAINED_FOCUS"* && "$body" == *"cvV102WorkoutReady"* && "$body" == *"document.body.dataset.cvV102='102.2'"* ]]; then
+              echo 'PUBLIC_ALIAS_V102_2_CONTRACT_OK'
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Canonical alias never exposed V102.2 contract after production deploy' >&2
+          exit 1
+
+      - name: Install Playwright WebKit
+        shell: bash
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Execute V102.2 behavior against production alias
+        env:
+          CV_TEST_URL: https://cv-coach-roan.vercel.app
+        run: node scripts/test-mobile-exercise-v102-browser.mjs
+
+      - name: Production contract summary
+        shell: bash
+        run: |
+          echo 'CV_V102_PRODUCTION_RUNTIME_OK'
+          echo "DEPLOYED_SHA=${{ github.event.workflow_run.head_sha || github.sha }}"
