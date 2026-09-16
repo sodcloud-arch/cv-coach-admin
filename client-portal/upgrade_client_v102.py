@@ -29,6 +29,7 @@ required_source_tokens=[
     'exerciseMedia',
     'cvExecutionBtnV35',
     'cvFastWorkout',
+    'cvWorkoutActiveV40',
     './assets/cv-push-v101.js'
 ]
 for token in required_source_tokens:
@@ -51,9 +52,13 @@ for token in [
     START,
     END,
     'CV_EXERCISE_SCREEN_V102_READY',
+    'V102.1_ACTIVE_FOCUS',
     "QUERY_KEY='cv_v102'",
     'scroll-snap-type:y proximity',
     'cvExecutionBtnV35',
+    'cvV102Expanded',
+    'cvV102Collapsed',
+    'cvWorkoutActiveV40',
 ]:
     if token not in text:
         raise SystemExit(f'V102 client contract missing: {token}')
@@ -61,4 +66,4 @@ if text.count(START) != 1 or text.count(END) != 1:
     raise SystemExit('V102 inline runtime must be injected exactly once')
 
 HTML.write_text(text,encoding='utf-8')
-print('CV_CLIENT_EXERCISE_SCREEN_V102_PATCHED')
+print('CV_CLIENT_EXERCISE_SCREEN_V102_1_PATCHED')

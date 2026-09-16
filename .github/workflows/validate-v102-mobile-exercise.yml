@@ -3,7 +3,7 @@ name: Validate V102 Mobile Exercise Screen
 on:
   push:
     branches:
-      - 'feat/v102-mobile-exercise-screen'
+      - 'feat/v102*'
       - main
     paths:
       - 'client-portal/**'
@@ -27,7 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build canonical client through V102
+      - name: Build canonical client through V102.1
         shell: bash
         run: |
           set -euo pipefail
@@ -54,8 +54,9 @@ jobs:
           python client-portal/upgrade_client_v69.py
           python client-portal/upgrade_client_v74.py
           python client-portal/upgrade_client_v101.py
+          python client-portal/upgrade_client_v102.py
 
-      - name: Validate V102 JavaScript
+      - name: Validate V102.1 JavaScript
         run: node --check client-portal/assets/cv-exercise-screen-v102.js
 
       - name: Validate mobile exercise contracts
@@ -71,6 +72,10 @@ jobs:
           grep -q 'cv-client-push-v101: explicit-consent + web-push + preferences' client-portal/stable/index.html
           grep -q 'cv-exercise-screen-v102: opt-in-inline-media + mobile-fit + proximity-snap' client-portal/stable/index.html
           grep -q 'CV_EXERCISE_SCREEN_V102_READY' client-portal/stable/index.html
+          grep -q 'V102.1_ACTIVE_FOCUS' client-portal/stable/index.html
+          grep -q 'cvV102Expanded' client-portal/stable/index.html
+          grep -q 'cvV102Collapsed' client-portal/stable/index.html
+          grep -q 'cvWorkoutActiveV40' client-portal/stable/index.html
           grep -q "QUERY_KEY='cv_v102'" client-portal/stable/index.html
 
       - name: Diff hygiene

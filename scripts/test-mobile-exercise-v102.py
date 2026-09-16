@@ -13,18 +13,26 @@ html=HTML.read_text(encoding='utf-8')
 
 asset_tokens=[
     'CV_EXERCISE_SCREEN_V102_READY',
+    "CONTRACT_REVISION='V102.1_ACTIVE_FOCUS'",
     "QUERY_KEY='cv_v102'",
     "STORAGE_KEY='cv_v102_experiment'",
     'scroll-snap-type:y proximity',
-    'height:min(240px,62vw)',
-    "button.remove()",
+    'cvWorkoutActiveV40',
+    "EXPANDED_CLASS='cvV102Expanded'",
+    "COLLAPSED_CLASS='cvV102Collapsed'",
+    'height:min(244px,63vw)',
+    "card.getAttribute('data-tech-img')",
+    "media.dataset.cvV102Generated='1'",
     "top.insertAdjacentElement('afterend',media)",
+    "card.setAttribute('aria-expanded'",
+    "scrollIntoView({behavior,block:'start'})",
+    "attributes:true,attributeFilter:['class']",
     'cvExerciseLegacyMainV102',
     'MutationObserver',
 ]
 for token in asset_tokens:
     if token not in asset:
-        raise SystemExit(f'V102 asset contract missing: {token}')
+        raise SystemExit(f'V102.1 asset contract missing: {token}')
 
 html_tokens=[
     'cv-exercise-screen-v102: opt-in-inline-media + mobile-fit + proximity-snap',
@@ -33,7 +41,8 @@ html_tokens=[
     'cv-client-push-v101: explicit-consent + web-push + preferences',
     'CVWorkoutSetGuardV74',
     'cvExecutionBtnV35',
-    'exerciseMedia',
+    'data-tech-img',
+    'cvWorkoutActiveV40',
 ]
 for token in html_tokens:
     if token not in html:
@@ -47,7 +56,13 @@ if "localStorage.setItem(STORAGE_KEY,'1')" not in asset or "localStorage.removeI
     raise SystemExit('V102 opt-in/opt-out contract incomplete')
 if 'body.cvFastWorkout .exerciseMedia,body.cvFastWorkout .cvTechnique{display:none!important}' not in html:
     raise SystemExit('Expected legacy hidden-media rule changed unexpectedly')
-if 'body.${BODY_CLASS}.cvFastWorkout .${CARD_CLASS}>.exerciseMedia' not in asset:
-    raise SystemExit('V102 must override media visibility only inside the experiment')
+if 'body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${EXPANDED_CLASS}>.exerciseMedia' not in asset:
+    raise SystemExit('V102.1 must override media visibility only for the active exercise')
+if 'body.${BODY_CLASS}.cvWorkoutActiveV40 .${CARD_CLASS}.${COLLAPSED_CLASS}>.cvSetRows' not in asset:
+    raise SystemExit('V102.1 must collapse non-current exercise logging rows')
+if "if(!isWorkoutActive()){\n    clearFocusState(cards);\n    return;\n  }" not in asset:
+    raise SystemExit('V102.1 must not alter pre-start exercise cards')
+if "version:'102.1'" not in asset:
+    raise SystemExit('V102.1 runtime version missing')
 
-print('CV_MOBILE_EXERCISE_V102_OK')
+print('CV_MOBILE_EXERCISE_V102_1_OK')

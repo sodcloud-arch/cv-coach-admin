@@ -24,6 +24,7 @@ on:
       - 'scripts/test-client-mobile-webkit-v71.mjs'
       - 'scripts/diagnose-v73-set-check-ready.mjs'
       - 'scripts/test-client-push-v101.py'
+      - 'scripts/test-mobile-exercise-v102.py'
       - 'supabase/migrations/**'
       - '.github/workflows/deploy-cv-coach-client-production.yml'
   workflow_dispatch:
@@ -47,7 +48,7 @@ jobs:
       - name: Checkout canonical main
         uses: actions/checkout@v4
 
-      - name: Build and regression-gate client artifact through V101
+      - name: Build and regression-gate client artifact through V102.1
         shell: bash
         run: |
           set -euo pipefail
@@ -88,6 +89,7 @@ jobs:
           python client-portal/upgrade_client_v74.py
           python scripts/test-workout-controller-v71.py
           python client-portal/upgrade_client_v101.py
+          python client-portal/upgrade_client_v102.py
           node --check client-portal/assets/cv-rank-real-ui-v64.js
           node --check client-portal/assets/cv-rank-real-ui-v65.js
           node --check client-portal/assets/cv-rank-celebration-v66.js
@@ -96,10 +98,12 @@ jobs:
           node --check client-portal/assets/cv-workout-numpad-v73.js
           node --check client-portal/assets/cv-workout-set-guard-v74.js
           node --check client-portal/assets/cv-push-v101.js
+          node --check client-portal/assets/cv-exercise-screen-v102.js
           node --check client-portal/sw.js
           python scripts/test-workout-runtime-v52.py
           python scripts/test-client-sound-v53.py
           python scripts/test-client-push-v101.py
+          python scripts/test-mobile-exercise-v102.py
 
           test "$(wc -c < client-portal/stable/index.html)" -gt 50000
           grep -qi 'CV Coach' client-portal/stable/index.html
@@ -114,6 +118,11 @@ jobs:
           grep -q 'cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save' client-portal/stable/index.html
           grep -q 'cv-workout-set-guard-v74: single-flight-set-toggle + hydration-guard' client-portal/stable/index.html
           grep -q 'cv-client-push-v101: explicit-consent + web-push + preferences' client-portal/stable/index.html
+          grep -q 'cv-exercise-screen-v102: opt-in-inline-media + mobile-fit + proximity-snap' client-portal/stable/index.html
+          grep -q 'CV_EXERCISE_SCREEN_V102_READY' client-portal/stable/index.html
+          grep -q 'V102.1_ACTIVE_FOCUS' client-portal/stable/index.html
+          grep -q 'cvV102Expanded' client-portal/stable/index.html
+          grep -q 'cvV102Collapsed' client-portal/stable/index.html
           grep -q 'CVWorkoutControllerV71' client-portal/stable/index.html
           grep -q 'CVWorkoutNumpadV73' client-portal/stable/index.html
           grep -q 'CVWorkoutSetGuardV74' client-portal/stable/index.html
@@ -191,6 +200,8 @@ jobs:
           grep -q 'CV_CLIENT_PUSH_V101_READY' .vercel/output/static/assets/cv-push-v101.js
           grep -q 'CVWorkoutSetGuardV74' .vercel/output/static/index.html
           grep -q 'cv-client-push-v101: explicit-consent + web-push + preferences' .vercel/output/static/index.html
+          grep -q 'CV_EXERCISE_SCREEN_V102_READY' .vercel/output/static/index.html
+          grep -q 'V102.1_ACTIVE_FOCUS' .vercel/output/static/index.html
           for f in tutorial bronze silver gold platinum diamond legend; do test -s ".vercel/output/static/assets/ranks/cv-rank-${f}-v61.webp"; done
 
       - name: Deploy CV Coach client production
@@ -199,7 +210,7 @@ jobs:
         shell: bash
         run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
-      - name: Verify public production alias through V101
+      - name: Verify public production alias through V102.1
         if: steps.auth.outputs.available == 'true'
         shell: bash
         run: |
@@ -216,21 +227,21 @@ jobs:
             sw_status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 https://cv-coach-roan.vercel.app/sw.js || true)"
             assets_ok=true
             for f in tutorial bronze silver gold platinum diamond legend; do
-              status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 "https://cv-coach-roan.vercel.app/assets/ranks/cv-rank-${f}-v61.webp?v=101" || true)"
+              status="$(curl --silent --output /dev/null --write-out '%{http_code}' --location --max-time 20 "https://cv-coach-roan.vercel.app/assets/ranks/cv-rank-${f}-v61.webp?v=1021" || true)"
               [[ "$status" == "200" ]] || assets_ok=false
             done
-            if [[ "$body" == *"cv-rank-engine-v61"* && "$body" == *"cv-rank-real-ui-v64"* && "$body" == *"cv-rank-real-ui-v65"* && "$body" == *"cv-rank-audio-sync-v67"* && "$body" == *"cv-rank-cinematic-v68"* && "$body" == *"cv-runtime-stability-v69"* && "$body" == *"cv-workout-controller-v71: authoritative-start + demo-safe + input-preservation"* && "$body" == *"cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save"* && "$body" == *"cv-workout-set-guard-v74: single-flight-set-toggle + hydration-guard"* && "$body" == *"cv-client-push-v101: explicit-consent + web-push + preferences"* && "$body" == *"CVWorkoutControllerV71"* && "$body" == *"CVWorkoutNumpadV73"* && "$body" == *"CVWorkoutSetGuardV74"* && "$body" != *"CVIOSKeyboardV72"* && "$body" == *"RANK_FAILSAFE_MS=5200"* && "$body" == *"START_TIMEOUT_MS=11000"* && "$body" == *"cv64WorkoutRankHud"* && "$body" == *"cv65LeagueProgress"* && "$body" == *"./assets/cv-rank-v61.js"* && "$body" == *"./assets/cv-push-v101.js"* && "$body" != *"cv-rank-system-v60-js"* && "$body" != *"cv-rank-real-ui-v63-js"* && "$body" != *"cvKeyboardEditingV71"* && "$sw_body" == *"cv-coach-shell-v101"* && "$sw_body" == *"CV_PUSH_SW_V101_READY"* && "$push_body" == *"CV_CLIENT_PUSH_V101_READY"* && "$js_status" == "200" && "$css_status" == "200" && "$push_status" == "200" && "$audio_status" == "200" && "$sw_status" == "200" && "$assets_ok" == "true" ]]; then
+            if [[ "$body" == *"cv-rank-engine-v61"* && "$body" == *"cv-rank-real-ui-v64"* && "$body" == *"cv-rank-real-ui-v65"* && "$body" == *"cv-rank-audio-sync-v67"* && "$body" == *"cv-rank-cinematic-v68"* && "$body" == *"cv-runtime-stability-v69"* && "$body" == *"cv-workout-controller-v71: authoritative-start + demo-safe + input-preservation"* && "$body" == *"cv-workout-numpad-v73: native-keyboard-retired + custom-editor + deterministic-save"* && "$body" == *"cv-workout-set-guard-v74: single-flight-set-toggle + hydration-guard"* && "$body" == *"cv-client-push-v101: explicit-consent + web-push + preferences"* && "$body" == *"cv-exercise-screen-v102: opt-in-inline-media + mobile-fit + proximity-snap"* && "$body" == *"CV_EXERCISE_SCREEN_V102_READY"* && "$body" == *"V102.1_ACTIVE_FOCUS"* && "$body" == *"cvV102Expanded"* && "$body" == *"cvV102Collapsed"* && "$body" == *"CVWorkoutControllerV71"* && "$body" == *"CVWorkoutNumpadV73"* && "$body" == *"CVWorkoutSetGuardV74"* && "$body" != *"CVIOSKeyboardV72"* && "$body" == *"RANK_FAILSAFE_MS=5200"* && "$body" == *"START_TIMEOUT_MS=11000"* && "$body" == *"cv64WorkoutRankHud"* && "$body" == *"cv65LeagueProgress"* && "$body" == *"./assets/cv-rank-v61.js"* && "$body" == *"./assets/cv-push-v101.js"* && "$body" != *"cv-rank-system-v60-js"* && "$body" != *"cv-rank-real-ui-v63-js"* && "$body" != *"cvKeyboardEditingV71"* && "$sw_body" == *"cv-coach-shell-v101"* && "$sw_body" == *"CV_PUSH_SW_V101_READY"* && "$push_body" == *"CV_CLIENT_PUSH_V101_READY"* && "$js_status" == "200" && "$css_status" == "200" && "$push_status" == "200" && "$audio_status" == "200" && "$sw_status" == "200" && "$assets_ok" == "true" ]]; then
               grep -qi '^x-content-type-options: nosniff' "$headers"
               grep -qi '^x-frame-options: DENY' "$headers"
               grep -qi '^content-security-policy:' "$headers"
-              echo 'PUBLIC_PORTAL_CV_RUNTIME_V101_OK'
+              echo 'PUBLIC_PORTAL_CV_RUNTIME_V102_1_OK'
               rm -f "$headers"
               exit 0
             fi
             rm -f "$headers"
             sleep 3
           done
-          echo 'Public CV Runtime V101 alias verification failed' >&2
+          echo 'Public CV Runtime V102.1 alias verification failed' >&2
           exit 1
 
       - name: Vercel credential required for canonical production
