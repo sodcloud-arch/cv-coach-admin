@@ -1,0 +1,112 @@
+name: CV Coach V104 Inline Set Entry Production
+
+on:
+  workflow_run:
+    workflows: ['CV Coach V103 Exercise Details Production']
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: cv-coach-v104-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-v104:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_pD5aAwrw2qpbPgoEarWhxcKF
+      VERCEL_PROJECT_ID: prj_PmFZQqN9tVEAUgKH8ekcnOoSgNOL
+      VERCEL_CLI_VERSION: 59.13.1
+    steps:
+      - name: Checkout deployed main revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      - name: Build canonical client through V104
+        shell: bash
+        run: |
+          set -euo pipefail
+          python client-portal/stabilize.py
+          python client-portal/consolidate_runtime.py
+          python client-portal/consolidate_session_runtime.py
+          python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
+          python client-portal/upgrade_client_v49.py
+          python client-portal/upgrade_client_v50.py
+          python client-portal/upgrade_client_v51.py
+          python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
+          python client-portal/upgrade_client_v54.py
+          python client-portal/upgrade_client_v55.py
+          python client-portal/upgrade_client_v56.py
+          python client-portal/upgrade_client_v57.py
+          python client-portal/upgrade_client_v59.py
+          python client-portal/upgrade_client_v60.py
+          python client-portal/repair_client_v60.py
+          python client-portal/upgrade_client_v61.py
+          python client-portal/upgrade_client_v67.py
+          python client-portal/upgrade_client_v68.py
+          python client-portal/upgrade_client_v69.py
+          python client-portal/upgrade_client_v74.py
+          python client-portal/upgrade_client_v101.py
+          python client-portal/upgrade_client_v102.py
+          python client-portal/upgrade_client_v103.py
+          python client-portal/upgrade_client_v104.py
+          node --check client-portal/assets/cv-inline-set-entry-v104.js
+          grep -q 'CV_INLINE_SET_ENTRY_V104_READY' client-portal/stable/index.html
+      - name: Require Vercel credential
+        run: test -n "${VERCEL_TOKEN:-}"
+      - name: Create Vercel static Build Output
+        working-directory: client-portal/stable
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel/output/static/assets/sounds .vercel/output/static/assets/ranks
+          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
+          cp index.html .vercel/output/static/index.html
+          cp ../manifest.webmanifest .vercel/output/static/manifest.webmanifest
+          cp ../sw.js .vercel/output/static/sw.js
+          cp ../icon.svg .vercel/output/static/icon.svg
+          cp ../assets/cv-isotipo-header-v1.webp .vercel/output/static/assets/cv-isotipo-header-v1.webp
+          cp ../assets/cv-rank-v61.js .vercel/output/static/assets/cv-rank-v61.js
+          cp ../assets/cv-rank-v61.css .vercel/output/static/assets/cv-rank-v61.css
+          cp ../assets/cv-push-v101.js .vercel/output/static/assets/cv-push-v101.js
+          cp ../assets/sounds/*.mp3 .vercel/output/static/assets/sounds/
+          cp ../assets/ranks/*.webp .vercel/output/static/assets/ranks/
+          cat > .vercel/output/config.json <<'JSON'
+          {"version":3,"routes":[{"src":"/","dest":"/index.html","headers":{"Cache-Control":"no-store"}},{"src":"/sw.js","dest":"/sw.js","headers":{"Cache-Control":"no-cache, no-store, must-revalidate","Service-Worker-Allowed":"/"}},{"src":"/manifest.webmanifest","dest":"/manifest.webmanifest"},{"src":"/icon.svg","dest":"/icon.svg"},{"src":"/assets/(.*)","dest":"/assets/$1"},{"handle":"filesystem"},{"src":"/(.*)","dest":"/index.html","headers":{"Cache-Control":"no-store"}}]}
+          JSON
+          grep -q 'CV_INLINE_SET_ENTRY_V104_READY' .vercel/output/static/index.html
+      - name: Deploy V104 client production
+        working-directory: client-portal/stable
+        run: npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+      - name: Wait for canonical alias V104
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..20}; do
+            body="$(curl --fail --silent --show-error --location --max-time 20 'https://cv-coach-roan.vercel.app/?v=104-canary' || true)"
+            if [[ "$body" == *"CV_INLINE_SET_ENTRY_V104_READY"* && "$body" == *"CV_EXERCISE_DETAILS_V103_READY"* ]]; then
+              echo 'PUBLIC_PORTAL_V104_STATIC_OK'; exit 0
+            fi
+            sleep 3
+          done
+          echo 'V104 did not reach canonical alias' >&2; exit 1
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Run V104 live inline-entry canary
+        env:
+          CV_TEST_URL: https://cv-coach-roan.vercel.app
+        run: node scripts/test-inline-set-entry-v104-browser.mjs
+      - name: Production summary
+        run: echo 'CV_INLINE_SET_ENTRY_V104_PRODUCTION_OK'
