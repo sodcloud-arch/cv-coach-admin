@@ -1,0 +1,26 @@
+name: Validate F1.M1.S2 Coaches
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609171800_f1_m1_s2_coach_profiles_arch1.sql"
+      - "supabase/migrations/202609171805_f1_m1_s2_coach_profile_hardening_arch1.sql"
+      - "scripts/test-f1-m1-s2-coaches.py"
+      - ".github/workflows/validate-f1-m1-s2-coaches.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coach-profile-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate ARCH-1.0 Coaches contract
+        run: python scripts/test-f1-m1-s2-coaches.py
