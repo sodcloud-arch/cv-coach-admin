@@ -1,0 +1,26 @@
+name: Validate F1.M1.S1 Organization
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609171700_f1_m1_s1_organization_arch1.sql"
+      - "supabase/migrations/202609171710_f1_m1_s1_organization_hardening_arch1.sql"
+      - "scripts/test-f1-m1-s1-organization.py"
+      - ".github/workflows/validate-f1-m1-s1-organization.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  organization-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate ARCH-1.0 Organization contract
+        run: python scripts/test-f1-m1-s1-organization.py
