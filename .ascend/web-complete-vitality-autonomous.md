@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-004 — C.V. Nutrition.
+WEB-005 — C.V. Integrated.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -202,3 +202,28 @@ Estado: COMPLETADO / C.V. TRAINING v1 PREPARADO EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-004 debe auditar y completar C.V. Nutrition con identidad verde, recorrido propio y el mismo estándar de conversión/QA.
+
+
+## WEB-004 — Cierre
+
+Estado: COMPLETADO / C.V. NUTRITION v1 PREPARADO EN SHOPIFY DEV.
+
+### Implementado
+- Hero propio con identidad verde C.V. Nutrition.
+- Problema → evaluación → estrategia → planificación flexible → educación → hábitos/adherencia → seguimiento.
+- Integración explícita con C.V. Integrated cuando Training y Nutrition necesitan compartir contexto.
+- Mensajería responsable: el registro nutricional se presenta como arquitectura preparada y no como función activa no verificada.
+- Sección ¿Para quién es? con derivación a profesional sanitario cuando exista necesidad clínica.
+- FAQ específica, CTA final y comparación de soluciones.
+- Responsive desktop/mobile, focus visible y consideración prefers-reduced-motion.
+
+### QA verificado
+- Theme CV Coach — V3 Refinada: UNPUBLISHED, estable, processing=false, processingFailed=false.
+- Página Nutrition: isPublished=false, template cv-nutrition.
+- Flujo requerido del blueprint presente en contenido/section.
+- Sin precios publicados, sin métricas inventadas y sin promesas de resultados.
+- Checksums de cv-home.liquid y cv-complete-vitality-home.css permanecen sin cambios.
+- Sin modificaciones en APP, Supabase, auth, admin o theme publicado.
+
+### Dependencia siguiente
+WEB-005 debe auditar y completar C.V. Integrated con identidad dorada, problema de sistemas aislados, decisiones conectadas, seguimiento conjunto, experiencia C.V. Coach y flujo premium de evaluación previa.
