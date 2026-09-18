@@ -5,88 +5,102 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050505">
 <meta name="robots" content="noindex,nofollow">
-<title>C.V. Complete Vitality — Fidelity Lock</title>
+<title>C.V. Complete Vitality — Layered Fidelity V1</title>
 <style>
 :root{--bg:#050505;--focus:#ff1a1a}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,Arial,sans-serif}
+html{scroll-behavior:smooth}
 body{overflow-x:hidden}
 a{color:inherit}
+.page{width:100%;background:#050505}
+.cv-shell{width:min(100vw,1440px);margin:0 auto;background:#050505}
+.slice{position:relative;width:100%;overflow:hidden;background:#050505;line-height:0}
+.slice>img{width:100%;height:auto;display:block;user-select:none;-webkit-user-drag:none}
+.hotspot{position:absolute;z-index:3;display:block;border:0;background:transparent;border-radius:4px;cursor:pointer;text-indent:-9999px;overflow:hidden}
+.hotspot:focus-visible{outline:2px solid var(--focus);outline-offset:2px;box-shadow:0 0 0 4px rgba(255,26,26,.18)}
+.hotspot:hover{background:rgba(255,255,255,.012)}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-.stage-shell{width:100%;background:radial-gradient(circle at 50% 15%,rgba(255,20,20,.05),transparent 28%),#050505}
-.stage{position:relative;width:min(100vw,1440px);margin:0 auto;aspect-ratio:1024/1536;overflow:hidden;background:#050505}
-.stage>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;user-select:none;-webkit-user-drag:none}
-.hotspot{position:absolute;z-index:5;display:block;border:0;background:transparent;border-radius:4px;cursor:pointer;text-indent:-9999px;overflow:hidden}
-.hotspot:focus-visible{outline:2px solid var(--focus);outline-offset:3px;box-shadow:0 0 0 4px rgba(255,26,26,.18)}
-.hotspot:hover{background:rgba(255,255,255,.01)}
-.hs-inicio{left:24.3%;top:1.55%;width:5.2%;height:2.6%}
-.hs-training-nav{left:29.8%;top:1.55%;width:6.7%;height:2.6%}
-.hs-nutrition-nav{left:36.4%;top:1.55%;width:7.1%;height:2.6%}
-.hs-integrated-nav{left:43.1%;top:1.55%;width:7.3%;height:2.6%}
-.hs-about{left:51.6%;top:1.55%;width:7.0%;height:2.6%}
-.hs-blog{left:58.9%;top:1.55%;width:4.5%;height:2.6%}
-.hs-login{left:68.4%;top:1.35%;width:12.3%;height:2.55%}
-.hs-start-top{left:81.8%;top:1.3%;width:14.8%;height:2.6%}
-.hs-start-hero{left:39.3%;top:39.8%;width:21.6%;height:3.2%}
-.hs-training-card{left:3.55%;top:47.6%;width:30.8%;height:35.2%}
-.hs-nutrition-card{left:35.7%;top:47.6%;width:28.8%;height:35.2%}
-.hs-integrated-card{left:66.2%;top:47.6%;width:30.5%;height:35.2%}
-.hs-training-cta{left:7.85%;top:78.15%;width:22.2%;height:3.0%}
-.hs-nutrition-cta{left:39.55%;top:78.15%;width:21.2%;height:3.0%}
-.hs-integrated-cta{left:70.0%;top:78.15%;width:22.2%;height:3.0%}
-.anchor{position:absolute;left:0;width:1px;height:1px;pointer-events:none}
-#inicio{top:0}
-#training{top:47.4%}
-#nutrition{top:47.4%}
-#integrated{top:47.4%}
-#pilares{top:84.2%}
-#metricas{top:92.2%}
+
+/* HEADER: source slice = y 0–80 / 1024 */
+.header-slice .inicio{left:24.8%;top:18%;width:4.3%;height:45%}
+.header-slice .training{left:30.2%;top:18%;width:6.2%;height:45%}
+.header-slice .nutrition{left:36.5%;top:18%;width:6.5%;height:45%}
+.header-slice .integrated{left:43.1%;top:18%;width:7.2%;height:45%}
+.header-slice .about{left:51.8%;top:18%;width:6.5%;height:45%}
+.header-slice .blog{left:59.0%;top:18%;width:4.0%;height:45%}
+.header-slice .login{left:68.5%;top:11%;width:12.2%;height:47%}
+.header-slice .start{left:81.8%;top:10%;width:14.6%;height:49%}
+
+/* HERO: source slice = y 80–725 / 1024 */
+.hero-slice .hero-cta{left:39.3%;top:82.8%;width:21.4%;height:7.4%}
+
+/* CARDS: source slice = y 725–1295 / 1024 */
+.cards-slice .training-card{left:3.55%;top:2.5%;width:30.6%;height:92.5%}
+.cards-slice .nutrition-card{left:35.75%;top:2.5%;width:28.6%;height:92.5%}
+.cards-slice .integrated-card{left:66.35%;top:2.5%;width:30.3%;height:92.5%}
+.cards-slice .training-cta{left:7.85%;top:80.2%;width:22.0%;height:7.2%}
+.cards-slice .nutrition-cta{left:39.55%;top:80.2%;width:21.0%;height:7.2%}
+.cards-slice .integrated-cta{left:70.15%;top:80.2%;width:22.0%;height:7.2%}
+
 @media(max-width:760px){
-  .stage{width:100vw;aspect-ratio:1024/1536}
-  .hs-login,.hs-start-top{height:3.2%}
+  .cv-shell{width:100vw}
 }
-@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 </style>
 </head>
 <body>
-<main class="stage-shell" aria-label="C.V. Complete Vitality">
-  <section class="stage" aria-label="Referencia maestra C.V. implementada como fidelity lock">
-    <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-web-master-reference-exact.png?v=1789719281" alt="C.V. Complete Vitality: entrenamiento, nutrición, bienestar, progreso y libertad">
+<main class="page" aria-label="C.V. Complete Vitality">
+  <div class="cv-shell">
 
-    <a class="hotspot hs-inicio" href="#inicio" aria-label="Inicio">Inicio</a>
-    <a class="hotspot hs-training-nav" href="#training" aria-label="C.V. Training">Training</a>
-    <a class="hotspot hs-nutrition-nav" href="#nutrition" aria-label="C.V. Nutrition">Nutrition</a>
-    <a class="hotspot hs-integrated-nav" href="#integrated" aria-label="C.V. Integrated">Integrated</a>
-    <a class="hotspot hs-about" href="#sobre-cv" aria-label="Sobre C.V.">Sobre C.V.</a>
-    <a class="hotspot hs-blog" href="#blog" aria-label="Blog">Blog</a>
-    <a class="hotspot hs-login" href="https://cv-coach-roan.vercel.app/" rel="noopener" aria-label="Iniciar sesión">Iniciar sesión</a>
-    <a class="hotspot hs-start-top" href="#training" aria-label="Comienza hoy">Comienza hoy</a>
-    <a class="hotspot hs-start-hero" href="#training" aria-label="Comienza hoy">Comienza hoy</a>
+    <header class="slice header-slice" id="inicio" aria-label="Navegación C.V.">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-header-slice-exact.png?v=1789720257" alt="C.V. Complete Vitality">
+      <nav aria-label="Navegación principal">
+        <a class="hotspot inicio" href="#inicio" aria-label="Inicio">Inicio</a>
+        <a class="hotspot training" href="#training" aria-label="Training">Training</a>
+        <a class="hotspot nutrition" href="#nutrition" aria-label="Nutrition">Nutrition</a>
+        <a class="hotspot integrated" href="#integrated" aria-label="Integrated">Integrated</a>
+        <a class="hotspot about" href="#sobre-cv" aria-label="Sobre C.V.">Sobre C.V.</a>
+        <a class="hotspot blog" href="#blog" aria-label="Blog">Blog</a>
+        <a class="hotspot login" href="https://cv-coach-roan.vercel.app/" rel="noopener" aria-label="Iniciar sesión">Iniciar sesión</a>
+        <a class="hotspot start" href="#training" aria-label="Comienza hoy">Comienza hoy</a>
+      </nav>
+    </header>
 
-    <a class="hotspot hs-training-card" href="#training" aria-label="Conoce C.V. Training">Training</a>
-    <a class="hotspot hs-nutrition-card" href="#nutrition" aria-label="Conoce C.V. Nutrition">Nutrition</a>
-    <a class="hotspot hs-integrated-card" href="#integrated" aria-label="Conoce C.V. Integrated">Integrated</a>
-    <a class="hotspot hs-training-cta" href="#training" aria-label="Conoce más sobre C.V. Training">Conoce más Training</a>
-    <a class="hotspot hs-nutrition-cta" href="#nutrition" aria-label="Conoce más sobre C.V. Nutrition">Conoce más Nutrition</a>
-    <a class="hotspot hs-integrated-cta" href="#integrated" aria-label="Conoce más sobre C.V. Integrated">Conoce más Integrated</a>
+    <section class="slice hero-slice" aria-labelledby="hero-title">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-hero-slice-exact.png?v=1789720266" alt="Atletas C.V. Complete Vitality">
+      <h1 id="hero-title" class="sr-only">Más que entrenamiento — Complete Vitality</h1>
+      <p class="sr-only">Disciplina, progreso y libertad. Entrenamiento, nutrición, bienestar y resultados en un solo lugar. A Higher Standard.</p>
+      <a class="hotspot hero-cta" href="#training" aria-label="Comienza hoy">Comienza hoy</a>
+    </section>
 
-    <span class="anchor" id="inicio"></span>
-    <span class="anchor" id="training"></span>
-    <span class="anchor" id="nutrition"></span>
-    <span class="anchor" id="integrated"></span>
-    <span class="anchor" id="pilares"></span>
-    <span class="anchor" id="metricas"></span>
-  </section>
+    <section class="slice cards-slice" aria-label="Soluciones C.V.">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-cards-slice-exact.png?v=1789720272" alt="C.V. Training, C.V. Nutrition y C.V. Integrated">
+      <article id="training" class="sr-only"><h2>C.V. Training</h2><p>Entrenamiento inteligente para resultados reales. Rutinas personalizadas, progresión medible, técnica y seguridad.</p></article>
+      <article id="nutrition" class="sr-only"><h2>C.V. Nutrition</h2><p>Nutrición real para una vida mejor. Planes personalizados, alimentación flexible, educación nutricional y hábitos sostenibles.</p></article>
+      <article id="integrated" class="sr-only"><h2>C.V. Integrated</h2><p>Entrenamiento y nutrición en un solo sistema, con plan completo y seguimiento constante.</p></article>
+      <a class="hotspot training-card" href="#training" aria-label="C.V. Training">Training</a>
+      <a class="hotspot nutrition-card" href="#nutrition" aria-label="C.V. Nutrition">Nutrition</a>
+      <a class="hotspot integrated-card" href="#integrated" aria-label="C.V. Integrated">Integrated</a>
+      <a class="hotspot training-cta" href="#training" aria-label="Conoce más sobre Training">Conoce más Training</a>
+      <a class="hotspot nutrition-cta" href="#nutrition" aria-label="Conoce más sobre Nutrition">Conoce más Nutrition</a>
+      <a class="hotspot integrated-cta" href="#integrated" aria-label="Conoce más sobre Integrated">Conoce más Integrated</a>
+    </section>
+
+    <section class="slice pillars-slice" id="pilares" aria-label="Pilares C.V.">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-pillars-slice-exact.png?v=1789720281" alt="Entrenamiento, Nutrición, Bienestar, Progreso y Libertad">
+      <h2 class="sr-only">Entrenamiento, Nutrición, Bienestar, Progreso y Libertad</h2>
+    </section>
+
+    <section class="slice metrics-slice" id="metricas" aria-label="Métricas de referencia visual">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-metrics-slice-exact.png?v=1789720287" alt="Métricas visuales C.V.">
+      <p class="sr-only">Los valores visibles son parte de la referencia visual y no se usarán como datos de producción hasta ser validados con datos reales.</p>
+    </section>
+
+  </div>
 
   <section class="sr-only" id="sobre-cv">
-    <h1>C.V. Complete Vitality</h1>
-    <p>Más que entrenamiento. Disciplina, progreso y libertad.</p><p>A Higher Standard</p>
-    <h2>C.V. Training</h2>
-    <p>Rutinas personalizadas, progresión medible, técnica y seguridad para todos los niveles.</p>
-    <h2>C.V. Nutrition</h2>
-    <p>Planes personalizados, alimentación flexible, educación nutricional y hábitos sostenibles.</p>
-    <h2>C.V. Integrated</h2>
-    <p>Entrenamiento y nutrición coordinados, seguimiento constante y una visión completa del progreso.</p>
+    <h2>Sobre C.V.</h2>
+    <p>Complete Vitality integra entrenamiento, nutrición y bienestar.</p>
   </section>
   <section class="sr-only" id="blog"><h2>Blog C.V.</h2></section>
 </main>
