@@ -130,3 +130,26 @@ C — Modelo híbrido.
 
 ### Objetivo
 Maximizar automatización y conversión sin eliminar revisión humana donde aporte seguridad, personalización o control de calidad.
+
+
+## WEB-001 — Cierre
+
+Estado: COMPLETADO / BASELINE CONGELADO.
+
+### Baseline Mobile v1
+- Rango objetivo validado: 390–430 px.
+- Header móvil propio.
+- Hero móvil propio.
+- Cards apiladas y optimizadas para touch.
+- Pilares responsive.
+- Cierre de marca sin métricas ficticias.
+- Menú con cierre, Escape y bloqueo de scroll.
+- Safe areas y focus visible.
+- CTAs con targets táctiles adecuados.
+
+### Baseline Desktop v1
+- Congelado.
+- La validación posterior a Mobile v1 confirmó MATCH = TRUE contra el screenshot de referencia congelado.
+
+### Regla de regresión
+Cualquier misión posterior que cambie Homepage debe volver a validar Mobile 390/430 y Desktop 1024 antes de aprobarse.
