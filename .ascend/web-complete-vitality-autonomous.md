@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-015 — Shopify full integration.
+WEB-016 — Full QA.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -455,3 +455,36 @@ Estado: COMPLETADO / SEO + ANALYTICS READINESS PREPARADO EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-015 debe consolidar integración Shopify: aislamiento de rutas C.V., navegación, contacto, 404, formularios, blog, app bridge y mapa de dependencias de productos/checkout que permanecerán bloqueados hasta precios/pagos aprobados.
+
+
+## WEB-015 — Cierre
+
+Estado: COMPLETADO / SHOPIFY FULL INTEGRATION v1 PREPARADA EN THEME DEV.
+
+### Implementado
+- Navegación C.V. aislada en menús no-default `cv-main-menu` y `cv-footer-menu`.
+- Contacto C.V. aislado en página draft `/pages/cv-contact`; el contacto publicado legacy de Compra Útil permanece intacto.
+- Footer C.V. actualizado para apuntar al contacto aislado.
+- FAQ y Profesionales actualizados para usar `/pages/cv-contact`.
+- 404 C.V. propio en español, sin catálogo/productos de Compra Útil.
+- Blog, formularios, selector, consentimiento, SEO y puente C.V. Coach integrados en el theme UNPUBLISHED.
+- Mapa técnico preparado para productos/checkout, pero sin crear productos ni activar pagos.
+
+### QA verificado
+- 14 páginas/rutas C.V. de contenido/legales están `isPublished=false` y usan templates C.V. correspondientes.
+- Menús C.V. no son navegación default y no alteran producción.
+- Todos los enlaces internos detectados en sections C.V. resuelven a rutas existentes.
+- El único término `checkout` detectado es texto explicativo en Planes; no existe llamada activa a cart/add, variantId, productId o checkout.
+- Theme `CV Coach — V3 Refinada` sigue UNPUBLISHED, processing=false, processingFailed=false.
+- Página legacy `/pages/contact` conserva `updatedAt=2026-09-11T19:13:56Z` y no fue modificada.
+- Homepage congelada mantiene sus checksums aprobados.
+
+### Bloqueos intencionales
+- pricing_products_checkout_approval
+- payment_activation_approval
+- legal_human_review
+- domain_dns_launch_configuration
+- final_visual_acceptance
+
+### Dependencia siguiente
+WEB-016 debe ejecutar QA integral de rutas, templates, seguridad, contenido, enlaces, estados de publicación, integridad del theme, regresión de Homepage y readiness funcional sin tocar producción.
