@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 Nutrition Habit Producers
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609181930_f1_m1_s5_nutrition_habit_producers_arch1.sql"
+      - "scripts/test-f1-m1-s5-nutrition-habit-producers.py"
+      - ".github/workflows/validate-f1-m1-s5-nutrition-habit-producers.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nutrition-habit-producers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate producer hardening
+        run: python scripts/test-f1-m1-s5-nutrition-habit-producers.py
