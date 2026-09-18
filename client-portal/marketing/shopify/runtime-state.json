@@ -1,0 +1,64 @@
+{
+  "shop": {
+    "domain": "comprautilchile.myshopify.com",
+    "currency": "CLP",
+    "working_theme": {
+      "name": "CV Coach — V3 Refinada",
+      "id": "gid://shopify/OnlineStoreTheme/162703605993",
+      "role": "UNPUBLISHED"
+    },
+    "published_theme_locked": {
+      "name": "Horizon",
+      "id": "gid://shopify/OnlineStoreTheme/162350858473"
+    }
+  },
+  "content": {
+    "blog": {
+      "id": "gid://shopify/Blog/106013524201",
+      "title": "C.V. Journal",
+      "handle": "cv"
+    },
+    "menus": {
+      "main": {
+        "id": "gid://shopify/Menu/284922904809",
+        "handle": "cv-main-menu"
+      },
+      "footer": {
+        "id": "gid://shopify/Menu/284922937577",
+        "handle": "cv-footer-menu"
+      }
+    },
+    "pages": {
+      "training": {"id":"gid://shopify/Page/137331572969","template":"cv-training","published":false},
+      "nutrition": {"id":"gid://shopify/Page/137331605737","template":"cv-nutrition","published":false},
+      "integrated": {"id":"gid://shopify/Page/137331638505","template":"cv-integrated","published":false},
+      "about": {"id":"gid://shopify/Page/137331671273","template":"cv-about","published":false},
+      "plans": {"id":"gid://shopify/Page/137331704041","template":"cv-plans","published":false},
+      "how": {"id":"gid://shopify/Page/137331736809","template":"cv-how","published":false},
+      "results": {"id":"gid://shopify/Page/137331769577","template":"cv-results","published":false},
+      "professionals": {"id":"gid://shopify/Page/137331802345","template":"cv-professionals","published":false},
+      "faq": {"id":"gid://shopify/Page/137331835113","template":"cv-faq","published":false},
+      "start": {"id":"gid://shopify/Page/137331867881","template":"cv-start","published":false}
+    }
+  },
+  "theme_files_added": [
+    "assets/cv-pages-v1.css",
+    "sections/cv-page-shell.liquid",
+    "templates/page.cv-training.json",
+    "templates/page.cv-nutrition.json",
+    "templates/page.cv-integrated.json",
+    "templates/page.cv-about.json",
+    "templates/page.cv-plans.json",
+    "templates/page.cv-how.json",
+    "templates/page.cv-results.json",
+    "templates/page.cv-professionals.json",
+    "templates/page.cv-faq.json",
+    "templates/page.cv-start.json"
+  ],
+  "safety": {
+    "main_theme_modified": false,
+    "pages_published": false,
+    "default_navigation_modified": false,
+    "production_published": false
+  }
+}
