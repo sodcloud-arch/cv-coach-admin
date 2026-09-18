@@ -7,7 +7,7 @@ ACTIVO
 ASCEND AUTÓNOMO — WEB C.V.
 
 ## Rama exclusiva
-`autopilot/web-complete-vitality-mobile-v1`
+`autopilot/web-master-v1`
 
 ## Baseline visual bloqueado
 - Desktop v1 aprobado y congelado.
@@ -16,7 +16,14 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-001 — Construir y perfeccionar la experiencia MOBILE de C.V. Complete Vitality para 390–430 px sin degradar Desktop v1.
+WEB-002 — Arquitectura global + Shopify structure.
+
+Objetivo:
+- convertir el blueprint aprobado en estructura implementable;
+- preparar navegación, rutas, templates y componentes reutilizables;
+- auditar la tienda Shopify conectada sin borrar contenido existente;
+- preparar integración segura con C.V. Coach App;
+- mantener WEB-001 congelado como baseline.
 
 ## Scope permitido
 - `client-portal/marketing/**`
