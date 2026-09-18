@@ -43,7 +43,7 @@
       "key": "blog",
       "path": "/blogs/cv",
       "nav": "primary",
-      "status": "in-progress"
+      "status": "built-v1-qa"
     },
     {
       "key": "plans",
@@ -61,7 +61,7 @@
       "key": "results",
       "path": "/pages/resultados",
       "nav": "secondary",
-      "status": "draft-content"
+      "status": "in-progress"
     },
     {
       "key": "professionals",
@@ -105,8 +105,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-009",
-  "last_completed": "WEB-008",
+  "current_mission": "WEB-010",
+  "last_completed": "WEB-009",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
