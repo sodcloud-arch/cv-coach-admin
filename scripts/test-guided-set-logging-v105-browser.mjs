@@ -52,7 +52,10 @@ try{
       imageVisible:(()=>{const img=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia .photo');return !!img&&img.offsetWidth>0&&img.offsetHeight>0&&getComputedStyle(img).display!=='none'})(),
       executionButtonVisible:(()=>{const b=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector('.cvExecutionBtnV35');return !!b&&b.offsetWidth>0&&b.offsetHeight>0&&getComputedStyle(b).display!=='none'})(),
       detailsSeparated:(()=>{const card=row.closest('.cvHevyExercise,.workoutExercise');const title=card?.querySelector('.cvDetailsTitleRowV103 h3,.cvExerciseTitleRowV35 h3');const details=card?.querySelector('.cvDetailsLinkV103');if(!title||!details)return false;const tr=title.getBoundingClientRect(),dr=details.getBoundingClientRect();return dr.top>=tr.bottom-2})(),
-      mediaHeight:(()=>{const m=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia');return m?m.getBoundingClientRect().height:0})()
+      mediaHeight:(()=>{const m=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia');return m?m.getBoundingClientRect().height:0})(),
+      prestartClass:document.body.classList.contains('cvWorkoutPrestartV40'),
+      prestartHeroHeight:(()=>{const hero=document.querySelector('.cvWorkoutHeroV31');return hero?hero.getBoundingClientRect().height:0})(),
+      startCtaHeight:(()=>{const b=document.querySelector('.cvWorkoutStartV40');return b?b.getBoundingClientRect().height:0})()
     };
   });
 
@@ -64,9 +67,9 @@ try{
   await page.screenshot({path:'artifacts/v105-mobile-current.png',fullPage:false});
   console.log('CV_V105_SCREENSHOT_WRITTEN artifacts/v105-mobile-current.png');
 
-  assert.equal(initial.htmlVersion,'105.2');
+  assert.equal(initial.htmlVersion,'105.3');
   assert.equal(initial.bodyClass,true);
-  assert.equal(initial.hasHint,false,'V105.2 removes redundant logging hint');
+  assert.equal(initial.hasHint,false,'V105.3 keeps redundant logging hint removed');
   assert.match(initial.weightId,/^cvw_/);
   assert.match(initial.repsId,/^cvr_/);
   assert.match(initial.weightLabel,/Peso.*serie/i);
@@ -79,6 +82,9 @@ try{
   assert.equal(initial.executionButtonVisible,false,'Current exercise must not require VER EJECUCIÓN');
   assert.equal(initial.detailsSeparated,true,'VER DETALLES must be visually separated from exercise title');
   assert.ok(initial.mediaHeight<=212,'Current exercise media should be compact enough to keep series visible');
+  assert.equal(initial.prestartClass,true,'Demo workout should be in compact prestart state before start');
+  assert.ok(initial.prestartHeroHeight>0&&initial.prestartHeroHeight<=230,'Prestart summary should be compact on mobile');
+  assert.ok(initial.startCtaHeight>=42&&initial.startCtaHeight<=48,'Start CTA should stay prominent without consuming excess height');
 
   const weight=page.locator('.cvSetRow.cvV105Next input[id^="cvw_"]:visible').first();
   const reps=page.locator('.cvSetRow.cvV105Next input[id^="cvr_"]:visible').first();
