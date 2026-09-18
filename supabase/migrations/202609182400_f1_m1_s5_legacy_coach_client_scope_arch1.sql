@@ -277,22 +277,29 @@ begin
   end if;
 
   -- The legacy shadow may mirror authority, but may never create authority.
-  if (
-      tg_table_name='coach_client_notes'
-      or (
-        tg_table_name='coach_clients'
-        and new.status='active'::public.coach_client_status
-      )
-     )
-     and not exists(
-       select 1
-       from public.client_coach_assignments a
-       where a.organization_id=new.organization_id
-         and a.coach_id=v_coach_entity
-         and a.client_id=v_client_entity
-         and a.status='active'::public.client_coach_assignment_status
-     ) then
-    raise exception 'legacy coach/client write requires canonical active assignment';
+  if tg_table_name='coach_client_notes' then
+    if not exists(
+      select 1
+      from public.client_coach_assignments a
+      where a.organization_id=new.organization_id
+        and a.coach_id=v_coach_entity
+        and a.client_id=v_client_entity
+        and a.status='active'::public.client_coach_assignment_status
+    ) then
+      raise exception 'legacy coach/client write requires canonical active assignment';
+    end if;
+  elsif tg_table_name='coach_clients' then
+    if new.status='active'::public.coach_client_status
+       and not exists(
+         select 1
+         from public.client_coach_assignments a
+         where a.organization_id=new.organization_id
+           and a.coach_id=v_coach_entity
+           and a.client_id=v_client_entity
+           and a.status='active'::public.client_coach_assignment_status
+       ) then
+      raise exception 'legacy coach/client write requires canonical active assignment';
+    end if;
   end if;
 
   if tg_op='UPDATE' and (
