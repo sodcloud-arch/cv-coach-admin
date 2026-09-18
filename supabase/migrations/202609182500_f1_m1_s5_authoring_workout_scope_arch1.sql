@@ -261,7 +261,7 @@ begin
   select ws.id into v_session_id from public.workout_sessions ws
   where ws.organization_id=v_organization and ws.client_id=v_target_client and ws.status='in_progress'::public.workout_session_status
   order by ws.started_at desc,ws.created_at desc limit 1;
-  if v_session_id is not null then return private.start_workout_payload(v_session_id,true); end if;
+  if v_session_id is not null then return private.start_workout_payload(v_session_id,true)||jsonb_build_object('organization_id',v_organization); end if;
 
   insert into public.workout_sessions(organization_id,client_id,program_id,program_day_id,started_at,status,completion_pct)
   values(v_organization,v_target_client,v_program_id,p_program_day_id,now(),'in_progress'::public.workout_session_status,0)
