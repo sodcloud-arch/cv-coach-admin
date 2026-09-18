@@ -29,16 +29,58 @@
       }
     },
     "pages": {
-      "training": {"id":"gid://shopify/Page/137331572969","template":"cv-training","published":false},
-      "nutrition": {"id":"gid://shopify/Page/137331605737","template":"cv-nutrition","published":false},
-      "integrated": {"id":"gid://shopify/Page/137331638505","template":"cv-integrated","published":false},
-      "about": {"id":"gid://shopify/Page/137331671273","template":"cv-about","published":false},
-      "plans": {"id":"gid://shopify/Page/137331704041","template":"cv-plans","published":false},
-      "how": {"id":"gid://shopify/Page/137331736809","template":"cv-how","published":false},
-      "results": {"id":"gid://shopify/Page/137331769577","template":"cv-results","published":false},
-      "professionals": {"id":"gid://shopify/Page/137331802345","template":"cv-professionals","published":false},
-      "faq": {"id":"gid://shopify/Page/137331835113","template":"cv-faq","published":false},
-      "start": {"id":"gid://shopify/Page/137331867881","template":"cv-start","published":false}
+      "training": {
+        "id": "gid://shopify/Page/137331572969",
+        "template": "cv-training",
+        "published": false,
+        "build": "v1",
+        "status": "built"
+      },
+      "nutrition": {
+        "id": "gid://shopify/Page/137331605737",
+        "template": "cv-nutrition",
+        "published": false
+      },
+      "integrated": {
+        "id": "gid://shopify/Page/137331638505",
+        "template": "cv-integrated",
+        "published": false
+      },
+      "about": {
+        "id": "gid://shopify/Page/137331671273",
+        "template": "cv-about",
+        "published": false
+      },
+      "plans": {
+        "id": "gid://shopify/Page/137331704041",
+        "template": "cv-plans",
+        "published": false
+      },
+      "how": {
+        "id": "gid://shopify/Page/137331736809",
+        "template": "cv-how",
+        "published": false
+      },
+      "results": {
+        "id": "gid://shopify/Page/137331769577",
+        "template": "cv-results",
+        "published": false
+      },
+      "professionals": {
+        "id": "gid://shopify/Page/137331802345",
+        "template": "cv-professionals",
+        "published": false
+      },
+      "faq": {
+        "id": "gid://shopify/Page/137331835113",
+        "template": "cv-faq",
+        "published": false
+      },
+      "start": {
+        "id": "gid://shopify/Page/137331867881",
+        "template": "cv-start",
+        "published": false
+      }
     }
   },
   "theme_files_added": [
@@ -53,7 +95,16 @@
     "templates/page.cv-results.json",
     "templates/page.cv-professionals.json",
     "templates/page.cv-faq.json",
-    "templates/page.cv-start.json"
+    "templates/page.cv-start.json",
+    "assets/cv-complete-vitality-home.css",
+    "assets/cv-complete-vitality-logo.png",
+    "assets/cv-site-v1.css",
+    "sections/cv-home.liquid",
+    "sections/cv-global-header.liquid",
+    "sections/cv-global-footer.liquid",
+    "layout/theme.liquid",
+    "assets/cv-training-v1.css",
+    "sections/cv-training-page.liquid"
   ],
   "safety": {
     "main_theme_modified": false,
