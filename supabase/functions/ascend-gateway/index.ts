@@ -106,6 +106,7 @@ function buildReasoningPrompt(claim: any) {
   const continuationInstruction = String(claim?.continuation_instruction ?? "").trim();
   const previousSummary = String(claim?.previous_summary ?? "").trim();
   const requestContext = compactJson(claim?.request_context ?? {}, 8000);
+  const projectContext = compactJson(claim?.project_context ?? {}, 8000);
 
   const continuationSection = continuationInstruction
     ? [
@@ -125,8 +126,11 @@ function buildReasoningPrompt(claim: any) {
     `Problema: ${problem}`,
     `Motivo: ${rationale}`,
     "",
-    "Contexto operativo de ASCEND:",
+    "Contexto operativo del Reasoning Request:",
     requestContext,
+    "",
+    "Estado ACTUAL del proyecto en ASCEND CORE:",
+    projectContext,
     ...continuationSection,
     "",
     "INSTRUCCIÓN:",
@@ -184,7 +188,7 @@ Deno.serve(async (req: Request) => {
     if (op === "bridge_health") {
       return json({
         ok: true,
-        version: "0.6",
+        version: "0.6.1",
         mode: "nexus-chat-bridge",
         device_key: device.device_key,
         openai_api: false,
@@ -681,7 +685,7 @@ Deno.serve(async (req: Request) => {
   if (op === "health") {
     return json({
       ok: true,
-      version: "0.6",
+      version: "0.6.1",
       mode: "zero-cost",
       repository: claims.repository,
       ref: claims.ref,
