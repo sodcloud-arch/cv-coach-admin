@@ -193,6 +193,62 @@
         color:#dce2e5;
         font:900 28px/1 'Barlow Condensed',sans-serif;
       }
+      @media(max-width:767px){
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutHeroV31{
+          margin:0 0 7px!important;
+          padding:12px 13px 12px!important;
+          border-radius:15px!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutHeroTop{
+          min-height:0!important;
+          gap:6px!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutHeroEy{
+          font-size:8px!important;
+          letter-spacing:.14em!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutLivePill{
+          padding:4px 7px!important;
+          font-size:7px!important;
+          letter-spacing:.055em!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutHeroV31 h1{
+          margin:5px 0 3px!important;
+          font-size:28px!important;
+          line-height:.96!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutHeroFocus{
+          font-size:10.5px!important;
+          line-height:1.3!important;
+          display:-webkit-box!important;
+          -webkit-line-clamp:2;
+          -webkit-box-orient:vertical;
+          overflow:hidden!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutHeroChips{
+          gap:5px!important;
+          margin-top:9px!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutHeroChip{
+          min-height:24px!important;
+          padding:0 8px!important;
+          font-size:8px!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutProgressTrack{
+          height:5px!important;
+          margin-top:10px!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutProgressCopy{
+          margin-top:5px!important;
+          font-size:8px!important;
+        }
+        body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutStartV40{
+          min-height:44px!important;
+          margin-top:10px!important;
+          border-radius:11px!important;
+          font-size:11px!important;
+        }
+      }
       @media(max-width:390px){
         body.cvFastWorkout.cvGuidedSetLoggingV105 .cvSetRow input[data-cv-v105="1"]{font-size:19px!important}
         body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia,
@@ -284,7 +340,7 @@
     scheduled=false;
     injectStyle();
     document.body?.classList.add('cvGuidedSetLoggingV105');
-    document.documentElement?.setAttribute('data-cv-guided-set-logging','105.2');
+    document.documentElement?.setAttribute('data-cv-guided-set-logging','105.3');
 
     const cards=[...document.querySelectorAll('.cvHevyExercise,.workoutExercise')].filter(isVisible);
     cards.forEach(decorateExercise);
@@ -359,6 +415,6 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enable,{once:true});
   else enable();
 
-  window.CVGuidedSetLoggingV105={version:VERSION,revision:'105.2',ready:true,refresh:schedule,marker:READY};
+  window.CVGuidedSetLoggingV105={version:VERSION,revision:'105.3',ready:true,refresh:schedule,marker:READY};
   console.info(READY,VERSION);
 })();
