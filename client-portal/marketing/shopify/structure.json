@@ -1,0 +1,37 @@
+{
+  "project": "C.V. Complete Vitality",
+  "shopify_runtime": {
+    "store": "comprautilchile.myshopify.com",
+    "working_theme_name": "CV Coach — V3 Refinada",
+    "working_theme_id": "gid://shopify/OnlineStoreTheme/162703605993",
+    "published_theme_name": "Horizon",
+    "published_theme_locked": true
+  },
+  "routes": [
+    {"key":"home","path":"/","nav":"primary","status":"baseline"},
+    {"key":"training","path":"/pages/training","nav":"primary","status":"planned"},
+    {"key":"nutrition","path":"/pages/nutrition","nav":"primary","status":"planned"},
+    {"key":"integrated","path":"/pages/integrated","nav":"primary","status":"planned"},
+    {"key":"about","path":"/pages/sobre-cv","nav":"primary","status":"planned"},
+    {"key":"blog","path":"/blogs/cv","nav":"primary","status":"planned"},
+    {"key":"plans","path":"/pages/planes","nav":"secondary","status":"planned"},
+    {"key":"how","path":"/pages/como-funciona","nav":"secondary","status":"planned"},
+    {"key":"results","path":"/pages/resultados","nav":"secondary","status":"planned"},
+    {"key":"professionals","path":"/pages/profesionales","nav":"secondary","status":"planned"},
+    {"key":"faq","path":"/pages/faq","nav":"secondary","status":"planned"},
+    {"key":"contact","path":"/pages/contact","nav":"secondary","status":"existing"},
+    {"key":"start","path":"/pages/comienza-hoy","nav":"cta","status":"planned"},
+    {"key":"login","path":"https://cv-coach-roan.vercel.app/","nav":"cta","status":"external-app"}
+  ],
+  "conversion": {
+    "mode": "hybrid",
+    "standard": "direct_shopify_purchase",
+    "premium": "assessment_then_purchase"
+  },
+  "guardrails": {
+    "no_auto_publish": true,
+    "no_unverified_metrics": true,
+    "no_fake_testimonials": true,
+    "no_delete_existing_content_without_dependency_check": true
+  }
+}
