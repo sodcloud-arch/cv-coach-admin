@@ -6,6 +6,7 @@ on:
     paths:
       - 'client-portal/**'
       - 'scripts/build-client-canonical.sh'
+      - 'scripts/package-vercel-prebuilt.sh'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
       - 'scripts/test-active-session-v105-browser.mjs'
       - 'scripts/test-demo-post-workout-v105-browser.mjs'
@@ -17,6 +18,7 @@ on:
     paths:
       - 'client-portal/**'
       - 'scripts/build-client-canonical.sh'
+      - 'scripts/package-vercel-prebuilt.sh'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
       - 'scripts/test-active-session-v105-browser.mjs'
       - 'scripts/test-demo-post-workout-v105-browser.mjs'
@@ -55,11 +57,23 @@ jobs:
       - name: Build canonical client
         run: bash scripts/build-client-canonical.sh
 
+      - name: Package exact Vercel prebuilt output
+        run: bash scripts/package-vercel-prebuilt.sh
+
       - name: Upload exact canonical artifact
         uses: actions/upload-artifact@v4
         with:
           name: cv-coach-canonical-${{ github.sha }}
           path: client-portal/stable/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload exact Vercel prebuilt artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cv-coach-vercel-prebuilt-${{ github.sha }}
+          path: client-portal/vercel-prebuilt/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
 
@@ -297,29 +311,48 @@ jobs:
           fi
           echo "Vercel deployment credential available."
 
-      - name: Download exact artifact that passed QA
+      - name: Download exact prebuilt artifact that passed QA
         uses: actions/download-artifact@v4
         with:
-          name: cv-coach-canonical-${{ github.sha }}
-          path: client-portal/stable
+          name: cv-coach-vercel-prebuilt-${{ github.sha }}
+          path: client-portal/vercel-prebuilt
 
-      - name: Link artifact to CV Coach Vercel project
+      - name: Verify downloaded prebuilt artifact
         shell: bash
         run: |
-          mkdir -p client-portal/stable/.vercel
-          cat > client-portal/stable/.vercel/project.json <<JSON
+          set -euo pipefail
+          test -f client-portal/vercel-prebuilt/.vercel/output/config.json
+          test -f client-portal/vercel-prebuilt/.vercel/output/static/index.html
+          test -f client-portal/vercel-prebuilt/.vercel/output/static/build.json
+          grep -q 'CV_FINISH_GUARD_V106_READY' client-portal/vercel-prebuilt/.vercel/output/static/index.html
+          grep -q "revision:'105.5'" client-portal/vercel-prebuilt/.vercel/output/static/index.html
+          python3 - <<'PY'
+          import json
+          data=json.load(open('client-portal/vercel-prebuilt/.vercel/output/static/build.json',encoding='utf-8'))
+          assert data.get('version')=='106',data
+          print('CV_PREBUILT_DOWNLOAD_VERIFIED',data.get('git_sha'))
+          PY
+
+      - name: Link prebuilt artifact to CV Coach Vercel project
+        shell: bash
+        run: |
+          mkdir -p client-portal/vercel-prebuilt/.vercel
+          cat > client-portal/vercel-prebuilt/.vercel/project.json <<JSON
           {
             "orgId": "${VERCEL_ORG_ID}",
             "projectId": "${VERCEL_PROJECT_ID}"
           }
           JSON
 
-      - name: Deploy exact tested artifact to production
+      - name: Deploy exact tested prebuilt artifact to production
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes vercel@latest deploy client-portal/stable \
+          npx --yes vercel@latest deploy client-portal/vercel-prebuilt \
+            --prebuilt \
+            --archive=tgz \
             --prod \
+            --force \
             --yes \
             --token "$VERCEL_TOKEN"
 
@@ -341,7 +374,7 @@ jobs:
           if [[ "$STATUS" -ne 0 ]]; then
             echo "::error::Production validation failed. Rolling back to the previous production deployment."
             (
-              cd client-portal/stable
+              cd client-portal/vercel-prebuilt
               npx --yes vercel@latest rollback --yes --token "$VERCEL_TOKEN"
             ) || true
             exit "$STATUS"
