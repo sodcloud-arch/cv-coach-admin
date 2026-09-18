@@ -130,7 +130,7 @@ create unique index if not exists ux_cv_rank_transitions_v61_org_id_client
   on public.cv_rank_transitions_v61(organization_id,id,client_id);
 
 -- Canonical Organization / Client boundaries.
-do $$
+do $
 declare
   t text;
 begin
@@ -145,27 +145,29 @@ begin
     'cv_trophies_v61'
   ]
   loop
-    execute format(
-      'alter table public.%I add constraint %I foreign key (organization_id) references public.organizations(id) on delete restrict',
-      t,t||'_organization_id_fkey'
-    )
-    where not exists(
+    if not exists(
       select 1 from pg_constraint
       where connamespace='public'::regnamespace
         and conname=t||'_organization_id_fkey'
-    );
+    ) then
+      execute format(
+        'alter table public.%I add constraint %I foreign key (organization_id) references public.organizations(id) on delete restrict',
+        t,t||'_organization_id_fkey'
+      );
+    end if;
 
-    execute format(
-      'alter table public.%I add constraint %I foreign key (organization_id,client_id) references public.clients(organization_id,user_id) on delete cascade',
-      t,t||'_client_same_org'
-    )
-    where not exists(
+    if not exists(
       select 1 from pg_constraint
       where connamespace='public'::regnamespace
         and conname=t||'_client_same_org'
-    );
+    ) then
+      execute format(
+        'alter table public.%I add constraint %I foreign key (organization_id,client_id) references public.clients(organization_id,user_id) on delete cascade',
+        t,t||'_client_same_org'
+      );
+    end if;
   end loop;
-end $$;
+end $;
 
 do $$
 begin
