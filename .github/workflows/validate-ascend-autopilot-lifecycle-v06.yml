@@ -1,0 +1,23 @@
+name: Validate ASCEND Autopilot Lifecycle v0.6
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609182830_ascend_autopilot_lifecycle_watchdog_v06.sql"
+      - "supabase/functions/ascend-gateway/index.ts"
+      - "scripts/test-ascend-autopilot-lifecycle-v06.py"
+      - ".github/workflows/validate-ascend-autopilot-lifecycle-v06.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lifecycle-v06:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-ascend-autopilot-lifecycle-v06.py
