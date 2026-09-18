@@ -20,54 +20,71 @@ try{
       return !!document.querySelector('.cvSetRow');
     }catch(_){return false}
   },null,{timeout:7000,polling:100});
+  await page.waitForFunction(()=>[...document.querySelectorAll('input[id^="cvw_"]')].some(el=>el.offsetWidth>0&&el.offsetHeight>0),null,{timeout:5000});
 
-  const weight=page.locator('input[id^="cvw_"]:visible').first();
-  const reps=page.locator('input[id^="cvr_"]:visible').first();
-  await weight.waitFor({state:'visible',timeout:5000});
-  await reps.waitFor({state:'visible',timeout:5000});
-  await weight.scrollIntoViewIfNeeded();
-  const weightId=await weight.getAttribute('id');
-  const repsId=await reps.getAttribute('id');
-
-  await weight.tap({timeout:5000});
-  await weight.fill('62,5');
-  await page.waitForTimeout(100);
-  let state=await page.evaluate(id=>{
-    const w=document.getElementById(id);
+  const weightState=await page.evaluate(()=>{
+    const w=[...document.querySelectorAll('input[id^="cvw_"]')].find(el=>el.offsetWidth>0&&el.offsetHeight>0);
+    if(!w)throw new Error('No visible weight input');
+    w.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch'}));
+    w.focus();
+    w.click();
+    w.value='62,5';
+    w.dispatchEvent(new Event('input',{bubbles:true}));
     return {
+      id:w.id,
       activeId:document.activeElement?.id||'',
-      type:w?.type,
-      inputmode:w?.getAttribute('inputmode'),
-      value:w?.value||'',
-      sheetOpen:!!document.querySelector('.cvTechBackdrop.show [role="dialog"],.cvTechBackdrop.show,.cvPadBackdrop.show [role="dialog"],.cvPadBackdrop.show')
+      type:w.type,
+      inputmode:w.getAttribute('inputmode'),
+      value:w.value,
+      readOnly:w.readOnly,
+      role:w.getAttribute('role'),
+      ariaHaspopup:w.getAttribute('aria-haspopup'),
+      v73:w.dataset.cvPadV73||null,
+      sheetOpen:!!document.querySelector('.cvTechBackdrop.show,.cvPadBackdrop.show,[role="dialog"].show')
     };
-  },weightId);
-  assert.equal(state.activeId,weightId,'Weight edit must remain in the row');
-  assert.equal(state.type,'text','Weight field must avoid native number picker UI');
-  assert.equal(state.inputmode,'decimal');
-  assert.equal(state.value,'62.5','Decimal comma must normalize inline');
-  assert.equal(state.sheetOpen,false,'Editing weight must not open a modal/sheet');
+  });
+  assert.equal(weightState.activeId,weightState.id,'Weight edit must remain in the row');
+  assert.equal(weightState.type,'text');
+  assert.equal(weightState.inputmode,'decimal');
+  assert.equal(weightState.value,'62.5','Decimal comma must normalize inline');
+  assert.equal(weightState.readOnly,false,'Weight input must be editable');
+  assert.equal(weightState.role,null,'Weight input must not masquerade as a button');
+  assert.equal(weightState.ariaHaspopup,null,'Weight input must not advertise a custom dialog');
+  assert.equal(weightState.v73,null,'V73 keypad ownership must be absent');
+  assert.equal(weightState.sheetOpen,false,'Editing weight must not open a modal/sheet');
 
-  await reps.scrollIntoViewIfNeeded();
-  await reps.tap({timeout:5000});
-  await reps.fill('10');
-  state=await page.evaluate(id=>{
-    const r=document.getElementById(id);
+  const repsState=await page.evaluate(()=>{
+    const r=[...document.querySelectorAll('input[id^="cvr_"]')].find(el=>el.offsetWidth>0&&el.offsetHeight>0);
+    if(!r)throw new Error('No visible reps input');
+    r.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch'}));
+    r.focus();
+    r.click();
+    r.value='10';
+    r.dispatchEvent(new Event('input',{bubbles:true}));
     return {
+      id:r.id,
       activeId:document.activeElement?.id||'',
-      type:r?.type,
-      inputmode:r?.getAttribute('inputmode'),
-      value:r?.value||'',
-      sheetOpen:!!document.querySelector('.cvTechBackdrop.show [role="dialog"],.cvTechBackdrop.show,.cvPadBackdrop.show [role="dialog"],.cvPadBackdrop.show')
+      type:r.type,
+      inputmode:r.getAttribute('inputmode'),
+      value:r.value,
+      readOnly:r.readOnly,
+      role:r.getAttribute('role'),
+      ariaHaspopup:r.getAttribute('aria-haspopup'),
+      v73:r.dataset.cvPadV73||null,
+      sheetOpen:!!document.querySelector('.cvTechBackdrop.show,.cvPadBackdrop.show,[role="dialog"].show')
     };
-  },repsId);
-  assert.equal(state.activeId,repsId,'Reps edit must remain in the row');
-  assert.equal(state.type,'text');
-  assert.equal(state.inputmode,'numeric');
-  assert.equal(state.value,'10');
-  assert.equal(state.sheetOpen,false,'Editing reps must not open a modal/sheet');
+  });
+  assert.equal(repsState.activeId,repsState.id,'Reps edit must remain in the row');
+  assert.equal(repsState.type,'text');
+  assert.equal(repsState.inputmode,'numeric');
+  assert.equal(repsState.value,'10');
+  assert.equal(repsState.readOnly,false);
+  assert.equal(repsState.role,null);
+  assert.equal(repsState.ariaHaspopup,null);
+  assert.equal(repsState.v73,null);
+  assert.equal(repsState.sheetOpen,false,'Editing reps must not open a modal/sheet');
   assert.equal(errors.length,0,'Browser errors: '+errors.join(' | '));
-  console.log('CV_INLINE_SET_ENTRY_V104_BROWSER_OK',JSON.stringify(state));
+  console.log('CV_INLINE_SET_ENTRY_V104_BROWSER_OK',JSON.stringify({weightState,repsState}));
 } finally {
   await context.close().catch(()=>{});
   await browser.close().catch(()=>{});
