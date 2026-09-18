@@ -432,7 +432,7 @@ begin
   );
   return v_result;
 end;
-$function$
+$function$;
 
 
 create or replace function private.calculate_cv_score_core(
@@ -655,7 +655,7 @@ begin
   return query
   select v_prev,v_new,v_xp,v_balance,v_new_levels;
 end;
-$function$
+$function$;
 
 
 create or replace function private.recalculate_cv_score_trigger()
@@ -986,7 +986,7 @@ begin
     'level_up',(v_level_after>v_level_before)
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.log_nutrition_day_backend(p_actor_id uuid, p_client_id uuid DEFAULT NULL::uuid, p_log_date date DEFAULT CURRENT_DATE, p_adherence_pct numeric DEFAULT NULL::numeric, p_meals_completed integer DEFAULT NULL::integer, p_compliant boolean DEFAULT NULL::boolean, p_notes text DEFAULT NULL::text)
@@ -1190,7 +1190,7 @@ begin
     'level_up',(v_level_after>v_level_before)
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.complete_workout_backend(p_session_id uuid, p_actor_id uuid)
@@ -1255,7 +1255,7 @@ begin
   update private.workout_processing set result=v_result where session_id=p_session_id;
   return v_result;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_client_rank_state_backend(p_actor_id uuid, p_client_id uuid DEFAULT NULL::uuid)
