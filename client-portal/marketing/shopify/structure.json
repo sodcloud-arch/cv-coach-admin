@@ -19,43 +19,43 @@
       "key": "training",
       "path": "/pages/training",
       "nav": "primary",
-      "status": "built-v1"
+      "status": "built-v1-qa-pending"
     },
     {
       "key": "nutrition",
       "path": "/pages/nutrition",
       "nav": "primary",
-      "status": "draft-content"
+      "status": "built-v1-qa-pending"
     },
     {
       "key": "integrated",
       "path": "/pages/integrated",
       "nav": "primary",
-      "status": "draft-content"
+      "status": "built-v1-qa-pending"
     },
     {
       "key": "about",
       "path": "/pages/sobre-cv",
       "nav": "primary",
-      "status": "draft-content"
+      "status": "built-v1-qa-pending"
     },
     {
       "key": "blog",
       "path": "/blogs/cv",
       "nav": "primary",
-      "status": "structure-ready"
+      "status": "built-v1-draft-content"
     },
     {
       "key": "plans",
       "path": "/pages/planes",
       "nav": "secondary",
-      "status": "draft-content"
+      "status": "built-v1-qa-pending"
     },
     {
       "key": "how",
       "path": "/pages/como-funciona",
       "nav": "secondary",
-      "status": "draft-content"
+      "status": "built-v1-qa-pending"
     },
     {
       "key": "results",
@@ -79,13 +79,13 @@
       "key": "contact",
       "path": "/pages/contact",
       "nav": "secondary",
-      "status": "existing"
+      "status": "built-in-dev-theme"
     },
     {
       "key": "start",
       "path": "/pages/comienza-hoy",
       "nav": "cta",
-      "status": "draft-content"
+      "status": "built-v1-functional-qa-pending"
     },
     {
       "key": "login",
@@ -105,6 +105,16 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-003",
-  "last_completed": "WEB-002"
+  "current_mission": "WEB-003 — C.V. Training QA + refinement",
+  "last_completed": "WEB-002",
+  "prebuilt_ahead": [
+    "WEB-004 Nutrition",
+    "WEB-005 Integrated",
+    "WEB-006 Plans/Conversion",
+    "WEB-007 How/App bridge",
+    "WEB-008 About",
+    "WEB-009 Blog",
+    "WEB-012 Contact"
+  ],
+  "last_shopify_dev_update": "2026-09-18T13:03:00Z"
 }
