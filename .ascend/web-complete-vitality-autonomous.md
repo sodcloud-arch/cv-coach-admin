@@ -16,14 +16,14 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-002 — Arquitectura global + Shopify structure.
+WEB-003 — C.V. Training.
 
 Objetivo:
-- convertir el blueprint aprobado en estructura implementable;
-- preparar navegación, rutas, templates y componentes reutilizables;
-- auditar la tienda Shopify conectada sin borrar contenido existente;
-- preparar integración segura con C.V. Coach App;
-- mantener WEB-001 congelado como baseline.
+- construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
+- mantener identidad azul y coherencia con C.V. Complete Vitality;
+- implementar Hero → problema → propuesta → personalización → rutina → ejercicios → progresión → seguimiento → app → para quién → cómo comenzar → FAQ → CTA;
+- preparar CTAs para el flujo comercial híbrido sin activar pagos reales;
+- validar responsive y no introducir regresión en WEB-001.
 
 ## Scope permitido
 - `client-portal/marketing/**`
@@ -70,24 +70,6 @@ Si una mejora requiere uno de esos recursos, registrar BLOQUEO y detener esa par
 ## Loop autónomo
 ANALIZAR → CRITICAR → MODIFICAR → VALIDAR → PREVIEW → REVISAR → REPETIR
 
-## Criterio WEB-001
-- 390 px: sin overflow horizontal, texto legible, CTAs accionables.
-- 430 px: composición equivalente y estable.
-- Header móvil propio.
-- Hero móvil diseñado, no desktop encogido.
-- Cards apiladas con jerarquía premium.
-- Pilares reorganizados.
-- Métricas no muestran cifras ficticias.
-- Desktop v1 permanece visualmente estable.
-- Sin cambios en APP ni producción.
-
-## Salida
-Cuando WEB-001 cumpla los criterios:
-- congelar Mobile v1;
-- abrir siguiente misión WEB solo desde esta rama;
-- escalar al usuario únicamente decisiones de marca, negocio o bloqueos compartidos.
-
-
 ## Estrategia comercial web aprobada
 
 ### Público principal
@@ -104,7 +86,6 @@ Profesionales — coaches y nutricionistas. Tendrán una entrada secundaria y ar
 
 ### Decisión
 A — B2C principal + profesionales como entrada secundaria.
-
 
 ## Regla de decisión autónoma aprobada
 
@@ -123,7 +104,6 @@ ASCEND solo debe escalar antes de ejecutar cuando:
 
 En decisiones ordinarias de arquitectura, UX, conversión, contenido estructural, responsive, SEO técnico, navegación, jerarquía, componentes y organización de Shopify, ASCEND debe elegir la alternativa recomendada, implementarla, revisarla y continuar.
 
-
 ## Flujo de conversión aprobado
 
 ### Decisión
@@ -137,7 +117,6 @@ C — Modelo híbrido.
 
 ### Objetivo
 Maximizar automatización y conversión sin eliminar revisión humana donde aporte seguridad, personalización o control de calidad.
-
 
 ## WEB-001 — Cierre
 
@@ -160,3 +139,40 @@ Estado: COMPLETADO / BASELINE CONGELADO.
 
 ### Regla de regresión
 Cualquier misión posterior que cambie Homepage debe volver a validar Mobile 390/430 y Desktop 1024 antes de aprobarse.
+
+## WEB-002 — Cierre
+
+Estado: COMPLETADO / ARQUITECTURA SHOPIFY PREPARADA.
+
+### Auditoría Shopify verificada
+- Theme publicado `Horizon`: intacto; no se modificó producción.
+- Theme de desarrollo `CV Coach — V3 Refinada`: UNPUBLISHED, estable y sin processing failure.
+- Assets C.V. existentes en V3: identidad, estilos base, JS, estabilidad y `cv-pages-v1.css`.
+- Section reutilizable `cv-page-shell.liquid` presente.
+- Templates presentes para Training, Nutrition, Integrated, About, Plans, How, Results, Professionals, FAQ y Start.
+- 10 páginas C.V. existen, todas `isPublished=false`, con templateSuffix correcto.
+- Menús aislados `C.V. Main` y `C.V. Footer` existen sin reemplazar navegación de producción.
+- Blog `C.V. Journal` existe con handle `cv`.
+
+### Rutas preparadas
+- `/pages/training`
+- `/pages/nutrition`
+- `/pages/integrated`
+- `/pages/sobre-cv`
+- `/pages/planes`
+- `/pages/como-funciona`
+- `/pages/resultados`
+- `/pages/profesionales`
+- `/pages/faq`
+- `/pages/comienza-hoy`
+- `/blogs/cv`
+
+### Seguridad
+- Sin publicación de theme.
+- Sin publicación de páginas.
+- Sin pagos reales.
+- Sin cambios en APP/auth/Supabase/admin.
+- Rollback: theme V3 y recursos C.V. permanecen aislados de producción.
+
+### Siguiente dependencia
+WEB-003 debe desarrollar C.V. Training usando la estructura preparada y conservar el baseline WEB-001.
