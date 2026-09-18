@@ -145,8 +145,11 @@
   }
 
   function schedulePersist(delay=120){
-    clearTimeout(persistTimer);
-    persistTimer=setTimeout(persistNow,delay);
+    if(persistTimer)return;
+    persistTimer=setTimeout(()=>{
+      persistTimer=null;
+      persistNow();
+    },delay);
   }
 
   function elapsedLabel(savedAt){
