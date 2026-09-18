@@ -73,13 +73,13 @@
       "key": "faq",
       "path": "/pages/faq",
       "nav": "secondary",
-      "status": "in-progress"
+      "status": "built-v1-qa"
     },
     {
       "key": "contact",
       "path": "/pages/contact",
       "nav": "secondary",
-      "status": "in-progress"
+      "status": "theme-v1-qa-legacy-page-preserved"
     },
     {
       "key": "start",
@@ -105,8 +105,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-012",
-  "last_completed": "WEB-011",
+  "current_mission": "WEB-013",
+  "last_completed": "WEB-012",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
