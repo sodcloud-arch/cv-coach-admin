@@ -71,9 +71,9 @@ try{
     console.warn('CV_V105_SCREENSHOT_SKIPPED',String(error?.message||error));
   }
 
-  assert.equal(initial.htmlVersion,'105.3');
+  assert.equal(initial.htmlVersion,'105.4');
   assert.equal(initial.bodyClass,true);
-  assert.equal(initial.hasHint,false,'V105.3 keeps redundant logging hint removed');
+  assert.equal(initial.hasHint,false,'V105.4 keeps redundant logging hint removed');
   assert.match(initial.weightId,/^cvw_/);
   assert.match(initial.repsId,/^cvr_/);
   assert.match(initial.weightLabel,/Peso.*serie/i);
