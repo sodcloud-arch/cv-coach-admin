@@ -1,68 +1,77 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / "supabase/migrations/202609180800_f1_m1_s3_tenant_clients_arch1.sql"
-sql = MIGRATION.read_text(encoding="utf-8").lower()
+BASE = ROOT / "supabase/migrations/202609171900_f1_m1_s3_clients_arch1.sql"
+BACKFILL = ROOT / "supabase/migrations/202609171910_f1_m1_s3_cv_coach_client_backfill_arch1.sql"
+sql = BASE.read_text(encoding="utf-8").lower()
+backfill = BACKFILL.read_text(encoding="utf-8").lower()
 
 required = {
-    "tenant client status": "create type public.tenant_client_status",
-    "canonical client table": "create table if not exists public.tenant_client_profiles",
-    "organization scope": "organization_id uuid not null references public.organizations(id)",
+    "client status": "create type public.client_status",
+    "canonical clients": "create table if not exists public.clients",
+    "tenant scope": "organization_id uuid not null references public.organizations(id)",
     "nullable account": "user_id uuid references public.profiles(id) on delete set null",
-    "tenant user uniqueness": "unique (organization_id,user_id)",
-    "tenant composite identity": "unique (organization_id,id)",
-    "lifecycle lead": "'lead'",
-    "lifecycle invited": "'invited'",
-    "lifecycle active": "'active'",
-    "lifecycle paused": "'paused'",
-    "lifecycle archived": "'archived'",
-    "onboarding state": "onboarding_state text not null",
-    "rls": "alter table public.tenant_client_profiles enable row level security",
-    "scoped visibility": "function private.can_view_tenant_client(",
-    "professional access": "private.is_org_professional(target_organization)",
-    "member self access": "private.is_org_member(target_organization)",
-    "backend creator": "function public.create_tenant_client_profile(",
-    "backend linker": "function public.link_tenant_client_user(",
-    "backend-only create": "tenant client creation is backend-only",
-    "backend-only link": "tenant client account linking is backend-only",
-    "immutable tenant": "client profile organization is immutable",
-    "immutable linked user": "linked client user is immutable",
-    "terminal archive": "archived client profile is terminal",
-    "legacy compatibility note": "legacy public.client_profiles remains operational until controlled cutover",
+    "accountless lifecycle": "'lead','invited','active','paused','archived'",
+    "contact metadata": "contact_metadata jsonb not null",
+    "onboarding state": "onboarding_state jsonb not null",
+    "tenant user uniqueness": "on public.clients(organization_id,user_id)",
+    "rls": "alter table public.clients enable row level security",
+    "scoped visibility": "function private.can_view_client_entity(",
+    "professional access": "private.is_org_professional(c.organization_id)",
+    "client self access": "private.is_org_member(c.organization_id)",
+    "backend creator": "function public.create_client(",
+    "backend linker": "function public.link_client_user(",
+    "backend-only create": "client creation is backend-only",
+    "backend-only link": "client account linking is backend-only",
+    "immutable tenant": "client organization is immutable",
+    "immutable linked user": "linked client user is immutable through direct updates",
+    "terminal archive": "archived client is terminal",
 }
 missing = [name for name, token in required.items() if token not in sql]
 if missing:
-    raise SystemExit("Missing F1.M1.S3 contracts: " + ", ".join(missing))
+    raise SystemExit("Missing F1.M1.S3 base contracts: " + ", ".join(missing))
 
-# S3 must remain additive while the live portal still reads the legacy client model.
-for forbidden in (
-    "alter table public.client_profiles",
-    "drop table public.client_profiles",
-    "alter table public.coach_clients",
-    "drop table public.coach_clients",
-    "alter table public.profiles",
-    "drop table public.profiles",
-):
-    if forbidden in sql:
-        raise SystemExit(f"F1.M1.S3 must not mutate legacy schema: {forbidden}")
+backfill_required = {
+    "cv coach tenant": "where slug='cv-coach'",
+    "legacy relationships": "join public.coach_clients cc",
+    "legacy profile read": "left join public.client_profiles cp",
+    "membership bridge": "insert into public.organization_members",
+    "canonical client backfill": "insert into public.clients",
+    "idempotent membership": "on conflict (organization_id,user_id) do nothing",
+    "idempotent client": "not exists(",
+    "legacy source": "'source','legacy_cv_coach'",
+}
+missing_backfill = [name for name, token in backfill_required.items() if token not in backfill]
+if missing_backfill:
+    raise SystemExit("Missing F1.M1.S3 backfill contracts: " + ", ".join(missing_backfill))
+
+for source_name, source in (("base", sql), ("backfill", backfill)):
+    for forbidden in (
+        "alter table public.client_profiles",
+        "drop table public.client_profiles",
+        "alter table public.coach_clients",
+        "drop table public.coach_clients",
+        "alter table public.profiles",
+        "drop table public.profiles",
+    ):
+        if forbidden in source:
+            raise SystemExit(f"F1.M1.S3 {source_name} must not mutate legacy schema: {forbidden}")
 
 for forbidden in (
-    "grant insert on table public.tenant_client_profiles to authenticated",
-    "grant update on table public.tenant_client_profiles to authenticated",
-    "grant delete on table public.tenant_client_profiles to authenticated",
-    "grant execute on function public.create_tenant_client_profile(uuid,text,uuid,public.tenant_client_status,text,text,jsonb,text) to authenticated",
-    "grant execute on function public.link_tenant_client_user(uuid,uuid) to authenticated",
+    "grant insert on table public.clients to authenticated",
+    "grant update on table public.clients to authenticated",
+    "grant delete on table public.clients to authenticated",
+    "grant execute on function public.create_client(uuid,text,uuid,public.client_status,jsonb,jsonb,uuid) to authenticated",
+    "grant execute on function public.link_client_user(uuid,uuid) to authenticated",
 ):
     if forbidden in sql:
         raise SystemExit(f"Unsafe authenticated privilege found: {forbidden}")
 
-if "where user_id is not null" not in sql:
-    raise SystemExit("Expected nullable-user index contract")
-
 print("F1.M1.S3 Clients contract: PASS")
-print("- tenant-scoped client identity: PASS")
-print("- client without login/account: PASS")
-print("- later account linking: PASS")
-print("- same user may exist across different tenants: PASS")
-print("- terminal archive preserves identity/history: PASS")
-print("- additive legacy compatibility: PASS")
+print("- canonical tenant-scoped client identity: PASS")
+print("- client can exist before login/account: PASS")
+print("- later account linking with active membership: PASS")
+print("- same global user can be a client in different tenants: PASS")
+print("- archive preserves canonical identity/history: PASS")
+print("- existing CV Coach clients backfilled additively: PASS")
+print("- legacy client_profiles / coach_clients remain untouched: PASS")
