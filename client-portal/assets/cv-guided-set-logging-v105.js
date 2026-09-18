@@ -401,7 +401,7 @@
   }
 
   function demoWorkoutMetrics(){
-    const rows=[...document.querySelectorAll('.cvSetRow')].filter(isVisible);
+    const rows=[...document.querySelectorAll('.cvSetRow')];
     const done=rows.filter(row=>row.classList.contains('done'));
     const total=rows.length;
     let volume=0;
