@@ -89,7 +89,7 @@ async function completeCurrentSet(){
 try{
   await page.goto(target,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(()=>window.CVInlineSetEntryV104?.version==='104',null,{timeout:10000});
-  await page.waitForFunction(()=>window.CVGuidedSetLoggingV105?.revision==='105.4',null,{timeout:10000});
+  await page.waitForFunction(()=>window.CVGuidedSetLoggingV105?.revision==='105.5',null,{timeout:10000});
 
   await page.evaluate(()=>document.getElementById('demoBtn')?.click());
   await page.waitForFunction(()=>!document.getElementById('app')?.classList.contains('hidden'),null,{timeout:5000});
