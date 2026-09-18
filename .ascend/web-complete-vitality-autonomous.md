@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-013 — Legales + cookies.
+WEB-014 — SEO + analytics readiness.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -407,3 +407,28 @@ Estado: COMPLETADO / FAQ + CONTACTO v1 PREPARADOS EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-013 debe preparar borradores de Privacidad, Términos y Cookies y una arquitectura de consentimiento. Revisión humana/legal será obligatoria antes de publicación o aceptación contractual.
+
+
+## WEB-013 — Cierre
+
+Estado: COMPLETADO COMO PREPARACIÓN / BLOQUEO LEGAL REGISTRADO PARA PRODUCCIÓN.
+
+### Implementado
+- Tres páginas legales C.V. en borrador y `isPublished=false`: Privacidad, Términos y Cookies.
+- Template legal especializado con advertencia visible de borrador/revisión pendiente.
+- Gestor de consentimiento en theme C.V. UNPUBLISHED con opciones: solo necesarias, analytics y marketing.
+- Preferencias guardadas localmente y evento `cv:consentchange` preparado para futuras integraciones.
+- Control en footer para reabrir preferencias.
+- Ningún tracker de Google/Meta/Clarity/Hotjar u otro tercero fue activado.
+
+### QA verificado
+- 3 páginas legales existen, están UNPUBLISHED y usan templates legales correctos.
+- Consent manager está montado únicamente en el theme C.V. de desarrollo.
+- No hay código de tracking de terceros en el consentimiento.
+- Homepage congelada sin cambios en checksums.
+
+### BLOQUEO DE PRODUCCIÓN
+Antes de publicar/aceptar estas políticas deben completarse entidad responsable, identificación fiscal, domicilio, correo, mercados, bases legales, proveedores reales, transferencias, retención, cancelación/reembolso, jurisdicción y revisión jurídica humana. Este bloqueo no impide continuar desarrollo técnico.
+
+### Dependencia siguiente
+WEB-014 debe preparar SEO técnico, metadatos, canonical/OpenGraph/schema y un puente de analytics respetuoso del consentimiento, sin activar trackers externos.
