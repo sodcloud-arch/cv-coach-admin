@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050505">
 <meta name="robots" content="noindex,nofollow">
-<title>C.V. Complete Vitality — Desktop Lock</title>
+<title>C.V. Complete Vitality — Training, Nutrition & Integrated</title>
+<meta name="description" content="Complete Vitality integra entrenamiento, nutrición y bienestar en una experiencia completa orientada al progreso real.">
 <style>
 :root{--bg:#050505;--red:#ff111f}
 *{box-sizing:border-box}
@@ -48,34 +49,38 @@ a{color:inherit;text-decoration:none}
 @media(max-width:760px){
   .header-slice,.hero-slice{display:none}
   .mobile-header{
-    position:sticky;top:0;z-index:50;height:64px;padding:0 12px 0 14px;
-    display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:9px;
+    position:sticky;top:0;z-index:50;
+    min-height:64px;height:calc(64px + env(safe-area-inset-top));
+    padding:env(safe-area-inset-top) 12px 0 14px;
+    display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;
     background:rgba(4,4,4,.97);backdrop-filter:blur(16px);
     border-bottom:1px solid rgba(255,255,255,.09);
     box-shadow:0 8px 24px rgba(0,0,0,.22)
   }
   .mobile-brand img{display:block;width:94px;height:auto}
   .mobile-start{
-    height:34px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;
+    min-width:82px;height:44px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;
     border:1px solid rgba(255,53,66,.75);border-radius:4px;background:linear-gradient(180deg,#ff1826,#d90816);
-    font-size:9px;font-weight:850;letter-spacing:.075em;text-transform:uppercase;
+    font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;
     box-shadow:0 0 14px rgba(255,17,31,.22),inset 0 1px rgba(255,255,255,.08)
   }
   .mobile-nav{position:relative}
   .mobile-nav summary{
-    list-style:none;width:36px;height:34px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.20);
-    border-radius:4px;background:#080808;font-size:18px;cursor:pointer
+    list-style:none;width:44px;height:44px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.20);
+    border-radius:4px;background:#080808;font-size:19px;cursor:pointer;
+    -webkit-tap-highlight-color:transparent
   }
   .mobile-nav summary::-webkit-details-marker{display:none}
   .mobile-nav[open] .mobile-menu{display:flex}
   .mobile-menu{
-    position:fixed;left:0;right:0;top:64px;display:none;flex-direction:column;
-    background:rgba(5,5,5,.985);border-bottom:1px solid rgba(255,255,255,.12);
-    padding:12px 18px 18px;box-shadow:0 18px 40px rgba(0,0,0,.48)
+    position:fixed;left:0;right:0;top:calc(64px + env(safe-area-inset-top));display:none;flex-direction:column;
+    max-height:calc(100dvh - 64px - env(safe-area-inset-top));overflow:auto;overscroll-behavior:contain;
+    background:rgba(5,5,5,.992);border-bottom:1px solid rgba(255,255,255,.12);
+    padding:10px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 18px 40px rgba(0,0,0,.56)
   }
   .mobile-menu a{
-    padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.06);
-    font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase
+    min-height:48px;padding:0 4px;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:12px;font-weight:750;letter-spacing:.08em;text-transform:uppercase
   }
   .mobile-menu a:last-child{border-bottom:0;color:#ff5962}
 
@@ -124,7 +129,7 @@ a{color:inherit;text-decoration:none}
   .mobile-values span:not(:last-child):after{content:"·";margin-left:10px;color:#777}
   .mobile-hero-sub{margin:11px auto 15px;max-width:300px;font-size:11px;line-height:1.5;color:#d6d6d6}
   .mobile-hero-cta{
-    display:inline-flex;height:43px;min-width:184px;align-items:center;justify-content:center;
+    display:inline-flex;height:46px;min-width:190px;align-items:center;justify-content:center;
     padding:0 20px;border:1px solid rgba(255,70,80,.78);border-radius:4px;background:linear-gradient(180deg,#ff1927,#d90816);
     font-size:10px;font-weight:850;letter-spacing:.055em;text-transform:uppercase;
     box-shadow:0 0 20px rgba(255,17,31,.28),inset 0 1px rgba(255,255,255,.09)
@@ -140,6 +145,10 @@ a{color:inherit;text-decoration:none}
   .cv-shell{width:100vw}
   #training,#nutrition,#integrated,#pilares{scroll-margin-top:72px}
   .mobile-start,.mobile-hero-cta,.card-cta{-webkit-tap-highlight-color:transparent}
+  .mobile-start:focus-visible,.mobile-hero-cta:focus-visible,.card-cta:focus-visible,.mobile-nav summary:focus-visible,.mobile-menu a:focus-visible{
+    outline:2px solid #fff;outline-offset:2px
+  }
+  body.mobile-menu-open{overflow:hidden;touch-action:none}
 }
 
 
@@ -203,7 +212,7 @@ box-shadow:0 0 1.563cqw color-mix(in srgb,var(--accent) 30%,transparent), inset 
   .card-head{margin-top:-24px;padding:0 18px}.card-head img.brand-mark{width:80px;height:49px;margin-bottom:0}
   .card-title-lockup{width:100%;height:69px;margin:0 auto}.feature-list{margin:14px 28px 66px 34px;gap:11px}
   .feature-list li{grid-template-columns:32px 1fr;gap:19px;min-height:27px;font-size:13px}.feature-icon{width:25px;height:25px}
-  .card-cta{left:26px;right:26px;bottom:15px;height:43px;font-size:11px}.card-cta .arrow{right:28px;font-size:18px}
+  .card-cta{left:26px;right:26px;bottom:15px;height:46px;font-size:11px}.card-cta .arrow{right:28px;font-size:18px}
   .real-pillars{aspect-ratio:auto;height:auto;grid-template-columns:repeat(2,1fr);gap:0;padding:20px 12px;background:#050505}
   .pillar{min-height:96px;border-bottom:1px solid rgba(255,255,255,.07)}
   .pillar:nth-child(odd){border-right:1px solid rgba(255,255,255,.07)}
@@ -285,7 +294,7 @@ box-shadow:0 0 1.563cqw color-mix(in srgb,var(--accent) 30%,transparent), inset 
         <div class="photo" role="img" aria-label="Atleta entrenando fuerza"></div>
         <div class="card-head">
           <img class="brand-mark" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-mark-exact.png?v=1789724858" alt="">
-          <img class="card-title-lockup" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-training-title-transparent.png?v=1789726080" alt="" aria-hidden="true">
+          <img class="card-title-lockup" loading="lazy" decoding="async" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-training-title-transparent.png?v=1789726080" alt="" aria-hidden="true">
           <h3>Training</h3>
           <div class="tagline">Entrenamiento inteligente para resultados reales</div>
         </div>
@@ -302,7 +311,7 @@ box-shadow:0 0 1.563cqw color-mix(in srgb,var(--accent) 30%,transparent), inset 
         <div class="photo" role="img" aria-label="Mujer con alimentación saludable"></div>
         <div class="card-head">
           <img class="brand-mark" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-mark-exact.png?v=1789724858" alt="">
-          <img class="card-title-lockup" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-nutrition-title-transparent.png?v=1789726094" alt="" aria-hidden="true">
+          <img class="card-title-lockup" loading="lazy" decoding="async" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-nutrition-title-transparent.png?v=1789726094" alt="" aria-hidden="true">
           <h3>Nutrition</h3>
           <div class="tagline">Nutrición real para una vida mejor</div>
         </div>
@@ -319,7 +328,7 @@ box-shadow:0 0 1.563cqw color-mix(in srgb,var(--accent) 30%,transparent), inset 
         <div class="photo" role="img" aria-label="Hombre y mujer en enfoque integrado"></div>
         <div class="card-head">
           <img class="brand-mark" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-mark-exact.png?v=1789724858" alt="">
-          <img class="card-title-lockup" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-integrated-title-transparent.png?v=1789726103" alt="" aria-hidden="true">
+          <img class="card-title-lockup" loading="lazy" decoding="async" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-integrated-title-transparent.png?v=1789726103" alt="" aria-hidden="true">
           <h3>Integrated</h3>
           <div class="tagline">Entrenamiento + nutrición, máximos resultados</div>
         </div>
@@ -373,12 +382,34 @@ box-shadow:0 0 1.563cqw color-mix(in srgb,var(--accent) 30%,transparent), inset 
   <section class="sr-only" id="blog"><h2>Blog C.V.</h2></section>
 </main>
 <script>
-document.querySelectorAll('.mobile-menu a').forEach(function(link){
-  link.addEventListener('click',function(){
-    var menu=link.closest('details');
-    if(menu) menu.removeAttribute('open');
+(function(){
+  var nav=document.querySelector('.mobile-nav');
+  if(!nav) return;
+  function syncMenuState(){
+    document.body.classList.toggle('mobile-menu-open',nav.open);
+  }
+  nav.addEventListener('toggle',syncMenuState);
+  document.querySelectorAll('.mobile-menu a').forEach(function(link){
+    link.addEventListener('click',function(){
+      nav.removeAttribute('open');
+      syncMenuState();
+    });
   });
-});
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape' && nav.open){
+      nav.removeAttribute('open');
+      syncMenuState();
+      var summary=nav.querySelector('summary');
+      if(summary) summary.focus();
+    }
+  });
+  window.addEventListener('resize',function(){
+    if(window.innerWidth>760 && nav.open){
+      nav.removeAttribute('open');
+      syncMenuState();
+    }
+  });
+})();
 </script>
 </body>
 </html>
