@@ -73,3 +73,11 @@ jobs:
         env:
           CV_TEST_URL: http://127.0.0.1:4173
         run: node scripts/test-guided-set-logging-v105-browser.mjs
+      - name: Upload V105 mobile screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v105-mobile-visual
+          path: artifacts/v105-mobile-current.png
+          if-no-files-found: error
+          retention-days: 3
