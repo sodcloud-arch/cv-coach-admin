@@ -11,7 +11,8 @@ on:
       - 'scripts/test-active-session-v105-browser.mjs'
       - 'scripts/test-demo-post-workout-v105-browser.mjs'
       - 'scripts/test-finish-guard-v106-browser.mjs'
-      - 'scripts/validate-production-v106.mjs'
+      - 'scripts/test-session-recovery-v107-browser.mjs'
+      - 'scripts/validate-production-v107.mjs'
       - '.github/workflows/cv-coach-canonical-production.yml'
   push:
     branches: [main]
@@ -23,7 +24,8 @@ on:
       - 'scripts/test-active-session-v105-browser.mjs'
       - 'scripts/test-demo-post-workout-v105-browser.mjs'
       - 'scripts/test-finish-guard-v106-browser.mjs'
-      - 'scripts/validate-production-v106.mjs'
+      - 'scripts/test-session-recovery-v107-browser.mjs'
+      - 'scripts/validate-production-v107.mjs'
       - '.github/workflows/cv-coach-canonical-production.yml'
 
 permissions:
@@ -48,11 +50,12 @@ jobs:
       - name: Validate pipeline script syntax
         run: |
           bash -n scripts/build-client-canonical.sh
-          node --check scripts/validate-production-v106.mjs
+          node --check scripts/validate-production-v107.mjs
           node --check scripts/test-guided-set-logging-v105-browser.mjs
           node --check scripts/test-active-session-v105-browser.mjs
           node --check scripts/test-demo-post-workout-v105-browser.mjs
           node --check scripts/test-finish-guard-v106-browser.mjs
+          node --check scripts/test-session-recovery-v107-browser.mjs
 
       - name: Build canonical client
         run: bash scripts/build-client-canonical.sh
@@ -238,6 +241,44 @@ jobs:
           if-no-files-found: warn
           retention-days: 3
 
+  chromium-session-recovery:
+    needs: build-canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download exact canonical artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cv-coach-canonical-${{ github.sha }}
+          path: client-portal/stable
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve canonical artifact
+        run: |
+          python3 -m http.server 4180 --directory client-portal/stable >/tmp/cv-recovery-http.log 2>&1 &
+          echo $! > /tmp/cv-recovery-http.pid
+          sleep 1
+
+      - name: Validate V107 interrupted-session recovery
+        env:
+          CV_TEST_URL: http://127.0.0.1:4180
+        run: node scripts/test-session-recovery-v107-browser.mjs
+
+      - name: Upload V107 recovery screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-session-recovery-${{ github.sha }}
+          path: artifacts/v107-session-recovery/*.png
+          if-no-files-found: warn
+          retention-days: 3
+
   webkit-active-canary:
     needs: build-canonical
     runs-on: ubuntu-latest
@@ -295,6 +336,7 @@ jobs:
       - chromium-active
       - chromium-post-workout
       - chromium-finish-guard
+      - chromium-session-recovery
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -325,11 +367,12 @@ jobs:
           test -f client-portal/vercel-prebuilt/.vercel/output/static/index.html
           test -f client-portal/vercel-prebuilt/.vercel/output/static/build.json
           grep -q 'CV_FINISH_GUARD_V106_READY' client-portal/vercel-prebuilt/.vercel/output/static/index.html
+          grep -q 'CV_SESSION_RECOVERY_V107_READY' client-portal/vercel-prebuilt/.vercel/output/static/index.html
           grep -q "revision:'105.5'" client-portal/vercel-prebuilt/.vercel/output/static/index.html
           python3 - <<'PY'
           import json
           data=json.load(open('client-portal/vercel-prebuilt/.vercel/output/static/build.json',encoding='utf-8'))
-          assert data.get('version')=='106',data
+          assert data.get('version')=='107',data
           print('CV_PREBUILT_DOWNLOAD_VERIFIED',data.get('git_sha'))
           PY
 
@@ -372,7 +415,7 @@ jobs:
           CV_EXPECTED_SHA: ${{ github.sha }}
         run: |
           set +e
-          node scripts/validate-production-v106.mjs
+          node scripts/validate-production-v107.mjs
           STATUS=$?
           set -e
 
