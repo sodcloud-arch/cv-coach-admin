@@ -49,13 +49,13 @@
       "key": "plans",
       "path": "/pages/planes",
       "nav": "secondary",
-      "status": "in-progress"
+      "status": "built-v1-qa"
     },
     {
       "key": "how",
       "path": "/pages/como-funciona",
       "nav": "secondary",
-      "status": "built-v1-qa-pending"
+      "status": "in-progress"
     },
     {
       "key": "results",
@@ -105,8 +105,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-006",
-  "last_completed": "WEB-005",
+  "current_mission": "WEB-007",
+  "last_completed": "WEB-006",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
