@@ -43,6 +43,95 @@ a{color:inherit;text-decoration:none}
 .cards-slice .nutrition-cta{left:39.55%;top:80.2%;width:21.0%;height:7.2%}
 .cards-slice .integrated-cta{left:70.15%;top:80.2%;width:22.0%;height:7.2%}
 
+
+.mobile-header,.mobile-hero{display:none}
+@media(max-width:760px){
+  .header-slice,.hero-slice{display:none}
+  .mobile-header{
+    position:sticky;top:0;z-index:50;height:68px;padding:0 14px;
+    display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;
+    background:rgba(5,5,5,.96);backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(255,255,255,.10)
+  }
+  .mobile-brand img{display:block;width:104px;height:auto}
+  .mobile-start{
+    height:36px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;
+    border-radius:4px;background:var(--red);font-size:10px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;box-shadow:0 0 16px rgba(255,17,31,.25)
+  }
+  .mobile-nav{position:relative}
+  .mobile-nav summary{
+    list-style:none;width:38px;height:36px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.24);
+    border-radius:4px;background:#090909;font-size:19px;cursor:pointer
+  }
+  .mobile-nav summary::-webkit-details-marker{display:none}
+  .mobile-nav[open] .mobile-menu{display:flex}
+  .mobile-menu{
+    position:fixed;left:0;right:0;top:68px;display:none;flex-direction:column;
+    background:rgba(5,5,5,.985);border-bottom:1px solid rgba(255,255,255,.12);
+    padding:12px 18px 18px;box-shadow:0 18px 40px rgba(0,0,0,.48)
+  }
+  .mobile-menu a{
+    padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase
+  }
+  .mobile-menu a:last-child{border-bottom:0;color:#ff5962}
+
+  .mobile-hero{
+    display:block;position:relative;height:720px;overflow:hidden;background:
+      radial-gradient(circle at 50% 12%,rgba(255,17,31,.13),transparent 27%),
+      radial-gradient(circle at 82% 60%,rgba(255,0,0,.10),transparent 24%),
+      linear-gradient(180deg,#090909 0%,#050505 48%,#020202 100%);
+    border-bottom:1px solid rgba(255,255,255,.09)
+  }
+  .mobile-hero:after{
+    content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:
+      linear-gradient(180deg,rgba(0,0,0,.10) 0%,rgba(0,0,0,.02) 40%,rgba(0,0,0,.42) 82%,#050505 100%),
+      linear-gradient(90deg,rgba(0,0,0,.22),transparent 24%,transparent 76%,rgba(0,0,0,.22))
+  }
+  .mobile-athlete{
+    position:absolute;z-index:1;bottom:0;height:64%;width:61%;object-fit:cover;filter:contrast(1.04) saturate(.96)
+  }
+  .mobile-athlete.male{
+    left:-15%;object-position:center top;
+    -webkit-mask-image:linear-gradient(90deg,#000 0 63%,rgba(0,0,0,.82) 75%,rgba(0,0,0,.16) 92%,transparent 100%);
+    mask-image:linear-gradient(90deg,#000 0 63%,rgba(0,0,0,.82) 75%,rgba(0,0,0,.16) 92%,transparent 100%)
+  }
+  .mobile-athlete.female{
+    right:-15%;object-position:center top;
+    -webkit-mask-image:linear-gradient(270deg,#000 0 63%,rgba(0,0,0,.82) 75%,rgba(0,0,0,.16) 92%,transparent 100%);
+    mask-image:linear-gradient(270deg,#000 0 63%,rgba(0,0,0,.82) 75%,rgba(0,0,0,.16) 92%,transparent 100%)
+  }
+  .mobile-hero-copy{
+    position:relative;z-index:7;text-align:center;padding:42px 18px 0;max-width:430px;margin:0 auto
+  }
+  .mobile-hero-logo{width:190px;max-width:52vw;margin:0 auto 13px;filter:drop-shadow(0 0 16px rgba(255,17,31,.12))}
+  .mobile-kicker{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:#d4d4d4;margin-bottom:9px}
+  .mobile-title{
+    margin:0;font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif;
+    font-size:clamp(47px,13vw,60px);line-height:.83;text-transform:uppercase;letter-spacing:-.015em;
+    text-shadow:0 3px 14px rgba(0,0,0,.7)
+  }
+  .mobile-title span{display:block}
+  .mobile-title .white{color:#f4f4f4}
+  .mobile-title .red{color:var(--red)}
+  .mobile-values{
+    margin:18px auto 0;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
+    font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#e9e9e9
+  }
+  .mobile-values span:not(:last-child):after{content:"·";margin-left:10px;color:#777}
+  .mobile-hero-sub{margin:13px auto 17px;max-width:300px;font-size:12px;line-height:1.45;color:#d5d5d5}
+  .mobile-hero-cta{
+    display:inline-flex;height:44px;min-width:190px;align-items:center;justify-content:center;
+    padding:0 22px;border-radius:4px;background:var(--red);font-size:11px;font-weight:850;
+    letter-spacing:.04em;text-transform:uppercase;box-shadow:0 0 22px rgba(255,17,31,.30)
+  }
+  .mobile-standard{
+    position:absolute;z-index:7;left:50%;bottom:18px;transform:translateX(-50%);
+    font-size:8px;letter-spacing:.33em;text-transform:uppercase;color:#b9b9b9;white-space:nowrap
+  }
+}
+
 /* Desktop-first: preserve approved composition. Mobile gets its own composition later. */
 @media(max-width:760px){
   .cv-shell{width:100vw}
@@ -102,16 +191,16 @@ box-shadow:0 0 1.563cqw color-mix(in srgb,var(--accent) 30%,transparent), inset 
 .metric-note small{display:block;margin-top:.586cqw;font-size:.781cqw;letter-spacing:.16em;text-transform:uppercase;color:#6f6f6f}
 
 @media(max-width:760px){
-  .real-cards{aspect-ratio:auto;height:auto;grid-template-columns:1fr;padding:16px;gap:16px}.cv-card{height:auto;min-height:528px}
-  .cv-card .photo{height:210px}.card-head{margin-top:-28px;padding:0 18px}.card-head img.brand-mark{width:85px;height:52px;margin-bottom:1px}
+  .real-cards{aspect-ratio:auto;height:auto;grid-template-columns:1fr;padding:14px 12px 20px;gap:16px}.cv-card{height:auto;min-height:540px;border-radius:6px}
+  .cv-card .photo{height:226px;background-position:center 10%}.card-head{margin-top:-28px;padding:0 18px}.card-head img.brand-mark{width:85px;height:52px;margin-bottom:1px}
   .card-title-lockup{width:100%;height:75px;margin:2px auto 0}.feature-list{margin:17px 31px 70px 40px;gap:10px}
   .feature-list li{grid-template-columns:34px 1fr;gap:24px;min-height:27px;font-size:13px}.feature-icon{width:27px;height:27px}
   .card-cta{left:41px;right:41px;bottom:16px;height:44px;font-size:12px}.card-cta .arrow{right:43px;font-size:19px}
-  .real-pillars{aspect-ratio:auto;height:auto;grid-template-columns:repeat(2,1fr);gap:22px 0;padding:26px 16px}
+  .real-pillars{aspect-ratio:auto;height:auto;grid-template-columns:repeat(2,1fr);gap:24px 0;padding:28px 14px 26px}
   .pillar img{height:34px;max-width:50px;margin-bottom:6px}.pillar strong{font-size:13px;line-height:16px}.pillar span{font-size:10px;line-height:12px;margin-top:4px}
   .pillar{transform:none!important}
   .pillar:nth-child(5){grid-column:1/-1}
-  .real-metrics{aspect-ratio:auto;height:auto;grid-template-columns:repeat(2,1fr);gap:0;padding:18px 16px}
+  .real-metrics{display:none}
   .metric .value{font-size:28px}.metric .label{font-size:9px;line-height:12px;margin-top:6px}.metric-note blockquote{font-size:10px}.metric-note small{font-size:8px}
   .metric,.metric:nth-child(n){height:auto;padding:16px;border-bottom:1px solid rgba(255,255,255,.10)}
   .metric:nth-child(even){border-right:0}
@@ -124,6 +213,40 @@ box-shadow:0 0 1.563cqw color-mix(in srgb,var(--accent) 30%,transparent), inset 
 <body>
 <main class="page" aria-label="C.V. Complete Vitality">
   <div class="cv-shell">
+
+
+    <header class="mobile-header" aria-label="Navegación móvil C.V.">
+      <a class="mobile-brand" href="#inicio-mobile" aria-label="C.V. Complete Vitality">
+        <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060" alt="C.V. Complete Vitality">
+      </a>
+      <a class="mobile-start" href="#training">Comienza</a>
+      <details class="mobile-nav">
+        <summary aria-label="Abrir menú">☰</summary>
+        <nav class="mobile-menu" aria-label="Navegación móvil">
+          <a href="#inicio-mobile">Inicio</a>
+          <a href="#training">Training</a>
+          <a href="#nutrition">Nutrition</a>
+          <a href="#integrated">Integrated</a>
+          <a href="#sobre-cv">Sobre C.V.</a>
+          <a href="#blog">Blog</a>
+          <a href="https://cv-coach-roan.vercel.app/" rel="noopener">Iniciar sesión</a>
+        </nav>
+      </details>
+    </header>
+
+    <section class="mobile-hero" id="inicio-mobile" aria-labelledby="hero-title-mobile">
+      <img class="mobile-athlete male" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-hero-left-athlete-source.png?v=1789720782" alt="">
+      <img class="mobile-athlete female" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-hero-right-athlete-source.png?v=1789720788" alt="">
+      <div class="mobile-hero-copy">
+        <img class="mobile-hero-logo" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060" alt="C.V. Complete Vitality">
+        <div class="mobile-kicker">Complete Vitality</div>
+        <h1 class="mobile-title" id="hero-title-mobile"><span class="white">Más que</span><span class="red">Entrenamiento</span></h1>
+        <div class="mobile-values"><span>Disciplina</span><span>Progreso</span><span>Libertad</span></div>
+        <p class="mobile-hero-sub">Entrenamiento. Nutrición. Bienestar. Resultados.<br>Todo en un solo lugar.</p>
+        <a class="mobile-hero-cta" href="#training">Comienza hoy&nbsp;&nbsp;→</a>
+      </div>
+      <div class="mobile-standard">A Higher Standard</div>
+    </section>
 
     <header class="slice header-slice" id="inicio" aria-label="Navegación C.V.">
       <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-header-slice-exact.png?v=1789720257" alt="C.V. Complete Vitality">
