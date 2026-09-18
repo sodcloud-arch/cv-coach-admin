@@ -11,7 +11,7 @@ required=[
     "cv_finalize_challenge_in_org_v62",
     "create_cv_challenge_in_org_v62",
     "create_cv_season_in_org_v62",
-    "c.organization_id=p_organization",
+    "organization_id=p_organization",
     "s.organization_id=v_org",
     "cr.organization_id=sp.organization_id",
     "where cr.organization_id=v_org",
