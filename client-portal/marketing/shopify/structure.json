@@ -67,19 +67,19 @@
       "key": "professionals",
       "path": "/pages/profesionales",
       "nav": "secondary",
-      "status": "in-progress"
+      "status": "built-v1-qa"
     },
     {
       "key": "faq",
       "path": "/pages/faq",
       "nav": "secondary",
-      "status": "draft-content"
+      "status": "in-progress"
     },
     {
       "key": "contact",
       "path": "/pages/contact",
       "nav": "secondary",
-      "status": "built-in-dev-theme"
+      "status": "in-progress"
     },
     {
       "key": "start",
@@ -105,8 +105,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-011",
-  "last_completed": "WEB-010",
+  "current_mission": "WEB-012",
+  "last_completed": "WEB-011",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
