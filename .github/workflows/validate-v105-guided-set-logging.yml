@@ -6,6 +6,7 @@ on:
       - 'client-portal/assets/cv-guided-set-logging-v105.js'
       - 'client-portal/upgrade_client_v105.py'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
+      - 'scripts/test-active-session-v105-browser.mjs'
       - '.github/workflows/validate-v105-guided-set-logging.yml'
   push:
     branches: [main, 'feat/v105-guided-set-logging']
@@ -13,6 +14,7 @@ on:
       - 'client-portal/assets/cv-guided-set-logging-v105.js'
       - 'client-portal/upgrade_client_v105.py'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
+      - 'scripts/test-active-session-v105-browser.mjs'
       - '.github/workflows/validate-v105-guided-set-logging.yml'
 
 permissions:
@@ -73,11 +75,17 @@ jobs:
         env:
           CV_TEST_URL: http://127.0.0.1:4173
         run: node scripts/test-guided-set-logging-v105-browser.mjs
-      - name: Upload V105 mobile screenshot
+      - name: Execute V105 active workout behavior
+        env:
+          CV_TEST_URL: http://127.0.0.1:4173
+        run: node scripts/test-active-session-v105-browser.mjs
+      - name: Upload V105 mobile screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: v105-mobile-visual
-          path: artifacts/v105-mobile-current.png
+          path: |
+            artifacts/v105-mobile-current.png
+            artifacts/v105-active-session/*.png
           if-no-files-found: error
           retention-days: 3
