@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-007 — Cómo funciona + App bridge.
+WEB-008 — Sobre C.V.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -276,3 +276,26 @@ Estado: COMPLETADO / PLANES + CONVERSIÓN v1 PREPARADOS EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-007 debe auditar Cómo funciona y reforzar el puente Shopify → C.V. Coach, separando con claridad educación/conversión de ejecución/autenticación.
+
+
+## WEB-007 — Cierre
+
+Estado: COMPLETADO / CÓMO FUNCIONA + APP BRIDGE v1 PREPARADO EN SHOPIFY DEV.
+
+### Implementado
+- Recorrido completo Descubrir → Elegir → Contratar → Onboarding → Ejecutar → Medir → Ajustar → Progresar.
+- Frontera explícita Shopify vs C.V. Coach: antes de contratar / después del onboarding.
+- Puente real de login hacia C.V. Coach App.
+- Mensajería modular: solo se consideran activas las funciones realmente habilitadas.
+- CTAs de Comienza hoy y acceso existente.
+- Responsive y focus visible.
+
+### QA verificado
+- Página Cómo funciona permanece `isPublished=false`, template `cv-how`.
+- Theme de trabajo sigue UNPUBLISHED, estable y sin processing failure.
+- Ocho pasos, frontera Shopify/App y login bridge presentes.
+- Estructura HTML section/div balanceada.
+- Homepage congelada sin cambios en checksums.
+
+### Dependencia siguiente
+WEB-008 debe completar Sobre C.V. con propósito, principios, arquitectura del ecosistema, visión de marca y CTA hacia el recorrido principal.
