@@ -1,0 +1,26 @@
+name: Validate F1.M1.S3 Clients
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609171900_f1_m1_s3_clients_arch1.sql"
+      - "supabase/migrations/202609171910_f1_m1_s3_cv_coach_client_backfill_arch1.sql"
+      - "scripts/test-f1-m1-s3-clients.py"
+      - ".github/workflows/validate-f1-m1-s3-clients.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tenant-client-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate ARCH-1.0 Clients contract
+        run: python scripts/test-f1-m1-s3-clients.py
