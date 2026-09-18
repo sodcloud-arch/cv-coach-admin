@@ -1,0 +1,26 @@
+name: Validate F1.M1.S4 Client Coach Assignments
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609180900_f1_m1_s4_client_coach_assignments_arch1.sql"
+      - "supabase/migrations/202609180910_f1_m1_s4_cv_coach_assignment_backfill_arch1.sql"
+      - "scripts/test-f1-m1-s4-client-coach-assignments.py"
+      - ".github/workflows/validate-f1-m1-s4-client-coach-assignments.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assignment-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate ARCH-1.0 client coach assignment contract
+        run: python scripts/test-f1-m1-s4-client-coach-assignments.py
