@@ -83,7 +83,8 @@
         color:#fff!important;
         box-shadow:0 0 0 2px rgba(255,64,87,.08),0 0 16px rgba(255,32,55,.08);
       }
-      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia{
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia,
+      body.cvFastWorkout.cvGuidedSetLoggingV105.cvExerciseScreenV102.cvV102WorkoutReady .cvV105ExerciseOpen.cvV102Expanded>.exerciseMedia{
         display:grid!important;
         place-items:center!important;
         width:100%!important;
@@ -98,11 +99,13 @@
         background:#030608!important;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 10px 26px rgba(0,0,0,.22)!important;
       }
-      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia:after{
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia:after,
+      body.cvFastWorkout.cvGuidedSetLoggingV105.cvExerciseScreenV102.cvV102WorkoutReady .cvV105ExerciseOpen.cvV102Expanded>.exerciseMedia:after{
         display:none!important;
         content:none!important;
       }
-      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia .photo{
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia .photo,
+      body.cvFastWorkout.cvGuidedSetLoggingV105.cvExerciseScreenV102.cvV102WorkoutReady .cvV105ExerciseOpen.cvV102Expanded>.exerciseMedia .photo{
         display:block!important;
         width:100%!important;
         height:100%!important;
@@ -192,7 +195,8 @@
       }
       @media(max-width:390px){
         body.cvFastWorkout.cvGuidedSetLoggingV105 .cvSetRow input[data-cv-v105="1"]{font-size:19px!important}
-        body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia{
+        body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia,
+        body.cvFastWorkout.cvGuidedSetLoggingV105.cvExerciseScreenV102.cvV102WorkoutReady .cvV105ExerciseOpen.cvV102Expanded>.exerciseMedia{
           height:min(188px,52vw)!important;
           min-height:min(188px,52vw)!important;
           max-height:188px!important;
