@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 Event Outbox Isolation
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609181700_f1_m1_s5_event_outbox_isolation_arch1.sql"
+      - "scripts/test-f1-m1-s5-event-outbox-isolation.py"
+      - ".github/workflows/validate-f1-m1-s5-event-outbox-isolation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  event-outbox-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate Event Outbox tenant isolation
+        run: python scripts/test-f1-m1-s5-event-outbox-isolation.py
