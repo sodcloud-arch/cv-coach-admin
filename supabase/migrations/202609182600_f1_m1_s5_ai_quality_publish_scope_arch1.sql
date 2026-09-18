@@ -322,7 +322,7 @@ $function$;
 
 comment on index public.uq_ai_program_generations_org_idempotency is
   'F1.M1.S5 G1B3B AI generation idempotency is independent per Organization.';
-comment on function public.prepare_ai_program_generation(uuid,uuid,text,integer,uuid,text) is
+comment on function public.prepare_ai_program_generation(uuid,uuid,uuid,text,integer,text) is
   'F1.M1.S5 G1B3B AI preparation binds authorization and all context inputs to Program Organization.';
 comment on function public.get_program_quality_audit_backend(uuid,uuid) is
   'F1.M1.S5 G1B3B Program audit reads schedule, recovery, time-learning and constraints inside Program Organization.';
