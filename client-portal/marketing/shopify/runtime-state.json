@@ -16,7 +16,10 @@
     "blog": {
       "id": "gid://shopify/Blog/106013524201",
       "title": "C.V. Journal",
-      "handle": "cv"
+      "handle": "cv",
+      "template": "cv",
+      "status": "built",
+      "draft_article_id": "gid://shopify/Article/596399030505"
     },
     "menus": {
       "main": {
@@ -34,32 +37,42 @@
         "template": "cv-training",
         "published": false,
         "build": "v1",
-        "status": "built"
+        "status": "built-qa-pending"
       },
       "nutrition": {
         "id": "gid://shopify/Page/137331605737",
         "template": "cv-nutrition",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-qa-pending"
       },
       "integrated": {
         "id": "gid://shopify/Page/137331638505",
         "template": "cv-integrated",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-qa-pending"
       },
       "about": {
         "id": "gid://shopify/Page/137331671273",
         "template": "cv-about",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-qa-pending"
       },
       "plans": {
         "id": "gid://shopify/Page/137331704041",
         "template": "cv-plans",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-qa-pending"
       },
       "how": {
         "id": "gid://shopify/Page/137331736809",
         "template": "cv-how",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-qa-pending"
       },
       "results": {
         "id": "gid://shopify/Page/137331769577",
@@ -79,8 +92,16 @@
       "start": {
         "id": "gid://shopify/Page/137331867881",
         "template": "cv-start",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-qa-pending"
       }
+    },
+    "contact": {
+      "path": "/pages/contact",
+      "theme_template": "contact",
+      "status": "dev-theme-built",
+      "production_page_untouched": true
     }
   },
   "theme_files_added": [
@@ -104,7 +125,28 @@
     "sections/cv-global-footer.liquid",
     "layout/theme.liquid",
     "assets/cv-training-v1.css",
-    "sections/cv-training-page.liquid"
+    "sections/cv-training-page.liquid",
+    "assets/cv-nutrition-v1.css",
+    "sections/cv-nutrition-page.liquid",
+    "assets/cv-integrated-v1.css",
+    "sections/cv-integrated-page.liquid",
+    "assets/cv-start-v1.css",
+    "assets/cv-start-v1.js",
+    "sections/cv-start-page.liquid",
+    "assets/cv-plans-v1.css",
+    "sections/cv-plans-page.liquid",
+    "assets/cv-how-v1.css",
+    "sections/cv-how-page.liquid",
+    "assets/cv-about-v1.css",
+    "sections/cv-about-page.liquid",
+    "assets/cv-contact-v1.css",
+    "sections/cv-contact-page.liquid",
+    "templates/page.contact.json",
+    "assets/cv-blog-v1.css",
+    "sections/cv-blog-index.liquid",
+    "templates/blog.cv.json",
+    "sections/cv-article-page.liquid",
+    "templates/article.cv.json"
   ],
   "safety": {
     "main_theme_modified": false,
