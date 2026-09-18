@@ -8,6 +8,7 @@ on:
       - 'client-portal/marketing/**'
       - '.ascend/web-complete-vitality-autonomous.md'
       - '.ascend/cv-web-master-blueprint.md'
+      - '.ascend/shopify-audit.md'
       - '.github/workflows/ascend-web-complete-vitality.yml'
   workflow_dispatch:
 
@@ -43,7 +44,7 @@ jobs:
           while IFS= read -r path; do
             [[ -z "$path" ]] && continue
             case "$path" in
-              client-portal/marketing/*|.ascend/web-complete-vitality-autonomous.md|.ascend/cv-web-master-blueprint.md|.github/workflows/ascend-web-complete-vitality.yml)
+              client-portal/marketing/*|.ascend/web-complete-vitality-autonomous.md|.ascend/cv-web-master-blueprint.md|.ascend/shopify-audit.md|.github/workflows/ascend-web-complete-vitality.yml)
                 ;;
               *)
                 echo "ASCEND_PARALLEL_LOCK_VIOLATION: $path" >&2
