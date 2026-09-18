@@ -48,56 +48,56 @@ a{color:inherit;text-decoration:none}
   .cv-shell{width:100vw}
 }
 
-.real-cards{padding:14px 38px 24px;background:#050505;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;border-top:1px solid rgba(255,255,255,.10)}
-.cv-card{--accent:#fff;position:relative;min-height:552px;border:1px solid var(--accent);border-radius:4px;background:
-  radial-gradient(circle at 50% 39%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 36%),
-  linear-gradient(180deg,#061017 0%,#020405 60%,#050505 100%);overflow:hidden;box-shadow:0 0 26px color-mix(in srgb,var(--accent) 8%,transparent)}
-.cv-card .photo{height:214px;background:var(--photo) center 18%/cover no-repeat;position:relative;transform:scale(1.018);transform-origin:center top}
-.cv-card .photo:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 48%,rgba(5,5,5,.18) 66%,#050505 100%)}
-.card-head{text-align:center;margin-top:-13px;position:relative;z-index:2;padding:0 18px}
-.card-head img{width:84px;margin:0 auto -1px;filter:drop-shadow(0 0 12px rgba(255,255,255,.10))}
-.card-head h3{margin:-2px 0 7px;font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif;font-size:35px;letter-spacing:.012em;line-height:.92;text-transform:uppercase;color:#f4f4f4;text-shadow:0 2px 9px rgba(0,0,0,.72)}
-.card-head .tagline{font-size:11px;line-height:1.40;letter-spacing:.17em;text-transform:uppercase;color:#f0f0f0}
-.feature-list{list-style:none;margin:20px 28px 0;padding:0;display:grid;gap:16px}
-.feature-list li{display:grid;grid-template-columns:36px 1fr;align-items:center;gap:14px;color:#f0f0f0;font-size:13px}
-.feature-list svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:1.75}
-.card-cta{position:absolute;left:42px;right:42px;bottom:17px;height:45px;border:1px solid var(--accent);border-radius:5px;
-display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:850;letter-spacing:.035em;text-transform:uppercase;
-box-shadow:0 0 23px color-mix(in srgb,var(--accent) 46%,transparent), inset 0 0 18px color-mix(in srgb,var(--accent) 11%,transparent)}
-.card-cta .arrow{position:absolute;right:44px;font-size:20px;font-weight:400}
+.real-cards{padding:14px 38px 22px;background:#050505;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;border-top:1px solid rgba(255,255,255,.10)}
+.cv-card{--accent:#fff;position:relative;min-height:528px;border:1px solid var(--accent);border-radius:4px;background:
+  radial-gradient(circle at 50% 34%,color-mix(in srgb,var(--accent) 8%,transparent),transparent 36%),
+  linear-gradient(180deg,#061017 0%,#020405 55%,#050505 100%);overflow:hidden;
+  box-shadow:0 0 18px color-mix(in srgb,var(--accent) 7%,transparent)}
+.cv-card .photo{height:260px;background:var(--photo) center 16%/cover no-repeat;position:relative}
+.cv-card .photo:after{content:"";position:absolute;inset:0;background:
+  linear-gradient(180deg,transparent 50%,rgba(5,5,5,.18) 68%,#050505 100%)}
+.card-head{text-align:center;margin-top:-58px;position:relative;z-index:2;padding:0 18px}
+.card-head img.brand-mark{width:85px;height:auto;margin:0 auto 4px;filter:drop-shadow(0 0 10px rgba(255,255,255,.09))}
+.card-head h3{margin:0 0 8px;font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif;font-size:38px;letter-spacing:.015em;line-height:.9;text-transform:uppercase;color:#f4f4f4;text-shadow:0 2px 9px rgba(0,0,0,.74)}
+.card-head .tagline{font-size:10px;line-height:1.45;letter-spacing:.17em;text-transform:uppercase;color:#f0f0f0}
+.feature-list{list-style:none;margin:15px 26px 0;padding:0;display:grid;gap:13px}
+.feature-list li{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:12px;color:#ededed;font-size:13px;line-height:1.2}
+.feature-icon{width:27px;height:27px;object-fit:contain;justify-self:center;filter:drop-shadow(0 0 4px rgba(255,255,255,.08))}
+.card-cta{position:absolute;left:41px;right:41px;bottom:17px;height:44px;border:1px solid var(--accent);border-radius:5px;
+display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;letter-spacing:.035em;text-transform:uppercase;
+box-shadow:0 0 18px color-mix(in srgb,var(--accent) 34%,transparent), inset 0 0 12px color-mix(in srgb,var(--accent) 8%,transparent)}
+.card-cta .arrow{position:absolute;right:43px;font-size:19px;font-weight:400}
 .cv-card.training{--accent:#00b4ff;--photo:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-training-clean-top.jpg?v=1789722615')}
 .cv-card.nutrition{--accent:#00e676;--photo:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-nutrition-clean-top.jpg?v=1789722620')}
-.cv-card.integrated{--accent:#ffd033;--photo:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-integrated-clean-top.jpg?v=1789722625')}
-@media(max-width:760px){.real-cards{grid-template-columns:1fr;padding:16px}.cv-card{min-height:552px}}
-
+.cv-card.integrated{--accent:#ffc629;--photo:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-integrated-clean-top.jpg?v=1789722625')}
 
 .real-pillars{
   display:grid;grid-template-columns:repeat(5,1fr);align-items:center;
-  min-height:116px;padding:18px 42px 16px;background:#050505;
-  border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.08)
+  min-height:116px;padding:15px 54px 14px;background:#050505;
+  border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)
 }
-.pillar{text-align:center;position:relative}
-.pillar:not(:last-child):after{content:"";position:absolute;right:0;top:9px;bottom:9px;width:1px;background:rgba(255,255,255,.06)}
-.pillar svg{width:34px;height:34px;stroke:var(--red);fill:none;stroke-width:1.9;margin-bottom:7px}
-.pillar strong{display:block;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:#f5f5f5}
-.pillar span{display:block;margin-top:5px;font-size:10px;letter-spacing:.23em;text-transform:uppercase;color:#c7c7c7}
+.pillar{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pillar img{height:34px;width:auto;max-width:50px;object-fit:contain;margin-bottom:7px;filter:drop-shadow(0 0 7px rgba(255,17,31,.10))}
+.pillar strong{display:block;font-size:13px;letter-spacing:.045em;text-transform:uppercase;color:#f5f5f5}
+.pillar span{display:block;margin-top:5px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#c7c7c7}
+
 .real-metrics{
   display:grid;grid-template-columns:repeat(4,1fr) 1.28fr;align-items:center;
-  min-height:118px;padding:14px 46px;background:linear-gradient(180deg,#050505,#070707);
+  min-height:118px;padding:14px 46px;background:#050505;
   border-bottom:1px solid rgba(255,255,255,.08)
 }
-.metric{padding:0 28px;min-height:58px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid rgba(255,255,255,.17)}
+.metric{padding:0 28px;min-height:58px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid rgba(255,255,255,.18)}
 .metric:first-child{padding-left:0}
-.metric .value{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1;color:#fff}
-.metric .label{margin-top:7px;font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:#bdbdbd}
-.metric .value.placeholder{color:#8d8d8d}
-.metric-note{padding-left:36px;text-align:center}
+.metric .value{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1;color:#8f8f8f}
+.metric .label{margin-top:8px;font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:#bdbdbd}
+.metric-note{padding-left:34px;text-align:center}
 .metric-note blockquote{margin:0;font-size:11px;line-height:1.65;letter-spacing:.26em;text-transform:uppercase;color:#cfcfcf}
-.metric-note small{display:block;margin-top:8px;font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#777}
+.metric-note small{display:block;margin-top:7px;font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#6f6f6f}
+
 @media(max-width:760px){
+  .real-cards{grid-template-columns:1fr;padding:16px}.cv-card{min-height:528px}
   .real-pillars{grid-template-columns:repeat(2,1fr);gap:22px 0;padding:26px 16px}
   .pillar:nth-child(5){grid-column:1/-1}
-  .pillar:not(:last-child):after{display:none}
   .real-metrics{grid-template-columns:repeat(2,1fr);gap:0;padding:18px 16px}
   .metric{padding:16px;border-bottom:1px solid rgba(255,255,255,.10)}
   .metric:nth-child(even){border-right:0}
@@ -135,15 +135,15 @@ box-shadow:0 0 23px color-mix(in srgb,var(--accent) 46%,transparent), inset 0 0 
       <article class="cv-card training" id="training">
         <div class="photo" role="img" aria-label="Atleta entrenando fuerza"></div>
         <div class="card-head">
-          <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060" alt="">
+          <img class="brand-mark" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-mark-exact.png?v=1789724858" alt="">
           <h3>Training</h3>
           <div class="tagline">Entrenamiento inteligente<br>para resultados reales</div>
         </div>
         <ul class="feature-list">
-          <li><svg viewBox="0 0 24 24"><path d="M3 10v4m3-7v10m3-8v6m6-6v6m3-8v10m3-7v4M9 12h6"/></svg><span>Rutinas personalizadas</span></li>
-          <li><svg viewBox="0 0 24 24"><path d="M4 20V9m5 11V4m5 16v-7m5 7V2"/></svg><span>Progresión medible</span></li>
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="2.5"/><path d="M7 21v-5l2-3 1 3 2-1 2 1 1-3 2 3v5M8 11l-2-2 2-2m8 4 2-2-2-2"/></svg><span>Técnica y seguridad</span></li>
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 4V1m8 11h3M12 20v3M4 12H1m11 0 6-6"/></svg><span>Para todos los niveles</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-tr-dumbbell.png?v=1789724864" alt=""><span>Rutinas personalizadas</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-tr-bars.png?v=1789724869" alt=""><span>Progresión medible</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-tr-person.png?v=1789724878" alt=""><span>Técnica y seguridad</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-tr-target.png?v=1789724895" alt=""><span>Para todos los niveles</span></li>
         </ul>
         <a class="card-cta" href="#training">Conoce más <span class="arrow">→</span></a>
       </article>
@@ -151,15 +151,15 @@ box-shadow:0 0 23px color-mix(in srgb,var(--accent) 46%,transparent), inset 0 0 
       <article class="cv-card nutrition" id="nutrition">
         <div class="photo" role="img" aria-label="Mujer con alimentación saludable"></div>
         <div class="card-head">
-          <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060" alt="">
+          <img class="brand-mark" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-mark-exact.png?v=1789724858" alt="">
           <h3>Nutrition</h3>
           <div class="tagline">Nutrición real<br>para una vida mejor</div>
         </div>
         <ul class="feature-list">
-          <li><svg viewBox="0 0 24 24"><path d="M12 7c-2-4-7-3-8 2-1 7 4 11 8 11s9-4 8-11c-1-5-6-6-8-2Zm0 0c0-3 2-5 5-5"/></svg><span>Planes personalizados</span></li>
-          <li><svg viewBox="0 0 24 24"><path d="M5 2v8m0 0v12m0-12H3V2m2 8h2V2M16 2v8c0 2 1 3 2 3v9m0-9c1 0 2-1 2-3V2"/></svg><span>Alimentación flexible</span></li>
-          <li><svg viewBox="0 0 24 24"><path d="M4 20V12m5 8V5m5 15v-9m5 9V2"/></svg><span>Educación nutricional</span></li>
-          <li><svg viewBox="0 0 24 24"><path d="M12 21S3 16 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 7-9 12-9 12Z"/></svg><span>Hábitos sostenibles</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-nu-apple.png?v=1789724900" alt=""><span>Planes personalizados</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-nu-cutlery.png?v=1789724906" alt=""><span>Alimentación flexible</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-nu-bars.png?v=1789724911" alt=""><span>Educación nutricional</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-nu-heart.png?v=1789724916" alt=""><span>Hábitos sostenibles</span></li>
         </ul>
         <a class="card-cta" href="#nutrition">Conoce más <span class="arrow">→</span></a>
       </article>
@@ -167,15 +167,15 @@ box-shadow:0 0 23px color-mix(in srgb,var(--accent) 46%,transparent), inset 0 0 
       <article class="cv-card integrated" id="integrated">
         <div class="photo" role="img" aria-label="Hombre y mujer en enfoque integrado"></div>
         <div class="card-head">
-          <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060" alt="">
+          <img class="brand-mark" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-mark-exact.png?v=1789724858" alt="">
           <h3>Integrated</h3>
           <div class="tagline">Entrenamiento + nutrición<br>máximos resultados</div>
         </div>
         <ul class="feature-list">
-          <li><svg viewBox="0 0 24 24"><path d="m3 17 5-5 4 3 7-8m-3 0h3v3"/></svg><span>Plan completo y personalizado</span></li>
-          <li><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg><span>Seguimiento constante</span></li>
-          <li><svg viewBox="0 0 24 24"><path d="m12 2 2.7 6.1 6.3.6-4.8 4.2 1.4 6.1-5.6-3.2L6.4 19l1.4-6.1L3 8.7l6.3-.6L12 2Z"/></svg><span>Resultados más rápidos</span></li>
-          <li><svg viewBox="0 0 24 24"><path d="M7 7c-3 0-5 2-5 5s2 5 5 5c5 0 5-10 10-10 3 0 5 2 5 5s-2 5-5 5C12 17 12 7 7 7Z"/></svg><span>Un estilo de vida, no una dieta</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-in-trend.png?v=1789724921" alt=""><span>Plan completo y personalizado</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-in-gear.png?v=1789724926" alt=""><span>Seguimiento constante</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-in-star.png?v=1789724932" alt=""><span>Resultados más rápidos</span></li>
+          <li><img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-in-infinity.png?v=1789724938" alt=""><span>Un estilo de vida, no una dieta</span></li>
         </ul>
         <a class="card-cta" href="#integrated">Conoce más <span class="arrow">→</span></a>
       </article>
@@ -183,23 +183,20 @@ box-shadow:0 0 23px color-mix(in srgb,var(--accent) 46%,transparent), inset 0 0 
 
     <section class="real-pillars" id="pilares" aria-label="Pilares C.V.">
       <div class="pillar">
-        <svg viewBox="0 0 24 24"><path d="M3 10v4m3-7v10m3-8v6m6-6v6m3-8v10m3-7v4M9 12h6"/></svg>
+        <img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-tr-dumbbell.png?v=1789724864" alt="">
         <strong>Entrenamiento</strong><span>Más fuerza</span>
       </div>
       <div class="pillar">
-        <svg viewBox="0 0 24 24"><path d="M12 7c-2-4-7-3-8 2-1 7 4 11 8 11s9-4 8-11c-1-5-6-6-8-2Zm0 0c0-3 2-5 5-5"/></svg>
+        <img class="feature-icon" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-nu-apple.png?v=1789724900" alt="">
         <strong>Nutrición</strong><span>Más energía</span>
       </div>
-      <div class="pillar">
-        <svg viewBox="0 0 24 24"><path d="M9 4a4 4 0 0 0-4 4v1a4 4 0 0 0-2 3.5A4.5 4.5 0 0 0 7.5 17H9m6-13a4 4 0 0 1 4 4v1a4 4 0 0 1 2 3.5A4.5 4.5 0 0 1 16.5 17H15M9 6v12m6-12v12M9 12h6"/></svg>
+      <div class="pillar"><img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-p-wellness.png?v=1789724957" alt="">
         <strong>Bienestar</strong><span>Más claridad</span>
       </div>
-      <div class="pillar">
-        <svg viewBox="0 0 24 24"><path d="M4 20V13h3v7m3 0V9h3v11m3 0V4h3v16"/></svg>
+      <div class="pillar"><img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-p-progress.png?v=1789724962" alt="">
         <strong>Progreso</strong><span>Más resultados</span>
       </div>
-      <div class="pillar">
-        <svg viewBox="0 0 24 24"><path d="m12 2 3 6 6 .8-4.5 4.2 1.2 6-5.7-3.2L6.3 19l1.2-6L3 8.8 9 8l3-6Z"/></svg>
+      <div class="pillar"><img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-icon-p-freedom.png?v=1789724967" alt="">
         <strong>Libertad</strong><span>Más vida</span>
       </div>
     </section>
