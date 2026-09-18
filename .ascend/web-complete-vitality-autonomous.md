@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-010 — Resultados + testimonios structure.
+WEB-011 — Profesionales.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -342,3 +342,24 @@ Estado: COMPLETADO / C.V. JOURNAL + ARTICLE TEMPLATE v1 PREPARADOS EN SHOPIFY DE
 
 ### Dependencia siguiente
 WEB-010 debe construir Resultados + testimonios como estructura segura para evidencia real, sin inventar métricas, transformaciones ni reseñas.
+
+
+## WEB-010 — Cierre
+
+Estado: COMPLETADO / RESULTADOS + TESTIMONIOS STRUCTURE v1 PREPARADO EN SHOPIFY DEV.
+
+### Implementado
+- Página especializada de Resultados sin métricas ficticias.
+- Principios de evidencia real, contexto, consentimiento y ausencia de garantías.
+- Bloques preparados para transformaciones, adherencia, progreso y experiencias, todos en estado de espera de datos reales.
+- Estándar de caso real con punto de partida, objetivo/modalidad, periodo, intervención, evidencia y consentimiento.
+- Estado vacío explícito para testimonios: no se muestran reseñas inventadas.
+
+### QA verificado
+- Página Resultados permanece `isPublished=false`, template `cv-results`.
+- No aparecen métricas de referencia generadas ni porcentajes inventados.
+- Theme de trabajo sigue UNPUBLISHED y estable.
+- Homepage congelada sin cambios.
+
+### Dependencia siguiente
+WEB-011 debe preparar Profesionales como entrada B2B secundaria para coaches y nutricionistas, sin competir con la propuesta B2C principal ni afirmar capacidades comerciales aún no habilitadas.
