@@ -250,6 +250,8 @@ set search_path to ''
 as $function$
 declare
   v_org uuid;
+  v_coach_entity uuid;
+  v_client_entity uuid;
 begin
   if new.organization_id is null then
     v_org:=private.resolve_legacy_professional_organization_v1(
@@ -258,18 +260,39 @@ begin
     new.organization_id:=v_org;
   end if;
 
-  if not exists(
-    select 1
-    from public.coach_profiles cp
-    join public.clients c
-      on c.organization_id=cp.organization_id
-     and c.user_id=new.client_id
-     and c.status<>'archived'::public.client_status
-    where cp.organization_id=new.organization_id
-      and cp.user_id=new.coach_id
-      and cp.status='active'::public.coach_profile_status
-  ) then
+  select cp.id,c.id
+    into v_coach_entity,v_client_entity
+  from public.coach_profiles cp
+  join public.clients c
+    on c.organization_id=cp.organization_id
+   and c.user_id=new.client_id
+   and c.status<>'archived'::public.client_status
+  where cp.organization_id=new.organization_id
+    and cp.user_id=new.coach_id
+    and cp.status='active'::public.coach_profile_status
+  limit 1;
+
+  if v_coach_entity is null or v_client_entity is null then
     raise exception 'legacy coach/client relation crosses organization boundary';
+  end if;
+
+  -- The legacy shadow may mirror authority, but may never create authority.
+  if (
+      tg_table_name='coach_client_notes'
+      or (
+        tg_table_name='coach_clients'
+        and new.status='active'::public.coach_client_status
+      )
+     )
+     and not exists(
+       select 1
+       from public.client_coach_assignments a
+       where a.organization_id=new.organization_id
+         and a.coach_id=v_coach_entity
+         and a.client_id=v_client_entity
+         and a.status='active'::public.client_coach_assignment_status
+     ) then
+    raise exception 'legacy coach/client write requires canonical active assignment';
   end if;
 
   if tg_op='UPDATE' and (
