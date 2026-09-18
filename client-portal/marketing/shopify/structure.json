@@ -5,23 +5,94 @@
     "working_theme_name": "CV Coach — V3 Refinada",
     "working_theme_id": "gid://shopify/OnlineStoreTheme/162703605993",
     "published_theme_name": "Horizon",
-    "published_theme_locked": true
+    "published_theme_locked": true,
+    "preview_theme": "CV Coach — V3 Refinada"
   },
   "routes": [
-    {"key":"home","path":"/","nav":"primary","status":"baseline"},
-    {"key":"training","path":"/pages/training","nav":"primary","status":"planned"},
-    {"key":"nutrition","path":"/pages/nutrition","nav":"primary","status":"planned"},
-    {"key":"integrated","path":"/pages/integrated","nav":"primary","status":"planned"},
-    {"key":"about","path":"/pages/sobre-cv","nav":"primary","status":"planned"},
-    {"key":"blog","path":"/blogs/cv","nav":"primary","status":"planned"},
-    {"key":"plans","path":"/pages/planes","nav":"secondary","status":"planned"},
-    {"key":"how","path":"/pages/como-funciona","nav":"secondary","status":"planned"},
-    {"key":"results","path":"/pages/resultados","nav":"secondary","status":"planned"},
-    {"key":"professionals","path":"/pages/profesionales","nav":"secondary","status":"planned"},
-    {"key":"faq","path":"/pages/faq","nav":"secondary","status":"planned"},
-    {"key":"contact","path":"/pages/contact","nav":"secondary","status":"existing"},
-    {"key":"start","path":"/pages/comienza-hoy","nav":"cta","status":"planned"},
-    {"key":"login","path":"https://cv-coach-roan.vercel.app/","nav":"cta","status":"external-app"}
+    {
+      "key": "home",
+      "path": "/",
+      "nav": "primary",
+      "status": "shopify-dev-synced"
+    },
+    {
+      "key": "training",
+      "path": "/pages/training",
+      "nav": "primary",
+      "status": "built-v1"
+    },
+    {
+      "key": "nutrition",
+      "path": "/pages/nutrition",
+      "nav": "primary",
+      "status": "draft-content"
+    },
+    {
+      "key": "integrated",
+      "path": "/pages/integrated",
+      "nav": "primary",
+      "status": "draft-content"
+    },
+    {
+      "key": "about",
+      "path": "/pages/sobre-cv",
+      "nav": "primary",
+      "status": "draft-content"
+    },
+    {
+      "key": "blog",
+      "path": "/blogs/cv",
+      "nav": "primary",
+      "status": "structure-ready"
+    },
+    {
+      "key": "plans",
+      "path": "/pages/planes",
+      "nav": "secondary",
+      "status": "draft-content"
+    },
+    {
+      "key": "how",
+      "path": "/pages/como-funciona",
+      "nav": "secondary",
+      "status": "draft-content"
+    },
+    {
+      "key": "results",
+      "path": "/pages/resultados",
+      "nav": "secondary",
+      "status": "draft-content"
+    },
+    {
+      "key": "professionals",
+      "path": "/pages/profesionales",
+      "nav": "secondary",
+      "status": "draft-content"
+    },
+    {
+      "key": "faq",
+      "path": "/pages/faq",
+      "nav": "secondary",
+      "status": "draft-content"
+    },
+    {
+      "key": "contact",
+      "path": "/pages/contact",
+      "nav": "secondary",
+      "status": "existing"
+    },
+    {
+      "key": "start",
+      "path": "/pages/comienza-hoy",
+      "nav": "cta",
+      "status": "draft-content"
+    },
+    {
+      "key": "login",
+      "path": "https://cv-coach-roan.vercel.app/",
+      "nav": "cta",
+      "status": "external-app"
+    }
   ],
   "conversion": {
     "mode": "hybrid",
@@ -33,5 +104,7 @@
     "no_unverified_metrics": true,
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
-  }
+  },
+  "current_mission": "WEB-003",
+  "last_completed": "WEB-002"
 }
