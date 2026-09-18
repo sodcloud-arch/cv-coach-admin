@@ -92,6 +92,24 @@
       "path": "https://cv-coach-roan.vercel.app/",
       "nav": "cta",
       "status": "external-app"
+    },
+    {
+      "key": "privacy",
+      "path": "/pages/cv-privacidad",
+      "nav": "legal",
+      "status": "draft-legal-review-required"
+    },
+    {
+      "key": "terms",
+      "path": "/pages/cv-terminos",
+      "nav": "legal",
+      "status": "draft-legal-review-required"
+    },
+    {
+      "key": "cookies",
+      "path": "/pages/cv-cookies",
+      "nav": "legal",
+      "status": "draft-legal-review-required"
     }
   ],
   "conversion": {
@@ -105,8 +123,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-013",
-  "last_completed": "WEB-012",
+  "current_mission": "WEB-014",
+  "last_completed": "WEB-013",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
@@ -116,5 +134,8 @@
     "WEB-009 Blog",
     "WEB-012 Contact"
   ],
-  "last_shopify_dev_update": "2026-09-18T13:03:00Z"
+  "last_shopify_dev_update": "2026-09-18T13:03:00Z",
+  "production_blockers": [
+    "legal_human_review"
+  ]
 }
