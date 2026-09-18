@@ -322,8 +322,13 @@
       media=document.createElement('div');
       media.className='exerciseMedia';
       const top=card.querySelector('.exerciseTop');
-      if(top)top.insertAdjacentElement('afterend',media);
-      else card.prepend(media);
+      if(top&&top.parentNode===card){
+        const sibling=top.nextSibling;
+        if(sibling&&sibling.parentNode===card)card.insertBefore(media,sibling);
+        else card.appendChild(media);
+      }else{
+        card.prepend(media);
+      }
     }
 
     let img=media.querySelector('.photo');

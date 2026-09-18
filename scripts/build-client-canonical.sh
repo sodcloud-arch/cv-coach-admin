@@ -34,6 +34,7 @@ python client-portal/upgrade_client_v102.py
 python client-portal/upgrade_client_v103.py
 python client-portal/upgrade_client_v104.py
 python client-portal/upgrade_client_v105.py
+python client-portal/upgrade_client_v106.py
 
 mkdir -p client-portal/stable/assets
 cp -R client-portal/assets/. client-portal/stable/assets/
@@ -46,9 +47,12 @@ for file in manifest.webmanifest sw.js favicon.ico; do
 done
 
 node --check client-portal/assets/cv-guided-set-logging-v105.js
+node --check client-portal/assets/cv-finish-guard-v106.js
 grep -q 'CV_GUIDED_SET_LOGGING_V105_READY' client-portal/stable/index.html
 grep -q 'CV_INLINE_SET_ENTRY_V104_READY' client-portal/stable/index.html
 grep -q "revision:'105.5'" client-portal/stable/index.html
+grep -q 'CV_FINISH_GUARD_V106_READY' client-portal/stable/index.html
+grep -q "data-cv-finish-guard','106'" client-portal/stable/index.html
 ! grep -q 'CVWorkoutNumpadV73' client-portal/stable/index.html
 
 python - <<'PY'
@@ -60,7 +64,7 @@ html = root / "index.html"
 payload = html.read_bytes()
 meta = {
     "pipeline": "canonical-client",
-    "version": "105.5",
+    "version": "106",
     "git_sha": os.environ.get("GITHUB_SHA") or os.environ.get("CV_GIT_SHA") or "local",
     "index_sha256": hashlib.sha256(payload).hexdigest(),
     "index_bytes": len(payload),
