@@ -96,6 +96,18 @@ alter table public.progress_photos alter column organization_id set not null;
 alter table public.client_habits alter column organization_id set not null;
 alter table public.habit_logs alter column organization_id set not null;
 
+-- Legacy uniqueness must be tenant-scoped. A single platform user can
+-- legitimately be an active client in more than one Organization.
+drop index if exists public.uq_client_habits_active;
+create unique index uq_client_habits_active_org
+  on public.client_habits(organization_id,client_id,habit_id)
+  where active=true;
+
+drop index if exists public.nutrition_targets_one_active_per_client;
+create unique index nutrition_targets_one_active_per_org_client
+  on public.nutrition_targets(organization_id,client_id)
+  where active=true;
+
 -- Supporting composite identities for same-tenant child relations.
 create unique index if not exists ux_client_habits_org_id_client
   on public.client_habits(organization_id,id,client_id);
