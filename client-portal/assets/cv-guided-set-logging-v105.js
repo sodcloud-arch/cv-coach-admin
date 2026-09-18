@@ -8,6 +8,8 @@
   const INPUT_SELECTOR='input[id^="cvw_"],input[id^="cvr_"]';
   let scheduled=false;
   let observer=null;
+  let demoFinishBase=null;
+  let demoFinishWrapped=false;
 
   function isVisible(el){
     if(!(el instanceof Element))return false;
@@ -214,6 +216,34 @@
         color:#dce2e5;
         font:900 28px/1 'Barlow Condensed',sans-serif;
       }
+      .cvV105DemoFeedbackBackdrop{
+        position:fixed;inset:0;z-index:360;display:flex;align-items:flex-end;justify-content:center;
+        padding:14px;background:rgba(0,0,0,.86);backdrop-filter:blur(10px);
+      }
+      .cvV105DemoFeedbackCard{
+        width:min(560px,100%);max-height:92dvh;overflow:auto;padding:18px;border:1px solid #303a42;
+        border-radius:20px;background:linear-gradient(155deg,#0d1319,#070b0f);
+        box-shadow:0 28px 90px rgba(0,0,0,.68);
+      }
+      .cvV105DemoFeedbackCard h2{font-size:30px;margin:4px 0 6px}
+      .cvV105DemoFeedbackGrid{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+      .cvV105DemoFeedbackCard label{display:block;margin:8px 0 5px;color:#aab5bb;font-size:8px;font-weight:900;letter-spacing:.08em}
+      .cvV105DemoFeedbackCard select,.cvV105DemoFeedbackCard textarea{
+        width:100%;min-height:46px;padding:10px 12px;border:1px solid #303942;border-radius:12px;
+        background:#05090d;color:#fff;font:inherit;outline:none;
+      }
+      .cvV105DemoFeedbackCard textarea{min-height:72px;resize:vertical}
+      .cvV105DemoFeedbackActions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:14px}
+      .cvV105DemoNotice{
+        margin:0 0 10px;padding:9px 11px;border:1px solid rgba(105,207,255,.30);border-radius:11px;
+        background:rgba(105,207,255,.07);color:#9bdcff;font-size:9px;font-weight:900;line-height:1.35;
+        letter-spacing:.04em;text-align:center;
+      }
+      @media(min-width:700px){
+        .cvV105DemoFeedbackBackdrop{align-items:center}
+        .cvV105DemoFeedbackGrid{grid-template-columns:repeat(3,1fr)}
+        .cvV105DemoFeedbackActions{grid-template-columns:1fr 1.3fr}
+      }
       @media(max-width:767px){
         body.cvWorkoutPrestartV40.cvFastWorkout.cvGuidedSetLoggingV105 .cvWorkoutHeroV31{
           margin:0 0 7px!important;
@@ -366,11 +396,124 @@
     card.querySelectorAll('.cvV105LoggingHint').forEach(hint=>hint.remove());
   }
 
+  function demoMode(){
+    return !!document.querySelector('#modeBadge .demoBadge,.demoBadge');
+  }
+
+  function demoWorkoutMetrics(){
+    const rows=[...document.querySelectorAll('.cvSetRow')];
+    const done=rows.filter(row=>row.classList.contains('done'));
+    const total=rows.length;
+    let volume=0;
+    done.forEach(row=>{
+      const weight=Number(row.querySelector('input[id^="cvw_"]')?.value||0);
+      const reps=Number(row.querySelector('input[id^="cvr_"]')?.value||0);
+      if(Number.isFinite(weight)&&Number.isFinite(reps)&&weight>0&&reps>0)volume+=weight*reps;
+    });
+    const completion=total?Math.round(done.length/total*100):0;
+    return {total,done:done.length,volume:Math.round(volume),completion};
+  }
+
+  function demoFeedbackOptions(min,max,label){
+    let html='<option value="">Selecciona</option>';
+    for(let i=min;i<=max;i++)html+=`<option value="${i}">${i}${label&&label[i]?' · '+label[i]:''}</option>`;
+    return html;
+  }
+
+  function closeDemoFeedback(){
+    document.getElementById('cvV105DemoFeedback')?.remove();
+  }
+
+  function openDemoFeedback(){
+    if(document.getElementById('cvV105DemoFeedback'))return;
+    const backdrop=document.createElement('div');
+    backdrop.id='cvV105DemoFeedback';
+    backdrop.className='cvV105DemoFeedbackBackdrop';
+    backdrop.innerHTML=`
+      <div class="cvV105DemoFeedbackCard" role="dialog" aria-modal="true" aria-labelledby="cvV105DemoFeedbackTitle">
+        <div class="cvV105DemoNotice">DEMO · ESTE CIERRE NO ESCRIBE DATOS REALES</div>
+        <div class="ey">CIERRE DE SESIÓN</div>
+        <h2 id="cvV105DemoFeedbackTitle">¿Cómo se sintió?</h2>
+        <div class="sub">Probamos el mismo cierre que verá un cliente real, sin guardar información.</div>
+        <div class="cvV105DemoFeedbackGrid">
+          <div><label for="cvV105DemoRpe">RPE GLOBAL</label><select id="cvV105DemoRpe">${demoFeedbackOptions(1,10,{3:'Muy suave',5:'Suave',7:'Moderado',8:'Duro',9:'Muy duro',10:'Máximo'})}</select></div>
+          <div><label for="cvV105DemoFatigue">FATIGA</label><select id="cvV105DemoFatigue">${demoFeedbackOptions(0,10,{0:'Muy baja',5:'Moderada',8:'Alta',10:'Muy alta'})}</select></div>
+          <div><label for="cvV105DemoPain">DOLOR / MOLESTIA</label><select id="cvV105DemoPain">${demoFeedbackOptions(0,10,{0:'Sin dolor',2:'Leve',5:'Moderado',8:'Alto'})}</select></div>
+        </div>
+        <label for="cvV105DemoNotes">Comentario de la sesión · opcional</label>
+        <textarea id="cvV105DemoNotes" maxlength="400" placeholder="Ej.: buena sesión, técnica estable…"></textarea>
+        <div class="cvV105DemoFeedbackActions">
+          <button id="cvV105DemoBack" class="btn" type="button">VOLVER AL ENTRENAMIENTO</button>
+          <button id="cvV105DemoFinish" class="btn primary" type="button">FINALIZAR DEMO</button>
+        </div>
+        <div id="cvV105DemoFeedbackStatus" class="cvFeedbackStatus"></div>
+      </div>`;
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('#cvV105DemoBack').onclick=closeDemoFeedback;
+    backdrop.querySelector('#cvV105DemoFinish').onclick=async()=>{
+      const rpe=Number(backdrop.querySelector('#cvV105DemoRpe').value);
+      const fatigue=Number(backdrop.querySelector('#cvV105DemoFatigue').value);
+      const pain=Number(backdrop.querySelector('#cvV105DemoPain').value);
+      const status=backdrop.querySelector('#cvV105DemoFeedbackStatus');
+      if(!Number.isInteger(rpe)||rpe<1||rpe>10){status.textContent='Selecciona tu RPE global.';return}
+      if(!Number.isInteger(fatigue)||fatigue<0||fatigue>10){status.textContent='Selecciona tu nivel de fatiga.';return}
+      if(!Number.isInteger(pain)||pain<0||pain>10){status.textContent='Selecciona tu nivel de dolor.';return}
+      const metrics=demoWorkoutMetrics();
+      closeDemoFeedback();
+      if(typeof demoFinishBase==='function')await demoFinishBase();
+      const result={
+        status:metrics.completion>=85?'completed':metrics.completion>=40?'partial':'abandoned',
+        completion_pct:metrics.completion,
+        total_volume:metrics.volume,
+        xp_earned:metrics.completion>=85?60:metrics.completion>=40?30:10,
+        credits_earned:metrics.completion>=85?5:0,
+        missions_completed:metrics.completion>=85?1:0,
+        achievements_unlocked:metrics.completion>=85?[{title:'Sesión demo completada'}]:[],
+        personal_records:[],
+        level_up:false,
+        current_level:1
+      };
+      if(typeof window.cvShowWorkoutResult==='function'){
+        window.cvShowWorkoutResult(result);
+        requestAnimationFrame(()=>{
+          const card=document.querySelector('#cvWorkoutResultModal .cvWorkoutResultCard');
+          if(card){
+            if(!card.querySelector('.cvV105DemoNotice')){
+              const notice=document.createElement('div');
+              notice.className='cvV105DemoNotice';
+              notice.textContent='DEMO · RESULTADOS SIMULADOS · NO SE GUARDÓ INFORMACIÓN';
+              card.prepend(notice);
+            }
+            const heroEy=card.querySelector('.cvResultHero .ey');
+            const heroSub=card.querySelector('.cvResultHero .sub');
+            if(heroEy)heroEy.textContent='RESUMEN DEMO';
+            if(heroSub)heroSub.textContent='Resultado simulado del cierre de sesión. En DEMO no se registraron métricas reales.';
+            const directHints=[...card.querySelectorAll(':scope > .hint')];
+            const footer=directHints[directHints.length-1];
+            if(footer)footer.textContent='En DEMO no se guardan métricas, progresión, XP, créditos ni recomendaciones reales.';
+          }
+        });
+      }
+    };
+  }
+
+  function wrapDemoFinish(){
+    if(demoFinishWrapped)return;
+    if(typeof window.finishWorkout!=='function')return;
+    demoFinishBase=window.finishWorkout;
+    window.finishWorkout=async function(){
+      if(!demoMode())return demoFinishBase.apply(this,arguments);
+      openDemoFeedback();
+    };
+    demoFinishWrapped=true;
+  }
+
   function apply(){
     scheduled=false;
     injectStyle();
     document.body?.classList.add('cvGuidedSetLoggingV105');
-    document.documentElement?.setAttribute('data-cv-guided-set-logging','105.4');
+    document.documentElement?.setAttribute('data-cv-guided-set-logging','105.5');
+    wrapDemoFinish();
 
     const cards=[...document.querySelectorAll('.cvHevyExercise,.workoutExercise')].filter(isVisible);
     cards.forEach(decorateExercise);
@@ -427,6 +570,13 @@
   document.addEventListener('keydown',event=>moveForward(event.target,event),true);
 
   document.addEventListener('click',event=>{
+    const finish=event.target?.closest?.('.workoutTop button');
+    if(finish&&/FINALIZAR/i.test(finish.textContent||'')&&demoMode()){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openDemoFeedback();
+      return;
+    }
     if(event.target?.closest?.('.cvSetCheck')){
       setTimeout(schedule,0);
       setTimeout(schedule,180);
@@ -445,6 +595,6 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enable,{once:true});
   else enable();
 
-  window.CVGuidedSetLoggingV105={version:VERSION,revision:'105.4',ready:true,refresh:schedule,marker:READY};
+  window.CVGuidedSetLoggingV105={version:VERSION,revision:'105.5',ready:true,refresh:schedule,marker:READY};
   console.info(READY,VERSION);
 })();
