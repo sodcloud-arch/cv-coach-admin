@@ -33,13 +33,15 @@ if context_bridge not in text:
 # wraps that title, insertBefore(row,title) can throw repeatedly from its
 # MutationObserver. Do not mutate if a newer layer already owns the title.
 legacy_v35="grow.insertBefore(row,title);row.appendChild(title);"
-safe_v35="if(title.parentNode!==grow)return;grow.insertBefore(row,title);row.appendChild(title);"
+safe_v35="if(title.parentNode!==grow)return;const cvV107Anchor=title.nextSibling;row.appendChild(title);if(cvV107Anchor&&cvV107Anchor.parentNode===grow)grow.insertBefore(row,cvV107Anchor);else grow.appendChild(row);"
 if legacy_v35 in text:
     text=text.replace(legacy_v35,safe_v35)
 if legacy_v35 in text:
     raise SystemExit('V107 failed to harden legacy V35 title insertion')
 if safe_v35 not in text:
     raise SystemExit('V107 safe V35 title insertion contract missing')
+if "insertBefore(row,title)" in text:
+    raise SystemExit('V107 race-prone V35 insertion still present')
 
 text=re.sub(rf'\s*{re.escape(START)}.*?{re.escape(END)}\s*','\n',text,flags=re.S)
 text=text.replace(MARKER,'')
