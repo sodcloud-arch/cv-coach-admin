@@ -95,8 +95,7 @@ begin
   update public.ai_program_generations set status='applied',output_snapshot=p_plan,warnings=coalesce(p_warnings,'[]'::jsonb),conflicts=coalesce(p_conflicts,'[]'::jsonb),explanations=coalesce(p_explanations,'{}'::jsonb),applied_at=now(),updated_at=now() where id=v_generation.id;
   return jsonb_build_object('generation_id',v_generation.id,'program_id',v_program.id,'client_id',v_program.client_id,'status','applied','days_written',v_day_count,'exercises_written',v_exercise_count,'publish_required',true);
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.clone_program_version_backend(p_actor_id uuid, p_source_program_id uuid)
  RETURNS jsonb
@@ -146,8 +145,7 @@ begin
   end loop;
   return jsonb_build_object('source_program_id',p_source_program_id,'program_id',v_new_program_id,'client_id',v_source.client_id,'status','draft','version',v_new_version,'days',v_days,'exercises',v_exercises,'contract','CLONE_PROGRAM_V84_PRESERVES_UNIT');
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_program_asset_preflight_v100(p_actor_id uuid, p_program_id uuid)
  RETURNS jsonb
@@ -200,8 +198,7 @@ begin
     'allowed_statuses',jsonb_build_array('approved','external_verified')
   );
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.review_progression_suggestion_v83(p_actor_id uuid, p_suggestion_id uuid, p_decision text, p_suggested_load numeric DEFAULT NULL::numeric, p_suggested_rep_min integer DEFAULT NULL::integer, p_suggested_rep_max integer DEFAULT NULL::integer, p_suggested_duration_seconds integer DEFAULT NULL::integer, p_note text DEFAULT NULL::text)
  RETURNS jsonb
@@ -375,8 +372,7 @@ begin
     'engine_version',s.engine_version
   );
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.review_training_adaptation_v83(p_actor_id uuid, p_review_id uuid, p_decision text, p_note text DEFAULT NULL::text)
  RETURNS jsonb
@@ -425,8 +421,7 @@ begin
     'state',r.state,'status',r.status,'reviewed_at',r.reviewed_at
   );
 end;
-$function$
-
+$function$;
 
 comment on function public.apply_ai_program_generation(uuid,uuid,jsonb,jsonb,jsonb,jsonb) is
   'F1.M1.S5 G1B1: AI generation apply authorization is bound to Program Organization.';
