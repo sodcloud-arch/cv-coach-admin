@@ -2,7 +2,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "supabase/migrations/202609181000_f1_m1_s5_canonical_data_isolation_arch1.sql"
+ROOTS = ROOT / "supabase/migrations/202609181020_f1_m1_s5_business_roots_isolation_arch1.sql"
 sql = MIGRATION.read_text(encoding="utf-8").lower()
+roots = ROOTS.read_text(encoding="utf-8").lower()
 
 required = {
     "discipline organization column": "alter table public.coach_profile_disciplines\n  add column if not exists organization_id uuid",
@@ -87,3 +89,59 @@ print("- membership-scoped identity/audit actors: PASS")
 print("- authenticated table privileges reduced to least privilege: PASS")
 print("- organization browser UPDATE uses explicit safe-column whitelist: PASS")
 print("- service-role secret references absent from client portal: PASS")
+
+
+root_required = {
+    "legacy resolver": "function private.resolve_legacy_client_organization_v1(",
+    "tenant view helper": "function private.can_view_client_in_org(",
+    "tenant manage helper": "function private.can_manage_client_in_org(",
+    "program tenant": "alter table public.programs add column if not exists organization_id uuid",
+    "session tenant": "alter table public.workout_sessions add column if not exists organization_id uuid",
+    "alerts tenant": "alter table public.coach_alerts add column if not exists organization_id uuid",
+    "progression tenant": "alter table public.progression_suggestions add column if not exists organization_id uuid",
+    "checkins tenant": "alter table public.weekly_checkins add column if not exists organization_id uuid",
+    "nutrition tenant": "alter table public.nutrition_daily_logs add column if not exists organization_id uuid",
+    "subscriptions tenant": "alter table public.client_subscriptions add column if not exists organization_id uuid",
+    "program client boundary": "constraint programs_client_same_org",
+    "program coach boundary": "constraint programs_coach_same_org",
+    "session program/client boundary": "constraint workout_sessions_program_same_org_client",
+    "alert client boundary": "constraint coach_alerts_client_same_org",
+    "alert coach boundary": "constraint coach_alerts_coach_same_org",
+    "progression session boundary": "constraint progression_suggestions_source_session_same_org_client",
+    "ambiguous tenant deny": "legacy client belongs to multiple organizations; organization_id is required",
+    "program rls v2": "create policy programs_select_v2",
+    "session rls v2": "create policy workout_sessions_select_v2",
+    "nutrition rls v2": "create policy nutrition_daily_select_v2",
+    "subscription rls v2": "create policy subscriptions_select_v2",
+}
+missing_roots = [name for name, token in root_required.items() if token not in roots]
+if missing_roots:
+    raise SystemExit("Missing F1.M1.S5 wave-2 contracts: " + ", ".join(missing_roots))
+
+for legacy_policy_token in (
+    "create policy programs_select\non public.programs",
+    "create policy workout_sessions_select\non public.workout_sessions",
+    "create policy nutrition_daily_select\non public.nutrition_daily_logs",
+):
+    if legacy_policy_token in roots:
+        raise SystemExit("Legacy tenant-agnostic policy was recreated: " + legacy_policy_token)
+
+for forbidden in (
+    "grant truncate",
+    "grant trigger",
+    "grant references",
+    "grant all privileges on table public.programs to authenticated",
+    "grant all privileges on table public.workout_sessions to authenticated",
+    "grant all privileges on table public.coach_alerts to authenticated",
+    "grant all privileges on table public.progression_suggestions to authenticated",
+    "grant all privileges on table public.weekly_checkins to authenticated",
+    "grant all privileges on table public.nutrition_daily_logs to authenticated",
+    "grant all privileges on table public.client_subscriptions to authenticated",
+):
+    if forbidden in roots:
+        raise SystemExit("Unsafe browser privilege in S5 wave 2: " + forbidden)
+
+print("- business roots carry explicit organization_id: PASS")
+print("- business-root policies use tenant-aware access helpers: PASS")
+print("- ambiguous multi-tenant legacy writes require explicit organization_id: PASS")
+print("- sessions/programs/alerts have same-tenant relational constraints: PASS")
