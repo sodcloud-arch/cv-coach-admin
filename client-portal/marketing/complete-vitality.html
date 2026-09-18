@@ -5,95 +5,37 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050505">
 <meta name="robots" content="noindex,nofollow">
-<title>C.V. Complete Vitality — Hero HTML/CSS</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>C.V. Complete Vitality — Desktop Lock</title>
 <style>
-:root{
-  --bg:#050505;--surface:#0a0a0a;--line:rgba(255,255,255,.14);--text:#f5f5f5;--muted:#a6a6a6;
-  --red:#ff111f;--blue:#00b4ff;--green:#00e676;--gold:#ffc629;
-  --display:"Barlow Condensed",Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif;
-  --sans:Inter,Arial,sans-serif;
-}
+:root{--bg:#050505;--red:#ff111f}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,Arial,sans-serif}
+html{scroll-behavior:smooth}
+body{overflow-x:hidden}
 a{color:inherit;text-decoration:none}
-img{display:block;max-width:100%}
-button{font:inherit}
-.cv-shell{width:min(100%,1440px);margin-inline:auto;background:#050505}
-.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-
-/* REAL HEADER */
-.site-header{
-  height:80px;display:grid;grid-template-columns:190px 1fr auto;align-items:center;gap:22px;
-  padding:0 38px;border-bottom:1px solid var(--line);background:#050505;position:relative;z-index:40
-}
-.brand img{width:120px;height:auto}
-.nav{display:flex;justify-content:center;align-items:center;gap:30px;font-size:11px;font-weight:800;letter-spacing:.055em;text-transform:uppercase}
-.nav a{position:relative;padding:30px 0;color:#eee}
-.nav a.active:after{content:"";position:absolute;height:2px;background:var(--red);left:0;right:0;bottom:18px;box-shadow:0 0 12px rgba(255,17,31,.8)}
-.header-actions{display:flex;gap:12px;align-items:center}
-.header-btn{
-  min-width:124px;height:42px;padding:0 18px;border-radius:4px;border:1px solid var(--red);
-  display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase
-}
-.header-btn.start{background:var(--red);min-width:148px;box-shadow:0 0 22px rgba(255,17,31,.28)}
-.mobile-toggle{display:none}
-
-/* REAL HERO */
-.hero{
-  position:relative;min-height:645px;aspect-ratio:1024/645;overflow:hidden;background:
-    radial-gradient(circle at 50% 17%,rgba(255,0,0,.08),transparent 28%),
-    radial-gradient(circle at 88% 48%,rgba(255,0,0,.11),transparent 23%),
-    linear-gradient(180deg,#090909 0%,#050505 100%);
-  border-bottom:1px solid var(--line)
-}
-.hero:before{content:"";position:absolute;inset:0;background:
-  linear-gradient(90deg,rgba(0,0,0,.18),transparent 14%,transparent 85%,rgba(0,0,0,.18)),
-  linear-gradient(180deg,rgba(0,0,0,.04),transparent 68%,rgba(0,0,0,.20));z-index:2;pointer-events:none}
-.athlete{position:absolute;z-index:1;top:0;height:100%;object-fit:cover;filter:contrast(1.04) saturate(.95)}
-.athlete.male{
-  left:-1.5%;width:45%;object-position:center top;
-  -webkit-mask-image:linear-gradient(to right,transparent 0 6%,#000 13% 55%,rgba(0,0,0,.82) 60%,rgba(0,0,0,.30) 65%,transparent 71% 100%);
-  mask-image:linear-gradient(to right,transparent 0 6%,#000 13% 55%,rgba(0,0,0,.82) 60%,rgba(0,0,0,.30) 65%,transparent 71% 100%);
-}
-.athlete.female{
-  right:-1.5%;width:45%;object-position:center top;
-  -webkit-mask-image:linear-gradient(to right,transparent 0 27%,rgba(0,0,0,.30) 32%,rgba(0,0,0,.82) 37%,#000 43% 91%,transparent 99% 100%);
-  mask-image:linear-gradient(to right,transparent 0 27%,rgba(0,0,0,.30) 32%,rgba(0,0,0,.82) 37%,#000 43% 91%,transparent 99% 100%);
-}
-.hero-center{
-  position:absolute;z-index:8;left:50%;top:47.5%;transform:translate(-50%,-50%);
-  width:46%;text-align:center
-}
-.hero-logo{width:66%;margin:0 auto 16px;filter:drop-shadow(0 0 16px rgba(255,255,255,.05)) drop-shadow(0 0 22px rgba(255,17,31,.10))}
-.hero-title{margin:0;font-family:var(--display);font-size:clamp(52px,6vw,84px);font-weight:900;line-height:.78;text-transform:uppercase;letter-spacing:-.02em;text-shadow:0 4px 14px rgba(0,0,0,.55)}
-.hero-title .white{display:block;color:#f4f4f4}
-.hero-title .red{display:block;color:var(--red)}
-.hero-values{margin-top:14px;display:flex;justify-content:center;gap:25px;font-size:12px;letter-spacing:.29em;text-transform:uppercase;color:#ececec}
-.hero-values span:not(:last-child):after{content:"·";margin-left:25px;color:#c4c4c4}
-.hero-copy{margin:14px auto 18px;max-width:460px;font-size:14px;line-height:1.55;color:#e7e7e7}
-.hero-cta{
-  display:inline-flex;height:46px;min-width:214px;align-items:center;justify-content:center;padding:0 25px;border-radius:4px;
-  background:var(--red);font-size:12px;font-weight:900;letter-spacing:.025em;text-transform:uppercase;
-  box-shadow:0 0 24px rgba(255,17,31,.30);transition:.2s ease
-}
-.hero-cta:hover{filter:brightness(1.1);transform:translateY(-2px)}
-.side-copy{position:absolute;z-index:9;font-size:11px;letter-spacing:.23em;line-height:1.55;text-transform:uppercase;color:#ededed}
-.side-copy:after{content:"";display:block;width:30px;height:2px;background:var(--red);margin-top:15px}
-.side-copy.left{left:4.1%;top:13.2%}
-.side-copy.right{right:4.2%;top:7.3%;text-align:left}
-.hero-tag{position:absolute;z-index:9;font-size:9px;letter-spacing:.23em;line-height:1.45;text-transform:uppercase;color:#d5d5d5}
-.hero-tag.left{left:4.0%;bottom:5.6%}
-.hero-tag.right{right:4.0%;bottom:4.7%;text-align:left}
-
-/* EXACT VISUAL SLICES BELOW HERO */
+.page{width:100%;background:#050505}
+.cv-shell{width:min(100vw,1440px);margin:0 auto;background:#050505}
 .slice{position:relative;width:100%;overflow:hidden;background:#050505;line-height:0}
 .slice>img{width:100%;height:auto;display:block;user-select:none;-webkit-user-drag:none}
-.hotspot{position:absolute;z-index:3;display:block;border:0;background:transparent;border-radius:4px;cursor:pointer;text-indent:-9999px;overflow:hidden}
-.hotspot:focus-visible{outline:2px solid var(--red);outline-offset:2px;box-shadow:0 0 0 4px rgba(255,26,26,.18)}
+.hotspot{position:absolute;z-index:5;display:block;border:0;background:transparent;border-radius:4px;cursor:pointer;text-indent:-9999px;overflow:hidden}
+.hotspot:focus-visible{outline:2px solid var(--red);outline-offset:2px;box-shadow:0 0 0 4px rgba(255,17,31,.18)}
+.hotspot:hover{background:rgba(255,255,255,.01)}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+/* HEADER exact 1024x80 */
+.header-slice .inicio{left:24.8%;top:18%;width:4.3%;height:45%}
+.header-slice .training{left:30.2%;top:18%;width:6.2%;height:45%}
+.header-slice .nutrition{left:36.5%;top:18%;width:6.5%;height:45%}
+.header-slice .integrated{left:43.1%;top:18%;width:7.2%;height:45%}
+.header-slice .about{left:51.8%;top:18%;width:6.5%;height:45%}
+.header-slice .blog{left:59.0%;top:18%;width:4.0%;height:45%}
+.header-slice .login{left:68.5%;top:11%;width:12.2%;height:47%}
+.header-slice .start{left:81.8%;top:10%;width:14.6%;height:49%}
+
+/* HERO exact 1024x645 */
+.hero-slice .hero-cta{left:39.3%;top:82.4%;width:21.5%;height:7.3%}
+
+/* CARDS exact */
 .cards-slice .training-card{left:3.55%;top:2.5%;width:30.6%;height:92.5%}
 .cards-slice .nutrition-card{left:35.75%;top:2.5%;width:28.6%;height:92.5%}
 .cards-slice .integrated-card{left:66.35%;top:2.5%;width:30.3%;height:92.5%}
@@ -101,95 +43,66 @@ button{font:inherit}
 .cards-slice .nutrition-cta{left:39.55%;top:80.2%;width:21.0%;height:7.2%}
 .cards-slice .integrated-cta{left:70.15%;top:80.2%;width:22.0%;height:7.2%}
 
-@media(max-width:980px){
-  .site-header{grid-template-columns:150px 1fr auto;padding:0 22px}.nav{gap:18px;font-size:10px}.header-btn{min-width:108px}.header-btn.start{min-width:124px}
-  .hero-center{width:52%}.hero-logo{width:72%}
-}
+/* Desktop-first: preserve approved composition. Mobile gets its own composition later. */
 @media(max-width:760px){
-  .site-header{height:70px;display:flex;justify-content:space-between;position:sticky;top:0;background:rgba(5,5,5,.96);backdrop-filter:blur(12px)}
-  .brand img{width:105px}.nav,.header-actions{display:none}.mobile-toggle{display:block;border:1px solid rgba(255,255,255,.22);background:#090909;color:#fff;border-radius:4px;padding:8px 11px}
-  .nav[data-open="1"]{display:flex!important;position:fixed;z-index:60;top:70px;left:0;right:0;background:#050505;flex-direction:column;gap:0;padding:14px 22px 24px;border-bottom:1px solid var(--line)}
-  .nav[data-open="1"] a{width:100%;padding:13px 0;text-align:left}
-  .hero{aspect-ratio:auto;min-height:840px}
-  .athlete.male{width:58%;left:-12%;height:78%;top:22%}.athlete.female{width:58%;right:-12%;height:78%;top:22%}
-  .hero-center{width:88%;top:36%}.hero-logo{width:58%;margin-bottom:14px}
-  .hero-title{font-size:52px}.hero-values{font-size:10px;gap:12px;letter-spacing:.18em}.hero-values span:not(:last-child):after{margin-left:12px}
-  .hero-copy{max-width:88%;font-size:13px}.side-copy,.hero-tag{display:none}
+  .cv-shell{width:100vw}
 }
 </style>
 </head>
 <body>
-<main class="cv-shell" aria-label="C.V. Complete Vitality">
-  <header class="site-header" id="inicio">
-    <a class="brand" href="#inicio" aria-label="C.V. Complete Vitality">
-      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060" alt="C.V. Complete Vitality">
-    </a>
-    <nav class="nav" aria-label="Navegación principal">
-      <a class="active" href="#inicio">Inicio</a>
-      <a href="#training">Training</a>
-      <a href="#nutrition">Nutrition</a>
-      <a href="#integrated">Integrated</a>
-      <a href="#sobre-cv">Sobre C.V.</a>
-      <a href="#blog">Blog</a>
-    </nav>
-    <div class="header-actions">
-      <a class="header-btn" href="https://cv-coach-roan.vercel.app/" rel="noopener">Iniciar sesión</a>
-      <a class="header-btn start" href="#training">Comienza hoy&nbsp;&nbsp;→</a>
-    </div>
-    <button class="mobile-toggle" type="button" aria-label="Abrir menú" aria-expanded="false">☰</button>
-  </header>
+<main class="page" aria-label="C.V. Complete Vitality">
+  <div class="cv-shell">
 
-  <section class="hero" aria-labelledby="hero-title">
-    <img class="athlete male" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-hero-left-athlete-source.png?v=1789720782" alt="">
-    <img class="athlete female" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-hero-right-athlete-source.png?v=1789720788" alt="">
+    <header class="slice header-slice" id="inicio" aria-label="Navegación C.V.">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-header-slice-exact.png?v=1789720257" alt="C.V. Complete Vitality">
+      <nav aria-label="Navegación principal">
+        <a class="hotspot inicio" href="#inicio" aria-label="Inicio">Inicio</a>
+        <a class="hotspot training" href="#training" aria-label="Training">Training</a>
+        <a class="hotspot nutrition" href="#nutrition" aria-label="Nutrition">Nutrition</a>
+        <a class="hotspot integrated" href="#integrated" aria-label="Integrated">Integrated</a>
+        <a class="hotspot about" href="#sobre-cv" aria-label="Sobre C.V.">Sobre C.V.</a>
+        <a class="hotspot blog" href="#blog" aria-label="Blog">Blog</a>
+        <a class="hotspot login" href="https://cv-coach-roan.vercel.app/" rel="noopener" aria-label="Iniciar sesión">Iniciar sesión</a>
+        <a class="hotspot start" href="#training" aria-label="Comienza hoy">Comienza hoy</a>
+      </nav>
+    </header>
 
-    <div class="side-copy left">Disciplina<br>Hoy<br>Libertad<br>Siempre</div>
-    <div class="side-copy right">Tu<br>Mejor<br>Versión<br>Empieza<br>Aquí</div>
-    <div class="hero-tag left">A Higher<br>Standard</div>
-    <div class="hero-tag right">Personas<br>Más fuertes<br>Para un<br>Mundo mejor</div>
+    <section class="slice hero-slice" aria-labelledby="hero-title">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-hero-master-exact.png?v=1789722362" alt="Atletas C.V. Complete Vitality">
+      <h1 id="hero-title" class="sr-only">Más que entrenamiento — Complete Vitality</h1>
+      <p class="sr-only">Disciplina, progreso y libertad. Entrenamiento, nutrición, bienestar y resultados en un solo lugar. A Higher Standard.</p>
+      <a class="hotspot hero-cta" href="#training" aria-label="Comienza hoy">Comienza hoy</a>
+    </section>
 
-    <div class="hero-center">
-      <img class="hero-logo" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060" alt="C.V. Complete Vitality">
-      <h1 class="hero-title" id="hero-title">
-        <span class="white">Más que</span>
-        <span class="red">Entrenamiento</span>
-      </h1>
-      <div class="hero-values"><span>Disciplina</span><span>Progreso</span><span>Libertad</span></div>
-      <p class="hero-copy">Entrenamiento. Nutrición. Bienestar. Resultados.<br>Todo en un solo lugar.</p><span class="sr-only">A Higher Standard</span>
-      <a class="hero-cta" href="#training">Comienza hoy&nbsp;&nbsp;→</a>
-    </div>
+    <section class="slice cards-slice" aria-label="Soluciones C.V.">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-cards-slice-exact.png?v=1789720272" alt="C.V. Training, C.V. Nutrition y C.V. Integrated">
+      <article id="training" class="sr-only"><h2>C.V. Training</h2><p>Entrenamiento inteligente para resultados reales.</p></article>
+      <article id="nutrition" class="sr-only"><h2>C.V. Nutrition</h2><p>Nutrición real para una vida mejor.</p></article>
+      <article id="integrated" class="sr-only"><h2>C.V. Integrated</h2><p>Entrenamiento y nutrición coordinados en un solo sistema.</p></article>
+      <a class="hotspot training-card" href="#training" aria-label="C.V. Training">Training</a>
+      <a class="hotspot nutrition-card" href="#nutrition" aria-label="C.V. Nutrition">Nutrition</a>
+      <a class="hotspot integrated-card" href="#integrated" aria-label="C.V. Integrated">Integrated</a>
+      <a class="hotspot training-cta" href="#training" aria-label="Conoce más sobre C.V. Training">Conoce más Training</a>
+      <a class="hotspot nutrition-cta" href="#nutrition" aria-label="Conoce más sobre C.V. Nutrition">Conoce más Nutrition</a>
+      <a class="hotspot integrated-cta" href="#integrated" aria-label="Conoce más sobre C.V. Integrated">Conoce más Integrated</a>
+    </section>
+
+    <section class="slice" id="pilares" aria-label="Pilares C.V.">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-pillars-slice-exact.png?v=1789720281" alt="Entrenamiento, Nutrición, Bienestar, Progreso y Libertad">
+    </section>
+
+    <section class="slice" id="metricas" aria-label="Métricas de referencia visual">
+      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-metrics-slice-exact.png?v=1789720287" alt="Métricas visuales C.V.">
+      <p class="sr-only">Las cifras visibles son parte de la referencia visual y no se publicarán como datos reales sin validación.</p>
+    </section>
+
+  </div>
+
+  <section class="sr-only" id="sobre-cv">
+    <h2>Sobre C.V.</h2>
+    <p>Complete Vitality integra entrenamiento, nutrición y bienestar.</p>
   </section>
-
-  <section class="slice cards-slice" aria-label="Soluciones C.V.">
-    <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-cards-slice-exact.png?v=1789720272" alt="C.V. Training, C.V. Nutrition y C.V. Integrated">
-    <article id="training" class="sr-only"><h2>C.V. Training</h2><p>Entrenamiento inteligente para resultados reales.</p></article>
-    <article id="nutrition" class="sr-only"><h2>C.V. Nutrition</h2><p>Nutrición real para una vida mejor.</p></article>
-    <article id="integrated" class="sr-only"><h2>C.V. Integrated</h2><p>Entrenamiento y nutrición coordinados en un solo sistema.</p></article>
-    <a class="hotspot training-card" href="#training" aria-label="C.V. Training">Training</a>
-    <a class="hotspot nutrition-card" href="#nutrition" aria-label="C.V. Nutrition">Nutrition</a>
-    <a class="hotspot integrated-card" href="#integrated" aria-label="C.V. Integrated">Integrated</a>
-    <a class="hotspot training-cta" href="#training" aria-label="Conoce más sobre C.V. Training">Conoce más Training</a>
-    <a class="hotspot nutrition-cta" href="#nutrition" aria-label="Conoce más sobre C.V. Nutrition">Conoce más Nutrition</a>
-    <a class="hotspot integrated-cta" href="#integrated" aria-label="Conoce más sobre C.V. Integrated">Conoce más Integrated</a>
-  </section>
-
-  <section class="slice" id="pilares" aria-label="Pilares C.V.">
-    <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-pillars-slice-exact.png?v=1789720281" alt="Entrenamiento, Nutrición, Bienestar, Progreso y Libertad">
-  </section>
-
-  <section class="slice" id="metricas" aria-label="Métricas de referencia visual">
-    <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-metrics-slice-exact.png?v=1789720287" alt="Métricas visuales C.V.">
-    <p class="sr-only">Las cifras visibles son parte de la referencia visual y no se publicarán como datos reales sin validación.</p>
-  </section>
-
-  <section class="sr-only" id="sobre-cv"><h2>Sobre C.V.</h2><p>Complete Vitality integra entrenamiento, nutrición y bienestar.</p></section>
   <section class="sr-only" id="blog"><h2>Blog C.V.</h2></section>
 </main>
-<script>
-const btn=document.querySelector('.mobile-toggle');
-const nav=document.querySelector('.nav');
-btn?.addEventListener('click',()=>{const open=nav?.dataset.open==='1';if(nav)nav.dataset.open=open?'0':'1';btn.setAttribute('aria-expanded',String(!open));});
-document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>{if(nav)nav.dataset.open='0';btn?.setAttribute('aria-expanded','false');}));
-</script>
 </body>
 </html>
