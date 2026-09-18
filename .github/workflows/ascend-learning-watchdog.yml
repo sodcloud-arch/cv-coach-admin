@@ -1,4 +1,4 @@
-name: ASCEND Learning Watchdog
+name: ASCEND Autopilot Watchdog
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: ascend-learning-watchdog
+  group: ascend-autopilot-watchdog
   cancel-in-progress: false
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
           echo "::add-mask::${TOKEN}"
           echo "token=${TOKEN}" >> "${GITHUB_OUTPUT}"
 
-      - name: Run ASCEND Learning Tick
+      - name: Run ASCEND Autopilot Tick
         env:
           ASCEND_TOKEN: ${{ steps.oidc.outputs.token }}
           ASCEND_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/ascend-gateway
@@ -42,8 +42,8 @@ jobs:
           import json, os, urllib.request
 
           body = {
-              "op": "learning_tick",
-              "limit": 250
+              "op": "autopilot_tick",
+              "limit": 500
           }
 
           req = urllib.request.Request(
@@ -59,12 +59,29 @@ jobs:
           with urllib.request.urlopen(req, timeout=30) as response:
               payload = json.loads(response.read().decode("utf-8"))
               if response.status != 200 or not payload.get("ok"):
-                  raise SystemExit(f"ASCEND learning tick failed: {payload}")
+                  raise SystemExit(f"ASCEND autopilot tick failed: {payload}")
 
               result = payload.get("result") or {}
-              print("ASCEND_LEARNING_TICK_OK")
+              print("ASCEND_AUTOPILOT_TICK_OK")
               print(json.dumps(result, indent=2, sort_keys=True))
 
-              if int(result.get("failed") or 0) > 0:
-                  raise SystemExit(f"ASCEND learning tick reported failures: {result}")
+              learning = result.get("learning") or {}
+              rules = result.get("rules") or {}
+
+              if int(learning.get("failed") or 0) > 0:
+                  raise SystemExit(f"ASCEND learning phase reported failures: {result}")
+
+              if int(rules.get("failed") or 0) > 0:
+                  raise SystemExit(f"ASCEND rules phase reported failures: {result}")
+
+              print(
+                  "ASCEND_SUMMARY",
+                  json.dumps({
+                      "reasoning_queue": result.get("reasoning_queue"),
+                      "planned": rules.get("planned"),
+                      "succeeded": rules.get("succeeded"),
+                      "blocked_total": rules.get("blocked_total"),
+                      "openai_api_enabled": result.get("openai_api_enabled"),
+                  }, separators=(",", ":"))
+              )
           PY
