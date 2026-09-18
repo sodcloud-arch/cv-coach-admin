@@ -1,0 +1,22 @@
+name: Validate F1.M1.S5 Training Intelligence Scope
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609182530_f1_m1_s5_training_intelligence_scope_arch1.sql"
+      - "scripts/test-f1-m1-s5-training-intelligence-scope.py"
+      - ".github/workflows/validate-f1-m1-s5-training-intelligence-scope.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  training-intelligence-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m1-s5-training-intelligence-scope.py
