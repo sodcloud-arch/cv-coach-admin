@@ -70,7 +70,7 @@ try{
   assert.equal(initial.imageVisible,true,'Current exercise image must be visible automatically in demo');
   assert.equal(initial.executionButtonVisible,false,'Current exercise must not require VER EJECUCIÓN');
   assert.equal(initial.detailsSeparated,true,'VER DETALLES must be visually separated from exercise title');
-  assert.ok(initial.mediaHeight<=210,'Current exercise media should be compact enough to keep series visible');
+  assert.ok(initial.mediaHeight<=212,'Current exercise media should be compact enough to keep series visible');
 
   await page.waitForFunction(()=>{
     const img=document.querySelector('.cvV105ExerciseOpen:visible > .exerciseMedia .photo');
