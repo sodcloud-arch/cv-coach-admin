@@ -243,9 +243,15 @@
         ctx.workout.started=Number(snapshot.started)||Date.now();
         try{if(typeof render==='function')render()}catch(_){try{window.render?.()}catch(__){}}
         try{if(typeof startTimer==='function')startTimer()}catch(_){}
+        try{window.CVExerciseScreenV102?.refresh?.()}catch(_){}
+        try{window.CVGuidedSetLoggingV105?.refresh?.()}catch(_){}
+        requestAnimationFrame(()=>{
+          try{window.CVExerciseScreenV102?.refresh?.()}catch(_){}
+          try{window.CVGuidedSetLoggingV105?.refresh?.()}catch(_){}
+        });
       }
 
-      await new Promise(resolve=>setTimeout(resolve,80));
+      await new Promise(resolve=>setTimeout(resolve,120));
       const state=setState();
       if(snapshot.done>0&&state.done<snapshot.done&&snapshot.mode==='demo')throw new Error('demo recovery state mismatch');
       recoveredToast(snapshot);
