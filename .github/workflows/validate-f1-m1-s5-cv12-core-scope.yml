@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 CV12 Core Scope
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609182000_f1_m1_s5_cv12_core_scope_arch1.sql"
+      - "scripts/test-f1-m1-s5-cv12-core-scope.py"
+      - ".github/workflows/validate-f1-m1-s5-cv12-core-scope.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cv12-core-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate CV12 core tenant scope
+        run: python scripts/test-f1-m1-s5-cv12-core-scope.py
