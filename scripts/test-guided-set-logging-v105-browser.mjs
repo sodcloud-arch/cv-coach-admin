@@ -30,6 +30,13 @@ try{
   },null,{timeout:7000,polling:100});
   await page.waitForFunction(()=>[...document.querySelectorAll('.cvSetRow')].some(row=>row.offsetWidth>0&&row.offsetHeight>0),null,{timeout:5000});
   await page.waitForFunction(()=>document.querySelector('.cvSetRow.cvV105Next'),null,{timeout:5000});
+  await page.evaluate(async()=>{try{if(document.fonts?.ready)await document.fonts.ready}catch(_){}});
+  await page.waitForFunction(()=>{
+    const button=document.querySelector('.cvWorkoutStartV40');
+    if(!button)return false;
+    const height=button.getBoundingClientRect().height;
+    return height>=42&&height<=48;
+  },null,{timeout:5000});
 
   const initial=await page.evaluate(()=>{
     const row=[...document.querySelectorAll('.cvSetRow.cvV105Next')].find(el=>el.offsetWidth>0&&el.offsetHeight>0);
@@ -88,7 +95,7 @@ try{
   assert.ok(initial.mediaHeight<=212,'Current exercise media should be compact enough to keep series visible');
   assert.equal(initial.prestartClass,true,'Demo workout should be in compact prestart state before start');
   assert.ok(initial.prestartHeroHeight>0&&initial.prestartHeroHeight<=230,'Prestart summary should be compact on mobile');
-  assert.ok(initial.startCtaHeight>=42&&initial.startCtaHeight<=48,'Start CTA should stay prominent without consuming excess height');
+  assert.ok(initial.startCtaHeight>=42&&initial.startCtaHeight<=48,`Start CTA should stay prominent without consuming excess height; measured ${initial.startCtaHeight}px`);
 
   const weight=page.locator('.cvSetRow.cvV105Next input[id^="cvw_"]:visible').first();
   const reps=page.locator('.cvSetRow.cvV105Next input[id^="cvr_"]:visible').first();
