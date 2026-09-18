@@ -57,7 +57,7 @@ try{
   });
 
   await page.waitForFunction(()=>{
-    const img=document.querySelector('.cvV105ExerciseOpen:visible > .exerciseMedia .photo');
+    const img=document.querySelector('.cvV105ExerciseOpen > .exerciseMedia .photo');
     return !img || (img.complete && img.naturalWidth>0);
   },null,{timeout:5000}).catch(()=>{});
   fs.mkdirSync('artifacts',{recursive:true});
