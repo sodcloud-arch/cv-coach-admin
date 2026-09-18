@@ -342,7 +342,12 @@
   },true);
 
   document.addEventListener('click',event=>{
-    if(event.target?.closest?.('.cvSetCheck'))setTimeout(()=>schedulePersist(20),220);
+    if(event.target?.closest?.('.cvSetCheck')){
+      setTimeout(()=>{
+        persistNow();
+        schedulePersist(40);
+      },260);
+    }
   },true);
 
   window.addEventListener('pagehide',()=>{if(active())persistNow()});
