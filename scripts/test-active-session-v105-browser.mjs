@@ -118,8 +118,17 @@ try{
   assert.equal(prestart.ctaVisible,true);
 
   const startButton=page.locator('.cvWorkoutStartV40');
+  await page.evaluate(async()=>{try{if(document.fonts?.ready)await document.fonts.ready}catch(_){}});
   await startButton.evaluate(el=>el.scrollIntoView({block:'center',inline:'nearest'}));
-  await page.waitForTimeout(80);
+  await page.waitForTimeout(180);
+  await startButton.evaluate(el=>{
+    const header=document.querySelector('header.top');
+    const hr=header?.getBoundingClientRect();
+    const r=el.getBoundingClientRect();
+    const safeTop=(hr?.bottom||0)+18;
+    if(r.top<safeTop)window.scrollBy({top:r.top-safeTop,behavior:'instant'});
+  });
+  await page.waitForTimeout(120);
   const startHit=await startButton.evaluate(el=>{
     const r=el.getBoundingClientRect();
     const x=r.left+r.width/2;
@@ -134,6 +143,7 @@ try{
       hitTag:hit?.tagName||''
     };
   });
+  console.log('CV_ACTIVE_START_HIT',JSON.stringify(startHit));
   assert.equal(startHit.clickable,true,'Start CTA center must be physically clickable and not covered by sticky UI');
   assert.ok(startHit.top>=0&&startHit.bottom<=startHit.viewport,'Start CTA must be fully inside the usable viewport before tap');
   await startButton.click({timeout:5000});
