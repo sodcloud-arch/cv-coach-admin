@@ -198,10 +198,10 @@
         border:1px solid #37434a;background:#091015;color:#cbd4d8;
       }
       .cvSessionRecoveredV107{
-        position:fixed;z-index:405;left:50%;top:calc(78px + env(safe-area-inset-top));transform:translateX(-50%);
-        width:min(480px,calc(100% - 24px));padding:9px 12px;border:1px solid rgba(82,227,161,.34);
-        border-radius:12px;background:rgba(7,24,16,.96);color:#89efb9;text-align:center;
-        font-size:8.5px;font-weight:900;letter-spacing:.055em;box-shadow:0 15px 38px rgba(0,0,0,.45);
+        position:relative;z-index:30;width:calc(100% - 20px);margin:8px auto 0;padding:9px 12px;
+        border:1px solid rgba(82,227,161,.34);border-radius:12px;
+        background:rgba(7,24,16,.96);color:#89efb9;text-align:center;
+        font-size:8.5px;font-weight:900;letter-spacing:.055em;box-shadow:0 10px 26px rgba(0,0,0,.32);
       }
       @media(min-width:700px){
         .cvSessionRecoveryV107Backdrop{align-items:center}
@@ -220,7 +220,9 @@
     const el=document.createElement('div');
     el.className='cvSessionRecoveredV107';
     el.textContent=`SESIÓN RECUPERADA · ${snapshot.done}/${snapshot.total} SERIES CONSERVADAS`;
-    document.body.appendChild(el);
+    const anchor=document.querySelector('.workoutTop');
+    if(anchor?.parentElement)anchor.after(el);
+    else document.body.appendChild(el);
     setTimeout(()=>el.remove(),3200);
   }
 
