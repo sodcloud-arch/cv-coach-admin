@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-011 — Profesionales.
+WEB-012 — FAQ + contacto.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -363,3 +363,26 @@ Estado: COMPLETADO / RESULTADOS + TESTIMONIOS STRUCTURE v1 PREPARADO EN SHOPIFY 
 
 ### Dependencia siguiente
 WEB-011 debe preparar Profesionales como entrada B2B secundaria para coaches y nutricionistas, sin competir con la propuesta B2C principal ni afirmar capacidades comerciales aún no habilitadas.
+
+
+## WEB-011 — Cierre
+
+Estado: COMPLETADO / PROFESIONALES v1 PREPARADO EN SHOPIFY DEV.
+
+### Implementado
+- Entrada B2B secundaria C.V. for Professionals.
+- Líneas futuras C.V. for Coaches y C.V. for Nutritionists.
+- Arquitectura multi-tenant explícita: Organization / Professional / Client.
+- White-label presentado únicamente como capacidad futura.
+- Estado comercial visible: expansión futura, aún no a la venta.
+- Regla B2C primero y prohibición de vender funciones inexistentes.
+- CTA de interés hacia contacto sin contratación automática.
+
+### QA verificado
+- Página Profesionales permanece `isPublished=false`, template `cv-professionals`.
+- Mensajería B2B no compite con la jerarquía B2C principal.
+- No se presentan capacidades futuras como funciones activas.
+- Theme de trabajo UNPUBLISHED estable y homepage congelada sin cambios.
+
+### Dependencia siguiente
+WEB-012 debe completar FAQ + Contacto: objeciones principales, navegación hacia soluciones, formulario real, estados de éxito/error y rutas claras hacia soporte/comienza hoy.
