@@ -1320,7 +1320,7 @@ begin
     'rank_progress_pct',round(v_rank_progress,1),'pillar_xp',v_pillars,
     'rank_reached_at',(select rh.reached_at from public.client_rank_history rh where rh.client_id=v_client and rh.class_id=v_rank.id limit 1)
   );
-end;$function$
+end;$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_client_rank_dashboard_v61(p_actor_id uuid, p_client_id uuid DEFAULT NULL::uuid)
@@ -1363,7 +1363,7 @@ declare v_client uuid:=coalesce(p_client_id,p_actor_id);v_organization uuid;v_pr
     'global_position',v_global,'global_total',v_total,'league_position',v_league,'alias',coalesce(v_profile.competitive_alias,private.cv_alias_v61(v_client)),
     'rank_protected_until',v_profile.rank_protected_until,'legend_since',v_profile.legend_since,
     'tutorial',private.cv_tutorial_status_v61(v_client));
-end;$function$
+end;$function$;
 
 
 comment on function private.calculate_cv_score_core_in_org(uuid,uuid,date,text) is
