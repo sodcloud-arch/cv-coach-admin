@@ -113,6 +113,10 @@ try{
   await page.locator('#cvSessionRecoveryResumeV107').click();
   await page.waitForFunction(()=>document.body.classList.contains('cvWorkoutActiveV40'),null,{timeout:7000});
   await page.waitForFunction(()=>document.querySelectorAll('.cvSetRow.done').length===3,null,{timeout:5000});
+  await page.waitForFunction(()=>{
+    const title=document.querySelector('.cvV105ExerciseOpen .exerciseTop h3')?.textContent||'';
+    return /Peso muerto rumano/i.test(title);
+  },null,{timeout:5000});
 
   const restored=await page.evaluate(()=>({
     done:document.querySelectorAll('.cvSetRow.done').length,
