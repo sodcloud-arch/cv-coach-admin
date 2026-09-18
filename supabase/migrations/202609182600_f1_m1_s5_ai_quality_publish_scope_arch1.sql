@@ -1,5 +1,33 @@
 -- ARCH-1.0 · F1.M1.S5 Wave G1B3B — AI / Quality / Publish tenant scope
 
+create or replace function private.inject_ai_generation_schedule_preferences()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_schedule jsonb;
+begin
+  select jsonb_build_object(
+    'training_days_per_week',s.training_days_per_week,
+    'session_minutes',s.session_minutes,
+    'source',s.source
+  )
+  into v_schedule
+  from private.get_client_training_schedule_in_org(
+    new.organization_id,new.client_id
+  ) s;
+
+  new.input_snapshot:=coalesce(new.input_snapshot,'{}'::jsonb)
+    ||jsonb_build_object(
+      'organization_id',new.organization_id,
+      'schedule_preferences',coalesce(v_schedule,'{}'::jsonb)
+    );
+  return new;
+end;
+$function$;
+
 alter table public.ai_program_generations
   drop constraint if exists ai_program_generations_idempotency_key_key;
 drop index if exists public.ai_program_generations_idempotency_key_key;
