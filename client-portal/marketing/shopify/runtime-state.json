@@ -37,71 +37,108 @@
         "template": "cv-training",
         "published": false,
         "build": "v1",
-        "status": "built-qa-pending"
+        "status": "built-v1-qa"
       },
       "nutrition": {
         "id": "gid://shopify/Page/137331605737",
         "template": "cv-nutrition",
         "published": false,
         "build": "v1",
-        "status": "built-qa-pending"
+        "status": "built-v1-qa"
       },
       "integrated": {
         "id": "gid://shopify/Page/137331638505",
         "template": "cv-integrated",
         "published": false,
         "build": "v1",
-        "status": "built-qa-pending"
+        "status": "built-v1-qa"
       },
       "about": {
         "id": "gid://shopify/Page/137331671273",
         "template": "cv-about",
         "published": false,
         "build": "v1",
-        "status": "built-qa-pending"
+        "status": "built-v1-qa"
       },
       "plans": {
         "id": "gid://shopify/Page/137331704041",
         "template": "cv-plans",
         "published": false,
         "build": "v1",
-        "status": "built-qa-pending"
+        "status": "built-v1-qa"
       },
       "how": {
         "id": "gid://shopify/Page/137331736809",
         "template": "cv-how",
         "published": false,
         "build": "v1",
-        "status": "built-qa-pending"
+        "status": "built-v1-qa"
       },
       "results": {
         "id": "gid://shopify/Page/137331769577",
         "template": "cv-results",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-v1-qa"
       },
       "professionals": {
         "id": "gid://shopify/Page/137331802345",
         "template": "cv-professionals",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-v1-qa"
       },
       "faq": {
         "id": "gid://shopify/Page/137331835113",
         "template": "cv-faq",
-        "published": false
+        "published": false,
+        "build": "v1",
+        "status": "built-v1-qa"
       },
       "start": {
         "id": "gid://shopify/Page/137331867881",
         "template": "cv-start",
         "published": false,
         "build": "v1",
-        "status": "built-qa-pending"
+        "status": "built-v1-qa"
+      },
+      "contact": {
+        "id": "gid://shopify/Page/137334030569",
+        "path": "/pages/cv-contact",
+        "template": "cv-contact",
+        "published": false,
+        "build": "v1",
+        "status": "isolated-draft-built-v1-qa"
       }
     },
     "contact": {
-      "path": "/pages/contact",
-      "theme_template": "contact",
-      "status": "dev-theme-built",
+      "path": "/pages/cv-contact",
+      "page_id": "gid://shopify/Page/137334030569",
+      "template": "cv-contact",
+      "status": "isolated-draft-built-v1-qa",
+      "legacy_contact_page_id": "gid://shopify/Page/136838152425",
+      "legacy_contact_path": "/pages/contact",
       "production_page_untouched": true
+    },
+    "legal": {
+      "privacy": {
+        "id": "gid://shopify/Page/137333899497",
+        "path": "/pages/cv-privacidad",
+        "published": false,
+        "status": "draft-legal-review-required"
+      },
+      "terms": {
+        "id": "gid://shopify/Page/137333932265",
+        "path": "/pages/cv-terminos",
+        "published": false,
+        "status": "draft-legal-review-required"
+      },
+      "cookies": {
+        "id": "gid://shopify/Page/137333965033",
+        "path": "/pages/cv-cookies",
+        "published": false,
+        "status": "draft-legal-review-required"
+      }
     }
   },
   "theme_files_added": [
@@ -146,12 +183,50 @@
     "sections/cv-blog-index.liquid",
     "templates/blog.cv.json",
     "sections/cv-article-page.liquid",
-    "templates/article.cv.json"
+    "templates/article.cv.json",
+    "templates/page.cv-contact.json",
+    "assets/cv-faq-v1.css",
+    "sections/cv-faq-page.liquid",
+    "assets/cv-results-v1.css",
+    "sections/cv-results-page.liquid",
+    "assets/cv-professionals-v1.css",
+    "sections/cv-professionals-page.liquid",
+    "assets/cv-legal-v1.css",
+    "sections/cv-legal-page.liquid",
+    "templates/page.cv-privacy.json",
+    "templates/page.cv-terms.json",
+    "templates/page.cv-cookies.json",
+    "assets/cv-consent-v1.css",
+    "assets/cv-consent-v1.js",
+    "sections/cv-cookie-consent.liquid",
+    "assets/cv-analytics-bridge-v1.js",
+    "assets/cv-404-v1.css",
+    "sections/cv-404-page.liquid",
+    "templates/404.json",
+    "assets/cv-contact-v1.js"
   ],
   "safety": {
     "main_theme_modified": false,
     "pages_published": false,
     "default_navigation_modified": false,
     "production_published": false
-  }
+  },
+  "integration": {
+    "contact_isolated": true,
+    "custom_404": true,
+    "menus_isolated": true,
+    "blog_ready": true,
+    "contact_form_real_shopify": true,
+    "app_login_bridge": "https://cv-coach-roan.vercel.app/",
+    "products_created": false,
+    "checkout_activated": false,
+    "external_trackers_activated": false
+  },
+  "production_blockers": [
+    "legal_human_review",
+    "pricing_products_checkout_approval",
+    "payment_activation_approval",
+    "domain_dns_launch_configuration",
+    "final_visual_acceptance"
+  ]
 }
