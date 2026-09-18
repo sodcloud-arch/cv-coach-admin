@@ -191,7 +191,7 @@ begin
   );
 
   insert into public.ai_program_generations(organization_id,program_id,client_id,coach_id,scope,target_day_number,status,engine_version,idempotency_key,input_snapshot)
-  values(v_program.id,p_client_id,p_actor_id,p_scope,p_target_day_number,'prepared','cv-coach-ai-program-v85',v_key,v_context)
+  values(v_organization,v_program.id,p_client_id,p_actor_id,p_scope,p_target_day_number,'prepared','cv-coach-ai-program-v85',v_key,v_context)
   returning * into v_generation;
 
   return jsonb_build_object('generation_id',v_generation.id,'program_id',v_generation.program_id,'client_id',v_generation.client_id,'scope',v_generation.scope,'target_day_number',v_generation.target_day_number,'status',v_generation.status,'engine_version',v_generation.engine_version,'context',v_generation.input_snapshot);
