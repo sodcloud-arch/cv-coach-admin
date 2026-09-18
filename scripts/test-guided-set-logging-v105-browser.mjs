@@ -68,6 +68,14 @@ try{
   assert.equal(initial.imageVisible,true,'Current exercise image must be visible automatically in demo');
   assert.equal(initial.executionButtonVisible,false,'Current exercise must not require VER EJECUCIÓN');
 
+  await page.waitForFunction(()=>{
+    const img=document.querySelector('.cvV105ExerciseOpen:visible > .exerciseMedia .photo');
+    return !img || (img.complete && img.naturalWidth>0);
+  },null,{timeout:5000}).catch(()=>{});
+  fs.mkdirSync('artifacts',{recursive:true});
+  await page.screenshot({path:'artifacts/v105-mobile-current.png',fullPage:false});
+  console.log('CV_V105_SCREENSHOT_WRITTEN artifacts/v105-mobile-current.png');
+
   const weight=page.locator('.cvSetRow.cvV105Next input[id^="cvw_"]:visible').first();
   const reps=page.locator('.cvSetRow.cvV105Next input[id^="cvr_"]:visible').first();
   await weight.focus();
@@ -85,12 +93,6 @@ try{
   assert.equal(modalOpen,false,'V105 logging flow must remain inline');
   assert.equal(errors.length,0,'Browser errors: '+errors.join(' | '));
 
-  fs.mkdirSync('artifacts',{recursive:true});
-  const currentCard=page.locator('.cvV105ExerciseOpen:visible').first();
-  await currentCard.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(250);
-  await page.screenshot({path:'artifacts/v105-mobile-current.png',fullPage:false});
-  console.log('CV_V105_SCREENSHOT_WRITTEN artifacts/v105-mobile-current.png');
   console.log('CV_GUIDED_SET_LOGGING_V105_BROWSER_OK',JSON.stringify(initial));
 }finally{
   await context.close().catch(()=>{});
