@@ -49,26 +49,60 @@ a{color:inherit;text-decoration:none}
 }
 
 .real-cards{padding:14px 38px 24px;background:#050505;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;border-top:1px solid rgba(255,255,255,.10)}
-.cv-card{--accent:#fff;position:relative;min-height:530px;border:1px solid var(--accent);border-radius:4px;background:
-  radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--accent) 8%,transparent),transparent 34%),
-  linear-gradient(180deg,#061017 0%,#020405 62%,#050505 100%);overflow:hidden;box-shadow:0 0 24px color-mix(in srgb,var(--accent) 6%,transparent)}
-.cv-card .photo{height:190px;background:var(--photo) center/cover no-repeat;position:relative}
-.cv-card .photo:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,#050505 100%)}
-.card-head{text-align:center;margin-top:-8px;position:relative;z-index:2;padding:0 18px}
-.card-head img{width:78px;margin:0 auto 0;filter:drop-shadow(0 0 10px rgba(255,255,255,.08))}
-.card-head h3{margin:-2px 0 8px;font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif;font-size:31px;letter-spacing:.015em;line-height:.95;text-transform:uppercase;color:#f3f3f3;text-shadow:0 2px 8px rgba(0,0,0,.65)}
-.card-head .tagline{font-size:11px;line-height:1.45;letter-spacing:.16em;text-transform:uppercase;color:#f0f0f0}
-.feature-list{list-style:none;margin:22px 26px 0;padding:0;display:grid;gap:17px}
-.feature-list li{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:12px;color:#eee;font-size:13px}
-.feature-list svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.8}
-.card-cta{position:absolute;left:42px;right:42px;bottom:18px;height:44px;border:1px solid var(--accent);border-radius:5px;
-display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
-box-shadow:0 0 18px color-mix(in srgb,var(--accent) 38%,transparent), inset 0 0 14px color-mix(in srgb,var(--accent) 8%,transparent)}
-.card-cta .arrow{position:absolute;right:46px;font-size:20px;font-weight:400}
+.cv-card{--accent:#fff;position:relative;min-height:552px;border:1px solid var(--accent);border-radius:4px;background:
+  radial-gradient(circle at 50% 39%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 36%),
+  linear-gradient(180deg,#061017 0%,#020405 60%,#050505 100%);overflow:hidden;box-shadow:0 0 26px color-mix(in srgb,var(--accent) 8%,transparent)}
+.cv-card .photo{height:214px;background:var(--photo) center 18%/cover no-repeat;position:relative;transform:scale(1.018);transform-origin:center top}
+.cv-card .photo:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 48%,rgba(5,5,5,.18) 66%,#050505 100%)}
+.card-head{text-align:center;margin-top:-13px;position:relative;z-index:2;padding:0 18px}
+.card-head img{width:84px;margin:0 auto -1px;filter:drop-shadow(0 0 12px rgba(255,255,255,.10))}
+.card-head h3{margin:-2px 0 7px;font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif;font-size:35px;letter-spacing:.012em;line-height:.92;text-transform:uppercase;color:#f4f4f4;text-shadow:0 2px 9px rgba(0,0,0,.72)}
+.card-head .tagline{font-size:11px;line-height:1.40;letter-spacing:.17em;text-transform:uppercase;color:#f0f0f0}
+.feature-list{list-style:none;margin:20px 28px 0;padding:0;display:grid;gap:16px}
+.feature-list li{display:grid;grid-template-columns:36px 1fr;align-items:center;gap:14px;color:#f0f0f0;font-size:13px}
+.feature-list svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:1.75}
+.card-cta{position:absolute;left:42px;right:42px;bottom:17px;height:45px;border:1px solid var(--accent);border-radius:5px;
+display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:850;letter-spacing:.035em;text-transform:uppercase;
+box-shadow:0 0 23px color-mix(in srgb,var(--accent) 46%,transparent), inset 0 0 18px color-mix(in srgb,var(--accent) 11%,transparent)}
+.card-cta .arrow{position:absolute;right:44px;font-size:20px;font-weight:400}
 .cv-card.training{--accent:#00b4ff;--photo:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-training-clean-top.jpg?v=1789722615')}
 .cv-card.nutrition{--accent:#00e676;--photo:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-nutrition-clean-top.jpg?v=1789722620')}
-.cv-card.integrated{--accent:#ffc629;--photo:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-integrated-clean-top.jpg?v=1789722625')}
-@media(max-width:760px){.real-cards{grid-template-columns:1fr;padding:16px}.cv-card{min-height:530px}}
+.cv-card.integrated{--accent:#ffd033;--photo:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-card-integrated-clean-top.jpg?v=1789722625')}
+@media(max-width:760px){.real-cards{grid-template-columns:1fr;padding:16px}.cv-card{min-height:552px}}
+
+
+.real-pillars{
+  display:grid;grid-template-columns:repeat(5,1fr);align-items:center;
+  min-height:116px;padding:18px 42px 16px;background:#050505;
+  border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.08)
+}
+.pillar{text-align:center;position:relative}
+.pillar:not(:last-child):after{content:"";position:absolute;right:0;top:9px;bottom:9px;width:1px;background:rgba(255,255,255,.06)}
+.pillar svg{width:34px;height:34px;stroke:var(--red);fill:none;stroke-width:1.9;margin-bottom:7px}
+.pillar strong{display:block;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:#f5f5f5}
+.pillar span{display:block;margin-top:5px;font-size:10px;letter-spacing:.23em;text-transform:uppercase;color:#c7c7c7}
+.real-metrics{
+  display:grid;grid-template-columns:repeat(4,1fr) 1.28fr;align-items:center;
+  min-height:118px;padding:14px 46px;background:linear-gradient(180deg,#050505,#070707);
+  border-bottom:1px solid rgba(255,255,255,.08)
+}
+.metric{padding:0 28px;min-height:58px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid rgba(255,255,255,.17)}
+.metric:first-child{padding-left:0}
+.metric .value{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1;color:#fff}
+.metric .label{margin-top:7px;font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:#bdbdbd}
+.metric .value.placeholder{color:#8d8d8d}
+.metric-note{padding-left:36px;text-align:center}
+.metric-note blockquote{margin:0;font-size:11px;line-height:1.65;letter-spacing:.26em;text-transform:uppercase;color:#cfcfcf}
+.metric-note small{display:block;margin-top:8px;font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#777}
+@media(max-width:760px){
+  .real-pillars{grid-template-columns:repeat(2,1fr);gap:22px 0;padding:26px 16px}
+  .pillar:nth-child(5){grid-column:1/-1}
+  .pillar:not(:last-child):after{display:none}
+  .real-metrics{grid-template-columns:repeat(2,1fr);gap:0;padding:18px 16px}
+  .metric{padding:16px;border-bottom:1px solid rgba(255,255,255,.10)}
+  .metric:nth-child(even){border-right:0}
+  .metric-note{grid-column:1/-1;padding:24px 0 6px}
+}
 
 </style>
 </head>
@@ -147,13 +181,38 @@ box-shadow:0 0 18px color-mix(in srgb,var(--accent) 38%,transparent), inset 0 0 
       </article>
     </section>
 
-    <section class="slice" id="pilares" aria-label="Pilares C.V.">
-      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-pillars-slice-exact.png?v=1789720281" alt="Entrenamiento, Nutrición, Bienestar, Progreso y Libertad">
+    <section class="real-pillars" id="pilares" aria-label="Pilares C.V.">
+      <div class="pillar">
+        <svg viewBox="0 0 24 24"><path d="M3 10v4m3-7v10m3-8v6m6-6v6m3-8v10m3-7v4M9 12h6"/></svg>
+        <strong>Entrenamiento</strong><span>Más fuerza</span>
+      </div>
+      <div class="pillar">
+        <svg viewBox="0 0 24 24"><path d="M12 7c-2-4-7-3-8 2-1 7 4 11 8 11s9-4 8-11c-1-5-6-6-8-2Zm0 0c0-3 2-5 5-5"/></svg>
+        <strong>Nutrición</strong><span>Más energía</span>
+      </div>
+      <div class="pillar">
+        <svg viewBox="0 0 24 24"><path d="M9 4a4 4 0 0 0-4 4v1a4 4 0 0 0-2 3.5A4.5 4.5 0 0 0 7.5 17H9m6-13a4 4 0 0 1 4 4v1a4 4 0 0 1 2 3.5A4.5 4.5 0 0 1 16.5 17H15M9 6v12m6-12v12M9 12h6"/></svg>
+        <strong>Bienestar</strong><span>Más claridad</span>
+      </div>
+      <div class="pillar">
+        <svg viewBox="0 0 24 24"><path d="M4 20V13h3v7m3 0V9h3v11m3 0V4h3v16"/></svg>
+        <strong>Progreso</strong><span>Más resultados</span>
+      </div>
+      <div class="pillar">
+        <svg viewBox="0 0 24 24"><path d="m12 2 3 6 6 .8-4.5 4.2 1.2 6-5.7-3.2L6.3 19l1.2-6L3 8.8 9 8l3-6Z"/></svg>
+        <strong>Libertad</strong><span>Más vida</span>
+      </div>
     </section>
 
-    <section class="slice" id="metricas" aria-label="Métricas de referencia visual">
-      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-metrics-slice-exact.png?v=1789720287" alt="Métricas visuales C.V.">
-      <p class="sr-only">Las cifras visibles son parte de la referencia visual y no se publicarán como datos reales sin validación.</p>
+    <section class="real-metrics" id="metricas" aria-label="Métricas C.V.">
+      <div class="metric"><span class="value placeholder">—</span><span class="label">Clientes activos</span></div>
+      <div class="metric"><span class="value placeholder">—</span><span class="label">Entrenamientos registrados</span></div>
+      <div class="metric"><span class="value placeholder">—</span><span class="label">Adherencia</span></div>
+      <div class="metric"><span class="value placeholder">—</span><span class="label">Satisfacción</span></div>
+      <div class="metric-note">
+        <blockquote>“Disciplina transforma realidades”</blockquote>
+        <small>Datos reales al publicar</small>
+      </div>
     </section>
 
   </div>
