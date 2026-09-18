@@ -123,8 +123,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-015",
-  "last_completed": "WEB-014",
+  "current_mission": "WEB-016",
+  "last_completed": "WEB-015",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
