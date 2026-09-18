@@ -24,6 +24,8 @@ required = [
     "can_view_client_in_org(organization_id,client_id)",
     "can_manage_client_in_org(organization_id,client_id)",
     "private.is_org_member(organization_id)",
+    "uq_client_habits_active_org",
+    "nutrition_targets_one_active_per_org_client",
 ]
 
 missing = [token for token in required if token not in sql]
@@ -34,6 +36,8 @@ for legacy in (
     "private.can_view_client(client_habits.client_id)",
     "private.can_manage_client(nutrition_targets.client_id)",
     "private.can_manage_client(meal_logs.client_id)",
+    "create unique index uq_client_habits_active on public.client_habits(client_id,habit_id)",
+    "create unique index nutrition_targets_one_active_per_client on public.nutrition_targets(client_id)",
 ):
     if legacy in sql:
         raise SystemExit("Legacy global RLS reintroduced: " + legacy)
