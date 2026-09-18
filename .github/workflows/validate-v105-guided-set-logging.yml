@@ -9,6 +9,7 @@ on:
       - 'scripts/build-client-canonical.sh'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
       - 'scripts/test-active-session-v105-browser.mjs'
+      - 'scripts/test-demo-post-workout-v105-browser.mjs'
       - '.github/workflows/validate-v105-guided-set-logging.yml'
   push:
     branches: [main, 'feat/v105-guided-set-logging']
@@ -18,6 +19,7 @@ on:
       - 'scripts/build-client-canonical.sh'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
       - 'scripts/test-active-session-v105-browser.mjs'
+      - 'scripts/test-demo-post-workout-v105-browser.mjs'
       - '.github/workflows/validate-v105-guided-set-logging.yml'
 
 permissions:
@@ -102,5 +104,41 @@ jobs:
         with:
           name: v105-active-session-visual
           path: artifacts/v105-active-session/*.png
+          if-no-files-found: warn
+          retention-days: 3
+
+
+  validate-post-workout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build canonical client through V105
+        run: bash scripts/build-client-canonical.sh
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve built client
+        shell: bash
+        run: |
+          python3 -m http.server 4175 --directory client-portal/stable >/tmp/cv105-finish-http.log 2>&1 &
+          echo $! > /tmp/cv105-finish-http.pid
+          sleep 1
+
+      - name: Execute demo post-workout behavior
+        env:
+          CV_TEST_URL: http://127.0.0.1:4175
+        run: node scripts/test-demo-post-workout-v105-browser.mjs
+
+      - name: Upload post-workout screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v105-post-workout-visual
+          path: artifacts/v105-post-workout/*.png
           if-no-files-found: warn
           retention-days: 3
