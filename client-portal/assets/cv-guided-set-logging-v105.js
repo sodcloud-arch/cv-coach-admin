@@ -314,6 +314,7 @@
     if(!rows.length)return;
 
     const current=rows.find(row=>!row.classList.contains('done'))||null;
+    const exerciseName=card.querySelector('.exerciseTop h3')?.textContent?.trim()||card.getAttribute('data-tech-name')||'';
     rows.forEach((row,index)=>{
       row.classList.toggle('cvV105Next',row===current);
       row.dataset.cvV105='1';
@@ -328,8 +329,16 @@
         reps.dataset.cvV105='1';
         if(!reps.getAttribute('aria-label'))reps.setAttribute('aria-label',`Repeticiones o tiempo de la serie ${label}`);
       }
-      if(check&&!check.getAttribute('aria-label')){
-        check.setAttribute('aria-label',row.classList.contains('done')?`Serie ${label} completada`:`Completar serie ${label}`);
+      if(check){
+        const done=row.classList.contains('done')||check.classList.contains('done');
+        check.setAttribute('aria-pressed',done?'true':'false');
+        const suffix=exerciseName?` de ${exerciseName}`:'';
+        if(done){
+          check.setAttribute('aria-label',`Serie ${label} completada${suffix}`);
+        }else{
+          const existing=check.getAttribute('aria-label')||'';
+          if(!existing||/completada/i.test(existing))check.setAttribute('aria-label',`Completar serie ${label}${suffix}`);
+        }
       }
     });
 
@@ -340,7 +349,7 @@
     scheduled=false;
     injectStyle();
     document.body?.classList.add('cvGuidedSetLoggingV105');
-    document.documentElement?.setAttribute('data-cv-guided-set-logging','105.3');
+    document.documentElement?.setAttribute('data-cv-guided-set-logging','105.4');
 
     const cards=[...document.querySelectorAll('.cvHevyExercise,.workoutExercise')].filter(isVisible);
     cards.forEach(decorateExercise);
@@ -415,6 +424,6 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enable,{once:true});
   else enable();
 
-  window.CVGuidedSetLoggingV105={version:VERSION,revision:'105.3',ready:true,refresh:schedule,marker:READY};
+  window.CVGuidedSetLoggingV105={version:VERSION,revision:'105.4',ready:true,refresh:schedule,marker:READY};
   console.info(READY,VERSION);
 })();
