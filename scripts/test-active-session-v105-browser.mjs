@@ -55,9 +55,14 @@ async function completeCurrentSet(){
   }
 
   const check=row.locator('.cvSetCheck');
+  const rowAnchorId=(await reps.count())?await reps.getAttribute('id'):await weight.getAttribute('id');
   await check.click();
-  await page.waitForFunction(el=>el?.classList.contains('done'),await row.elementHandle(),{timeout:4000});
-  await page.waitForFunction(el=>el?.getAttribute('aria-pressed')==='true',await check.elementHandle(),{timeout:4000});
+  await page.waitForFunction(id=>{
+    const anchor=id?document.getElementById(id):null;
+    const liveRow=anchor?.closest('.cvSetRow');
+    const liveCheck=liveRow?.querySelector('.cvSetCheck');
+    return !!liveRow?.classList.contains('done')&&liveCheck?.getAttribute('aria-pressed')==='true';
+  },rowAnchorId,{timeout:4000});
 
   const rest=page.locator('#cvRestVisualV32');
   await rest.waitFor({state:'visible',timeout:4000});
