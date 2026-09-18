@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-006 — Planes + conversión.
+WEB-007 — Cómo funciona + App bridge.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -251,3 +251,28 @@ Estado: COMPLETADO / C.V. INTEGRATED v1 PREPARADO EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-006 debe completar Planes + conversión: comparador claro, selector de ruta, modelo híbrido, estados de CTA y preparación técnica para productos/checkout sin activar cobros ni inventar precios.
+
+
+## WEB-006 — Cierre
+
+Estado: COMPLETADO / PLANES + CONVERSIÓN v1 PREPARADOS EN SHOPIFY DEV.
+
+### Implementado
+- Comparador Training / Nutrition / Integrated con identidad de color por solución.
+- CTAs separados: elegir ruta y ver detalles.
+- Selector C.V. con preselección por query `route`, estado `aria-pressed` y resultado `aria-live`.
+- Modelo híbrido documentado en interfaz: compra directa para componentes estandarizables y evaluación previa para servicios personalizados/premium.
+- Flujo posterior: elegir → confirmar modalidad → onboarding/C.V. Coach.
+- Sin checkout activo; arquitectura preparada para conectarlo cuando existan precios/productos aprobados.
+- Focus visible y consideración prefers-reduced-motion.
+
+### QA verificado
+- Planes y Comienza hoy permanecen `isPublished=false` con templates correctos.
+- Theme de trabajo sigue UNPUBLISHED, estable y sin processing failure.
+- Selector contiene las tres rutas y soporta prefill por URL.
+- No existen llamadas activas a checkout, cart/add, productId o variantId en el selector.
+- Sin precios, métricas o claims inventados.
+- Homepage congelada sin cambios en checksums.
+
+### Dependencia siguiente
+WEB-007 debe auditar Cómo funciona y reforzar el puente Shopify → C.V. Coach, separando con claridad educación/conversión de ejecución/autenticación.
