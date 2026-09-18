@@ -56,6 +56,14 @@ try{
     };
   });
 
+  await page.waitForFunction(()=>{
+    const img=document.querySelector('.cvV105ExerciseOpen:visible > .exerciseMedia .photo');
+    return !img || (img.complete && img.naturalWidth>0);
+  },null,{timeout:5000}).catch(()=>{});
+  fs.mkdirSync('artifacts',{recursive:true});
+  await page.screenshot({path:'artifacts/v105-mobile-current.png',fullPage:false});
+  console.log('CV_V105_SCREENSHOT_WRITTEN artifacts/v105-mobile-current.png');
+
   assert.equal(initial.htmlVersion,'105.2');
   assert.equal(initial.bodyClass,true);
   assert.equal(initial.hasHint,false,'V105.2 removes redundant logging hint');
@@ -71,14 +79,6 @@ try{
   assert.equal(initial.executionButtonVisible,false,'Current exercise must not require VER EJECUCIÓN');
   assert.equal(initial.detailsSeparated,true,'VER DETALLES must be visually separated from exercise title');
   assert.ok(initial.mediaHeight<=212,'Current exercise media should be compact enough to keep series visible');
-
-  await page.waitForFunction(()=>{
-    const img=document.querySelector('.cvV105ExerciseOpen:visible > .exerciseMedia .photo');
-    return !img || (img.complete && img.naturalWidth>0);
-  },null,{timeout:5000}).catch(()=>{});
-  fs.mkdirSync('artifacts',{recursive:true});
-  await page.screenshot({path:'artifacts/v105-mobile-current.png',fullPage:false});
-  console.log('CV_V105_SCREENSHOT_WRITTEN artifacts/v105-mobile-current.png');
 
   const weight=page.locator('.cvSetRow.cvV105Next input[id^="cvw_"]:visible').first();
   const reps=page.locator('.cvSetRow.cvV105Next input[id^="cvr_"]:visible').first();
