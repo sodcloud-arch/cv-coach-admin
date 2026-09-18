@@ -16,8 +16,7 @@ alter table public.coach_client_notes
 -- ---------------------------------------------------------------------------
 
 update public.coach_clients cc
-set organization_id=x.organization_id
-from lateral (
+set organization_id=(
   select a.organization_id
   from public.coach_profiles cp
   join public.clients c
@@ -38,7 +37,7 @@ from lateral (
     (a.status='active'::public.client_coach_assignment_status) desc,
     a.assigned_at desc
   limit 1
-) x
+)
 where cc.organization_id is null;
 
 update public.client_invites i
