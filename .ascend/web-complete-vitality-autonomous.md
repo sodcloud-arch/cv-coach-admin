@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-012 — FAQ + contacto.
+WEB-013 — Legales + cookies.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -386,3 +386,24 @@ Estado: COMPLETADO / PROFESIONALES v1 PREPARADO EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-012 debe completar FAQ + Contacto: objeciones principales, navegación hacia soluciones, formulario real, estados de éxito/error y rutas claras hacia soporte/comienza hoy.
+
+
+## WEB-012 — Cierre
+
+Estado: COMPLETADO / FAQ + CONTACTO v1 PREPARADOS EN SHOPIFY DEV.
+
+### Implementado
+- FAQ especializada por categorías: General, Soluciones, Contratación, C.V. Coach, Resultados y Seguridad.
+- Respuestas explícitas sobre modelo híbrido, módulos disponibles, ausencia de garantías y límites médicos.
+- Contacto C.V. utiliza formulario Shopify real con estados de éxito/error.
+- Rutas rápidas a Comienza hoy, FAQ y acceso C.V. Coach.
+- Prefill seguro de asunto por query `topic` para interés profesional y líneas C.V.
+
+### QA verificado
+- FAQ permanece `isPublished=false`, template `cv-faq`.
+- Formulario de contacto usa `{% form 'contact' %}` con email/mensaje requeridos.
+- Página Contacto legacy de Compra Útil no fue modificada: conserva updatedAt 2026-09-11 y contenido original; solo el template del theme C.V. UNPUBLISHED presenta la experiencia C.V.
+- Theme de trabajo UNPUBLISHED estable y homepage congelada sin cambios.
+
+### Dependencia siguiente
+WEB-013 debe preparar borradores de Privacidad, Términos y Cookies y una arquitectura de consentimiento. Revisión humana/legal será obligatoria antes de publicación o aceptación contractual.
