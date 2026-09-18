@@ -97,3 +97,36 @@ Profesionales — coaches y nutricionistas. Tendrán una entrada secundaria y ar
 
 ### Decisión
 A — B2C principal + profesionales como entrada secundaria.
+
+
+## Regla de decisión autónoma aprobada
+
+Cuando existan varias opciones razonables y una recomendación técnica/estratégica clara, ASCEND seguirá automáticamente la recomendación sin pedir confirmación intermedia.
+
+El usuario revisará el resultado completo al final y podrá solicitar cambios.
+
+ASCEND solo debe escalar antes de ejecutar cuando:
+- la acción sea irreversible o de alto impacto;
+- implique producción, dinero real, pagos o contratos;
+- requiera credenciales, aceptación legal o intervención humana obligatoria;
+- afecte datos reales de clientes;
+- toque recursos compartidos/protegidos fuera del scope WEB;
+- exista una decisión de marca sin una opción claramente superior;
+- pueda degradar una funcionalidad ya aprobada y no exista rollback seguro.
+
+En decisiones ordinarias de arquitectura, UX, conversión, contenido estructural, responsive, SEO técnico, navegación, jerarquía, componentes y organización de Shopify, ASCEND debe elegir la alternativa recomendada, implementarla, revisarla y continuar.
+
+
+## Flujo de conversión aprobado
+
+### Decisión
+C — Modelo híbrido.
+
+### Regla
+- Productos/planes estándar que puedan automatizarse: compra directa mediante Shopify.
+- Servicios personalizados o premium que requieran evaluación profesional: evaluación previa, luego contratación.
+- C.V. Integrated premium puede mantener evaluación previa mientras exista intervención humana relevante.
+- El sistema debe quedar preparado para convertir progresivamente flujos premium a compra directa sin rehacer la arquitectura.
+
+### Objetivo
+Maximizar automatización y conversión sin eliminar revisión humana donde aporte seguridad, personalización o control de calidad.
