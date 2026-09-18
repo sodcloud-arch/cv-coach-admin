@@ -102,13 +102,19 @@ try{
       title:modal.querySelector('.cvResultHero h2')?.textContent?.trim()||'',
       metrics,
       bodyHome:!document.body.classList.contains('cvWorkoutActiveV40'),
-      resultVisible:modal.offsetWidth>0&&modal.offsetHeight>0
+      resultVisible:modal.offsetWidth>0&&modal.offsetHeight>0,
+      heroEy:modal.querySelector('.cvResultHero .ey')?.textContent?.trim()||'',
+      heroSub:modal.querySelector('.cvResultHero .sub')?.textContent?.replace(/\s+/g,' ').trim()||'',
+      fullText:modal.textContent?.replace(/\s+/g,' ').trim()||''
     };
   });
 
   assert.equal(result.resultVisible,true);
   assert.match(result.notice,/RESULTADOS SIMULADOS/i);
   assert.match(result.title,/ENTRENAMIENTO COMPLETADO/i);
+  assert.match(result.heroEy,/RESUMEN DEMO/i);
+  assert.match(result.heroSub,/no se registraron métricas reales/i);
+  assert.doesNotMatch(result.fullText,/PROGRESO REGISTRADO/i);
   assert.ok(result.metrics.some(x=>/Finalización\s*100%/i.test(x)),'Summary must show 100% completion');
   const volumeMetric=result.metrics.find(x=>/Volumen/i.test(x))||'';
   const volumeDigits=Number((volumeMetric.match(/[\d.,]+/)?.[0]||'0').replace(/[^\d]/g,''));
