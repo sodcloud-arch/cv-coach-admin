@@ -172,8 +172,8 @@ begin
     return jsonb_build_object('generation_id',v_generation.id,'program_id',v_generation.program_id,'client_id',v_generation.client_id,'scope',v_generation.scope,'target_day_number',v_generation.target_day_number,'status',v_generation.status,'engine_version',v_generation.engine_version,'context',v_generation.input_snapshot);
   end if;
 
-  select coalesce(jsonb_object_agg(r.question_key,r.response_value),'{}'::jsonb) into v_onboarding from public.onboarding_responses r where r.client_id=p_client_id;
-  select coalesce(to_jsonb(w),'{}'::jsonb) into v_weekly from (select wc.* from public.weekly_checkins wc where wc.client_id=p_client_id order by wc.submitted_at desc limit 1) w;
+  select coalesce(jsonb_object_agg(r.question_key,r.response_value),'{}'::jsonb) into v_onboarding from public.onboarding_responses r where r.organization_id=v_organization and r.client_id=p_client_id;
+  select coalesce(to_jsonb(w),'{}'::jsonb) into v_weekly from (select wc.* from public.weekly_checkins wc where wc.organization_id=v_organization and wc.client_id=p_client_id order by wc.submitted_at desc limit 1) w;
   select coalesce(to_jsonb(cp),'{}'::jsonb) into v_client_profile from public.client_profiles cp where cp.organization_id=v_organization and cp.client_id=p_client_id;
   select coalesce(to_jsonb(t),'{}'::jsonb) into v_time_learning from private.get_client_time_learning_in_org(v_organization,p_client_id) t;
   select coalesce(jsonb_agg(jsonb_build_object('constraint_code',c.constraint_code,'label',cat.label,'region',cat.region,'action',c.action,'note',c.note)),'[]'::jsonb)
@@ -206,8 +206,8 @@ begin
   v_context:=jsonb_build_object(
     'client_profile',coalesce(v_client_profile,'{}'::jsonb),
     'onboarding',coalesce(v_onboarding,'{}'::jsonb),
-    'training_preferences',coalesce((select to_jsonb(tp) from public.client_training_preferences tp where tp.client_id=p_client_id),'{}'::jsonb),
-    'schedule_preferences',coalesce((select to_jsonb(sp) from public.client_training_schedule_preferences sp where sp.client_id=p_client_id),'{}'::jsonb),
+    'training_preferences',coalesce((select to_jsonb(tp) from public.client_training_preferences tp where tp.organization_id=v_organization and tp.client_id=p_client_id),'{}'::jsonb),
+    'schedule_preferences',coalesce((select to_jsonb(sp) from public.client_training_schedule_preferences sp where sp.organization_id=v_organization and sp.client_id=p_client_id),'{}'::jsonb),
     'training_constraints',coalesce(v_constraints,'[]'::jsonb),
     'time_learning',coalesce(v_time_learning,'{}'::jsonb),
     'exercise_mechanical_exposures',coalesce(v_exposures,'[]'::jsonb),
