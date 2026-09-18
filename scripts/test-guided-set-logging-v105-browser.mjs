@@ -34,7 +34,35 @@ try{
     document.body.classList.contains('cvFastWorkout')&&
     document.body.classList.contains('cvGuidedSetLoggingV105')
   ),null,{timeout:10000});
-  await page.waitForSelector('.cvWorkoutStartV40',{state:'visible',timeout:10000});
+  try{
+    await page.waitForFunction(()=>{
+      const b=document.querySelector('.cvWorkoutStartV40');
+      if(!b)return false;
+      const r=b.getBoundingClientRect();
+      const s=getComputedStyle(b);
+      return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)>0;
+    },null,{timeout:30000});
+  }catch(error){
+    const diagnostic=await page.evaluate(()=>{
+      const b=document.querySelector('.cvWorkoutStartV40');
+      const r=b?.getBoundingClientRect();
+      const s=b?getComputedStyle(b):null;
+      return {
+        bodyClass:document.body.className,
+        hasStart:!!b,
+        startText:b?.textContent?.trim()||'',
+        startRect:r?{x:r.x,y:r.y,width:r.width,height:r.height}:null,
+        startDisplay:s?.display||null,
+        startVisibility:s?.visibility||null,
+        startOpacity:s?.opacity||null,
+        setRows:document.querySelectorAll('.cvSetRow').length,
+        visibleRows:[...document.querySelectorAll('.cvSetRow')].filter(row=>row.offsetWidth>0&&row.offsetHeight>0).length,
+        appHidden:document.getElementById('app')?.classList.contains('hidden')??null
+      };
+    });
+    console.error('CV_V105_WEBKIT_START_DIAGNOSTIC',JSON.stringify(diagnostic));
+    throw error;
+  }
 
   const initial=await page.evaluate(()=>{
     const row=[...document.querySelectorAll('.cvSetRow.cvV105Next')].find(el=>el.offsetWidth>0&&el.offsetHeight>0);
