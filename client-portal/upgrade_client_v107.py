@@ -17,6 +17,19 @@ subprocess.run(['node','--check',str(ASSET)],check=True)
 asset=ASSET.read_text(encoding='utf-8').strip()
 text=HTML.read_text(encoding='utf-8')
 
+# V107 hardens the legacy V35 title-wrapper against V103 ownership.
+# V35 used to assume the h3 remained a direct child of .grow. Once V103
+# wraps that title, insertBefore(row,title) can throw repeatedly from its
+# MutationObserver. Do not mutate if a newer layer already owns the title.
+legacy_v35="grow.insertBefore(row,title);row.appendChild(title);"
+safe_v35="if(title.parentNode!==grow)return;grow.insertBefore(row,title);row.appendChild(title);"
+if legacy_v35 in text:
+    text=text.replace(legacy_v35,safe_v35)
+if legacy_v35 in text:
+    raise SystemExit('V107 failed to harden legacy V35 title insertion')
+if safe_v35 not in text:
+    raise SystemExit('V107 safe V35 title insertion contract missing')
+
 text=re.sub(rf'\s*{re.escape(START)}.*?{re.escape(END)}\s*','\n',text,flags=re.S)
 text=text.replace(MARKER,'')
 
