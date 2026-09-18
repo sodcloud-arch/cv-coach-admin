@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "supabase/migrations/202609182830_ascend_autopilot_lifecycle_watchdog_v06.sql"
+      - "supabase/functions/ascend-gateway/index.ts"
       - "scripts/test-ascend-autopilot-lifecycle-v06.py"
       - ".github/workflows/validate-ascend-autopilot-lifecycle-v06.yml"
   workflow_dispatch:
