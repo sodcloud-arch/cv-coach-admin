@@ -12,12 +12,18 @@
   let observer=null;
 
   function safeContext(){
-    let currentMode='real',currentWorkout=null,currentUser=null;
-    try{if(typeof mode!=='undefined')currentMode=mode}catch(_){}
-    try{if(typeof workout!=='undefined')currentWorkout=workout}catch(_){}
-    try{if(typeof user!=='undefined')currentUser=user}catch(_){}
-    if(!currentMode)currentMode=document.querySelector('#modeBadge .demoBadge,.demoBadge')?'demo':'real';
-    return {mode:currentMode,workout:currentWorkout,user:currentUser};
+    try{
+      const bridged=window.CVWorkoutContextV107?.();
+      if(bridged){
+        return {
+          mode:bridged.mode||'real',
+          workout:bridged.workout||null,
+          user:bridged.user||null
+        };
+      }
+    }catch(_){}
+    const fallbackMode=document.querySelector('#modeBadge .demoBadge,.demoBadge')?'demo':'real';
+    return {mode:fallbackMode,workout:null,user:null};
   }
 
   function visible(el){
