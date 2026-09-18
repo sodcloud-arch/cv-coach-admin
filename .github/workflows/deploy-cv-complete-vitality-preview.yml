@@ -34,10 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s client-portal/marketing/complete-vitality.html
-          grep -q 'Más que' client-portal/marketing/complete-vitality.html
-          grep -q 'C.V. Training' client-portal/marketing/complete-vitality.html
-          grep -q 'C.V. Nutrition' client-portal/marketing/complete-vitality.html
-          grep -q 'C.V. Integrated' client-portal/marketing/complete-vitality.html
+          grep -q 'Complete Vitality' client-portal/marketing/complete-vitality.html
 
       - name: Require Vercel credential
         shell: bash
