@@ -1,0 +1,101 @@
+name: C.V. Complete Vitality Landing Preview
+
+on:
+  push:
+    branches:
+      - feat/complete-vitality-landing-v1
+    paths:
+      - 'client-portal/marketing/**'
+      - '.github/workflows/deploy-cv-complete-vitality-preview.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: cv-complete-vitality-preview
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_pD5aAwrw2qpbPgoEarWhxcKF
+      VERCEL_PROJECT_ID: prj_PmFZQqN9tVEAUgKH8ekcnOoSgNOL
+      VERCEL_CLI_VERSION: 59.13.1
+    steps:
+      - name: Checkout landing branch
+        uses: actions/checkout@v4
+
+      - name: Validate landing artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s client-portal/marketing/complete-vitality.html
+          grep -q 'Más que' client-portal/marketing/complete-vitality.html
+          grep -q 'C.V. Training' client-portal/marketing/complete-vitality.html
+          grep -q 'C.V. Nutrition' client-portal/marketing/complete-vitality.html
+          grep -q 'C.V. Integrated' client-portal/marketing/complete-vitality.html
+          grep -q 'A Higher Standard' client-portal/marketing/complete-vitality.html
+
+      - name: Require Vercel credential
+        shell: bash
+        run: |
+          test -n "${VERCEL_TOKEN:-}" || { echo 'VERCEL_TOKEN_MISSING' >&2; exit 1; }
+
+      - name: Build isolated preview artifact
+        working-directory: client-portal/marketing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel/output/static
+          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > .vercel/project.json
+          cp complete-vitality.html .vercel/output/static/index.html
+          cat > .vercel/output/config.json <<'JSON'
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/",
+                "dest": "/index.html",
+                "headers": {
+                  "Cache-Control": "no-store",
+                  "X-Content-Type-Options": "nosniff",
+                  "X-Frame-Options": "DENY",
+                  "Referrer-Policy": "strict-origin-when-cross-origin",
+                  "X-Robots-Tag": "noindex, nofollow"
+                }
+              },
+              {"handle": "filesystem"},
+              {"src": "/(.*)", "dest": "/index.html"}
+            ]
+          }
+          JSON
+
+      - name: Deploy isolated Vercel preview
+        id: deploy
+        working-directory: client-portal/marketing
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="$(npx --yes vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --token="$VERCEL_TOKEN")"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "CV_COMPLETE_VITALITY_PREVIEW_URL=$url"
+
+      - name: Smoke test preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="${{ steps.deploy.outputs.url }}"
+          for attempt in 1 2 3 4 5 6; do
+            body="$(curl --fail --silent --show-error --location --max-time 20 "$url" || true)"
+            if [[ "$body" == *"C.V. Complete Vitality"* && "$body" == *"C.V. Training"* && "$body" == *"C.V. Nutrition"* && "$body" == *"C.V. Integrated"* ]]; then
+              echo 'CV_COMPLETE_VITALITY_PREVIEW_OK'
+              exit 0
+            fi
+            sleep 3
+          done
+          echo 'Preview smoke test failed' >&2
+          exit 1
