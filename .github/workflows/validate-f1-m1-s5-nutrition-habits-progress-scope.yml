@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 Nutrition Habits Progress Scope
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609181900_f1_m1_s5_nutrition_habits_progress_scope_arch1.sql"
+      - "scripts/test-f1-m1-s5-nutrition-habits-progress-scope.py"
+      - ".github/workflows/validate-f1-m1-s5-nutrition-habits-progress-scope.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nutrition-habits-progress-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate tenant scope
+        run: python scripts/test-f1-m1-s5-nutrition-habits-progress-scope.py
