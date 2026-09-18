@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 Client Consumer Hardening
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609181830_f1_m1_s5_client_consumer_hardening_arch1.sql"
+      - "scripts/test-f1-m1-s5-client-consumer-hardening.py"
+      - ".github/workflows/validate-f1-m1-s5-client-consumer-hardening.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  client-consumer-hardening:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate client consumer tenant hardening
+        run: python scripts/test-f1-m1-s5-client-consumer-hardening.py
