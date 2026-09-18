@@ -27,7 +27,7 @@ async function startDemo(){
   await page.waitForFunction(()=>!document.getElementById('app')?.classList.contains('hidden'),null,{timeout:5000});
   await page.evaluate(async()=>{if(typeof window.openDay==='function')await window.openDay('d1')});
   await page.waitForSelector('.cvWorkoutStartV40',{state:'visible',timeout:7000});
-  await page.locator('.cvWorkoutStartV40').click();
+  await page.evaluate(()=>document.querySelector('.cvWorkoutStartV40')?.click());
   await page.waitForFunction(()=>document.body.classList.contains('cvWorkoutActiveV40'),null,{timeout:5000});
 }
 
