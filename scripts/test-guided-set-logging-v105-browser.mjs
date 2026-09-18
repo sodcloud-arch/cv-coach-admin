@@ -50,13 +50,15 @@ try{
       repsFont:r?getComputedStyle(r).fontSize:'',
       mediaVisible:!!row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia') && (()=>{const m=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia');const s=getComputedStyle(m);return m.offsetWidth>0&&m.offsetHeight>0&&s.display!=='none'})(),
       imageVisible:(()=>{const img=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia .photo');return !!img&&img.offsetWidth>0&&img.offsetHeight>0&&getComputedStyle(img).display!=='none'})(),
-      executionButtonVisible:(()=>{const b=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector('.cvExecutionBtnV35');return !!b&&b.offsetWidth>0&&b.offsetHeight>0&&getComputedStyle(b).display!=='none'})()
+      executionButtonVisible:(()=>{const b=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector('.cvExecutionBtnV35');return !!b&&b.offsetWidth>0&&b.offsetHeight>0&&getComputedStyle(b).display!=='none'})(),
+      detailsSeparated:(()=>{const card=row.closest('.cvHevyExercise,.workoutExercise');const title=card?.querySelector('.cvDetailsTitleRowV103 h3,.cvExerciseTitleRowV35 h3');const details=card?.querySelector('.cvDetailsLinkV103');if(!title||!details)return false;const tr=title.getBoundingClientRect(),dr=details.getBoundingClientRect();return dr.top>=tr.bottom-2})(),
+      mediaHeight:(()=>{const m=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia');return m?m.getBoundingClientRect().height:0})()
     };
   });
 
-  assert.equal(initial.htmlVersion,'105.1');
+  assert.equal(initial.htmlVersion,'105.2');
   assert.equal(initial.bodyClass,true);
-  assert.equal(initial.hasHint,true);
+  assert.equal(initial.hasHint,false,'V105.2 removes redundant logging hint');
   assert.match(initial.weightId,/^cvw_/);
   assert.match(initial.repsId,/^cvr_/);
   assert.match(initial.weightLabel,/Peso.*serie/i);
@@ -67,6 +69,8 @@ try{
   assert.equal(initial.mediaVisible,true,'Current exercise media must be visible automatically');
   assert.equal(initial.imageVisible,true,'Current exercise image must be visible automatically in demo');
   assert.equal(initial.executionButtonVisible,false,'Current exercise must not require VER EJECUCIÓN');
+  assert.equal(initial.detailsSeparated,true,'VER DETALLES must be visually separated from exercise title');
+  assert.ok(initial.mediaHeight<=210,'Current exercise media should be compact enough to keep series visible');
 
   await page.waitForFunction(()=>{
     const img=document.querySelector('.cvV105ExerciseOpen:visible > .exerciseMedia .photo');
