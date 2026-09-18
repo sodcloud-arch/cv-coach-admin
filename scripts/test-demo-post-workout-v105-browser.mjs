@@ -110,7 +110,9 @@ try{
   assert.match(result.notice,/RESULTADOS SIMULADOS/i);
   assert.match(result.title,/ENTRENAMIENTO COMPLETADO/i);
   assert.ok(result.metrics.some(x=>/Finalización\s*100%/i.test(x)),'Summary must show 100% completion');
-  assert.ok(result.metrics.some(x=>/Volumen\s*2\.400 kg/i.test(x)||/Volumen\s*2400 kg/i.test(x)),'Summary must show demo volume');
+  const volumeMetric=result.metrics.find(x=>/Volumen/i.test(x))||'';
+  const volumeDigits=Number((volumeMetric.match(/[\d.,]+/)?.[0]||'0').replace(/[^\d]/g,''));
+  assert.equal(volumeDigits,2400,'Summary must show 2400 kg demo volume');
   assert.equal(result.bodyHome,true,'Demo should return to home behind the result summary');
   assert.equal(writeRequests.length,0,'Demo finalization must not issue Supabase write requests: '+JSON.stringify(writeRequests));
   assert.equal(errors.length,0,'Browser errors: '+errors.join(' | '));
