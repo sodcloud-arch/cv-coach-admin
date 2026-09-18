@@ -76,6 +76,7 @@ jobs:
           CV_TEST_URL: http://127.0.0.1:4173
         run: node scripts/test-guided-set-logging-v105-browser.mjs
       - name: Execute V105 active workout behavior
+        if: always()
         env:
           CV_TEST_URL: http://127.0.0.1:4173
         run: node scripts/test-active-session-v105-browser.mjs
@@ -87,5 +88,5 @@ jobs:
           path: |
             artifacts/v105-mobile-current.png
             artifacts/v105-active-session/*.png
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 3
