@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 Weekly Tenant Compatibility
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609181640_f1_m1_s5_weekly_checkin_tenant_compat_fix.sql"
+      - "scripts/test-f1-m1-s5-weekly-checkin-tenant-compat.py"
+      - ".github/workflows/validate-f1-m1-s5-weekly-checkin-tenant-compat.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  weekly-tenant-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate weekly tenant compatibility
+        run: python scripts/test-f1-m1-s5-weekly-checkin-tenant-compat.py
