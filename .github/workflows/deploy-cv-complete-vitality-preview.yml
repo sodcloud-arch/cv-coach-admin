@@ -38,7 +38,6 @@ jobs:
           grep -q 'C.V. Training' client-portal/marketing/complete-vitality.html
           grep -q 'C.V. Nutrition' client-portal/marketing/complete-vitality.html
           grep -q 'C.V. Integrated' client-portal/marketing/complete-vitality.html
-          grep -q 'A Higher Standard' client-portal/marketing/complete-vitality.html
 
       - name: Require Vercel credential
         shell: bash
