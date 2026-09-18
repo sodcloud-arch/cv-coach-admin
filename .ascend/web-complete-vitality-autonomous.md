@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-003 — C.V. Training.
+WEB-004 — C.V. Nutrition.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -176,3 +176,29 @@ Estado: COMPLETADO / ARQUITECTURA SHOPIFY PREPARADA.
 
 ### Siguiente dependencia
 WEB-003 debe desarrollar C.V. Training usando la estructura preparada y conservar el baseline WEB-001.
+
+
+## WEB-003 — Cierre
+
+Estado: COMPLETADO / C.V. TRAINING v1 PREPARADO EN SHOPIFY DEV.
+
+### Implementado
+- Hero propio con identidad azul C.V. Training.
+- Problema → propuesta → personalización → rutina → ejercicios → progresión → seguimiento.
+- Integración visual y narrativa con C.V. Coach.
+- Sección ¿Para quién es?.
+- FAQ específica.
+- CTA final + comparación de soluciones.
+- Responsive desktop/mobile con refinamiento específico para 390 px.
+- Focus visible y consideración prefers-reduced-motion.
+
+### QA verificado
+- Theme CV Coach — V3 Refinada: UNPUBLISHED, estable, processing=false, processingFailed=false.
+- Página Training: isPublished=false, template cv-training.
+- Sin precios publicados.
+- Sin métricas inventadas.
+- Checksums de cv-home.liquid y cv-complete-vitality-home.css sin cambios durante WEB-003.
+- Sin modificaciones en APP, Supabase, auth, admin o theme publicado.
+
+### Dependencia siguiente
+WEB-004 debe auditar y completar C.V. Nutrition con identidad verde, recorrido propio y el mismo estándar de conversión/QA.
