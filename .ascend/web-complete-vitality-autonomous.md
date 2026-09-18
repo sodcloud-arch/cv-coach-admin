@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-014 — SEO + analytics readiness.
+WEB-015 — Shopify full integration.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -432,3 +432,26 @@ Antes de publicar/aceptar estas políticas deben completarse entidad responsable
 
 ### Dependencia siguiente
 WEB-014 debe preparar SEO técnico, metadatos, canonical/OpenGraph/schema y un puente de analytics respetuoso del consentimiento, sin activar trackers externos.
+
+
+## WEB-014 — Cierre
+
+Estado: COMPLETADO / SEO + ANALYTICS READINESS PREPARADO EN SHOPIFY DEV.
+
+### Implementado
+- Meta title/description con descripciones específicas para rutas C.V. principales.
+- Canonical URL.
+- OpenGraph y Twitter metadata.
+- Schema.org WebSite y BlogPosting condicional para artículos publicados.
+- Puente `CVAnalytics` local, sin transmisión externa, condicionado a consentimiento analytics.
+- Cola de eventos local y hooks `data-cv-track` en navegación global.
+- Integración con evento `cv:consentchange`.
+
+### QA verificado
+- No existen trackers externos activos (Google/Meta/Clarity/Hotjar/etc.).
+- Analytics no registra eventos si no existe consentimiento analytics.
+- Canonical, OG, Twitter y schema presentes en layout/article.
+- Theme de trabajo sigue UNPUBLISHED y homepage congelada sin cambios visuales de sus archivos.
+
+### Dependencia siguiente
+WEB-015 debe consolidar integración Shopify: aislamiento de rutas C.V., navegación, contacto, 404, formularios, blog, app bridge y mapa de dependencias de productos/checkout que permanecerán bloqueados hasta precios/pagos aprobados.
