@@ -468,7 +468,7 @@
         xp_earned:metrics.completion>=85?60:metrics.completion>=40?30:10,
         credits_earned:metrics.completion>=85?5:0,
         missions_completed:metrics.completion>=85?1:0,
-        achievements_unlocked:metrics.completion>=85?[{title:'Sesión demo completada',rarity:'demo'}]:[],
+        achievements_unlocked:metrics.completion>=85?[{title:'Sesión demo completada'}]:[],
         personal_records:[],
         level_up:false,
         current_level:1
@@ -477,11 +477,20 @@
         window.cvShowWorkoutResult(result);
         requestAnimationFrame(()=>{
           const card=document.querySelector('#cvWorkoutResultModal .cvWorkoutResultCard');
-          if(card&&!card.querySelector('.cvV105DemoNotice')){
-            const notice=document.createElement('div');
-            notice.className='cvV105DemoNotice';
-            notice.textContent='DEMO · RESULTADOS SIMULADOS · NO SE GUARDÓ INFORMACIÓN';
-            card.prepend(notice);
+          if(card){
+            if(!card.querySelector('.cvV105DemoNotice')){
+              const notice=document.createElement('div');
+              notice.className='cvV105DemoNotice';
+              notice.textContent='DEMO · RESULTADOS SIMULADOS · NO SE GUARDÓ INFORMACIÓN';
+              card.prepend(notice);
+            }
+            const heroEy=card.querySelector('.cvResultHero .ey');
+            const heroSub=card.querySelector('.cvResultHero .sub');
+            if(heroEy)heroEy.textContent='RESUMEN DEMO';
+            if(heroSub)heroSub.textContent='Resultado simulado del cierre de sesión. En DEMO no se registraron métricas reales.';
+            const directHints=[...card.querySelectorAll(':scope > .hint')];
+            const footer=directHints[directHints.length-1];
+            if(footer)footer.textContent='En DEMO no se guardan métricas, progresión, XP, créditos ni recomendaciones reales.';
           }
         });
       }
