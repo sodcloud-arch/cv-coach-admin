@@ -221,7 +221,7 @@
     el.className='cvSessionRecoveredV107';
     el.textContent=`SESIÓN RECUPERADA · ${snapshot.done}/${snapshot.total} SERIES CONSERVADAS`;
     const anchor=document.querySelector('.workoutTop');
-    if(anchor?.parentElement)anchor.after(el);
+    if(anchor)anchor.appendChild(el);
     else document.body.appendChild(el);
     setTimeout(()=>el.remove(),3200);
   }
