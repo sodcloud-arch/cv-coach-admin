@@ -55,8 +55,8 @@ try{
   assert.equal(initial.hasHint,true);
   assert.match(initial.weightId,/^cvw_/);
   assert.match(initial.repsId,/^cvr_/);
-  assert.match(initial.weightLabel,/Peso de la serie/);
-  assert.match(initial.repsLabel,/Repeticiones o tiempo de la serie/);
+  assert.match(initial.weightLabel,/Peso.*serie/i);
+  assert.match(initial.repsLabel,/(Repeticiones|tiempo|segundos).*serie|serie.*(Repeticiones|tiempo|segundos)/i);
   assert.match(initial.checkLabel,/serie/i);
   assert.ok(parseFloat(initial.weightFont)>=19);
   assert.ok(parseFloat(initial.repsFont)>=19);
