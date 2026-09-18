@@ -5,6 +5,7 @@ on:
     paths:
       - "supabase/migrations/202609180900_f1_m1_s4_client_coach_assignments_arch1.sql"
       - "supabase/migrations/202609180910_f1_m1_s4_cv_coach_assignment_backfill_arch1.sql"
+      - "supabase/migrations/202609180920_f1_m1_s4_assigned_client_visibility_arch1.sql"
       - "scripts/test-f1-m1-s4-client-coach-assignments.py"
       - ".github/workflows/validate-f1-m1-s4-client-coach-assignments.yml"
   workflow_dispatch:
