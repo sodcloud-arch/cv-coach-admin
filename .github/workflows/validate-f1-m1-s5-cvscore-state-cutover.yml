@@ -1,0 +1,22 @@
+name: Validate F1.M1.S5 CV Score State Cutover
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609182130_f1_m1_s5_cvscore_state_cutover_arch1.sql"
+      - "scripts/test-f1-m1-s5-cvscore-state-cutover.py"
+      - ".github/workflows/validate-f1-m1-s5-cvscore-state-cutover.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cvscore-state-cutover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m1-s5-cvscore-state-cutover.py
