@@ -24,7 +24,7 @@ context_bridge="window.CVWorkoutContextV107=()=>({mode,user,view,data,workout});
 if context_bridge not in text:
     if context_decl not in text:
         raise SystemExit('V107 workout context declaration missing')
-    text=text.replace(context_decl,context_decl+"\\n"+context_bridge,1)
+    text=text.replace(context_decl,context_decl+"\n"+context_bridge,1)
 if context_bridge not in text:
     raise SystemExit('V107 workout context bridge injection failed')
 
