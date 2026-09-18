@@ -79,3 +79,21 @@ Cuando WEB-001 cumpla los criterios:
 - congelar Mobile v1;
 - abrir siguiente misión WEB solo desde esta rama;
 - escalar al usuario únicamente decisiones de marca, negocio o bloqueos compartidos.
+
+
+## Estrategia comercial web aprobada
+
+### Público principal
+B2C — personas que buscan mejorar entrenamiento, nutrición, bienestar y progreso mediante C.V. Complete Vitality.
+
+### Público secundario
+Profesionales — coaches y nutricionistas. Tendrán una entrada secundaria y arquitectura preparada para futura expansión B2B, sin competir visualmente con la propuesta B2C principal.
+
+### Regla de jerarquía
+- Homepage, navegación principal y CTAs priorizan B2C.
+- Profesionales se accede desde contenido secundario y/o footer.
+- No introducir una navegación B2B con el mismo peso que Training / Nutrition / Integrated en esta etapa.
+- La arquitectura técnica debe quedar preparada para C.V. for Coaches y C.V. for Nutritionists sin rehacer la web.
+
+### Decisión
+A — B2C principal + profesionales como entrada secundaria.
