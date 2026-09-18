@@ -104,6 +104,9 @@ box-shadow:0 0 16px color-mix(in srgb,var(--accent) 30%,transparent), inset 0 0 
   .metric-note{grid-column:1/-1;padding:24px 0 6px}
 }
 
+
+.compare-overlay{display:none;position:absolute;z-index:9999;left:50%;top:0;transform:translateX(-50%);width:min(100vw,1440px);height:auto;pointer-events:none;mix-blend-mode:difference}
+body.compare-mode .compare-overlay{display:block}
 </style>
 </head>
 <body>
@@ -220,5 +223,9 @@ box-shadow:0 0 16px color-mix(in srgb,var(--accent) 30%,transparent), inset 0 0 
   </section>
   <section class="sr-only" id="blog"><h2>Blog C.V.</h2></section>
 </main>
+<img class="compare-overlay" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-web-master-reference-exact.png?v=1789719281" alt="" aria-hidden="true">
+<script>
+if(new URLSearchParams(location.search).get('compare')==='1'){document.body.classList.add('compare-mode');}
+</script>
 </body>
 </html>
