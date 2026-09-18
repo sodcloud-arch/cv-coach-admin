@@ -39,6 +39,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate pipeline script syntax
+        run: |
+          bash -n scripts/build-client-canonical.sh
+          node --check scripts/validate-production-v105.mjs
+
       - name: Build canonical client
         run: bash scripts/build-client-canonical.sh
 
