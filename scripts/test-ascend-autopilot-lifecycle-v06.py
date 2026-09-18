@@ -24,9 +24,11 @@ required_gateway=[
   "ascend_reconcile_chat_session",
   "continuation_instruction",
   "continuación del ciclo anterior",
+  "estado actual del proyecto en ascend core",
+  "project_context",
   "reasoning_resolution_failed",
   '.eq("current_reasoning_request_id", requestid)',
-  'version: "0.6"',
+  'version: "0.6.1"',
 ]
 missing_gateway=[x for x in required_gateway if x not in gateway]
 if missing_gateway:
