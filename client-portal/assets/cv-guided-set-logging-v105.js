@@ -87,9 +87,9 @@
         display:grid!important;
         place-items:center!important;
         width:100%!important;
-        height:min(210px,56vw)!important;
-        min-height:min(210px,56vw)!important;
-        max-height:210px!important;
+        height:min(204px,54vw)!important;
+        min-height:min(204px,54vw)!important;
+        max-height:204px!important;
         margin:8px 0 9px!important;
         padding:0!important;
         overflow:hidden!important;
@@ -193,9 +193,9 @@
       @media(max-width:390px){
         body.cvFastWorkout.cvGuidedSetLoggingV105 .cvSetRow input[data-cv-v105="1"]{font-size:19px!important}
         body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia{
-          height:min(195px,54vw)!important;
-          min-height:min(195px,54vw)!important;
-          max-height:195px!important;
+          height:min(188px,52vw)!important;
+          min-height:min(188px,52vw)!important;
+          max-height:188px!important;
         }
       }
     `;
