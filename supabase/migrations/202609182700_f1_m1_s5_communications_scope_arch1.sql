@@ -130,7 +130,7 @@ begin
   if not private.actor_can_manage_client_in_org_v1(p_actor_id,p_organization_id,p_client_id) then
     raise exception 'Not authorized to manage this client in organization';
   end if;
-  if v_phone is not null and v_phone !~ '^\\+[1-9][0-9]{7,14}$' then
+  if v_phone is not null and v_phone !~ '^\+[1-9][0-9]{7,14}$' then
     raise exception 'WhatsApp phone must be valid E.164';
   end if;
   if p_opt_in and (v_phone is null or v_source is null) then
@@ -248,7 +248,7 @@ begin
     v_status:='blocked'; v_reason:='WhatsApp consent has not been recorded.';
   elsif not v_pref.whatsapp_opt_in then
     v_status:='blocked'; v_reason:='WhatsApp opt-in is not active.';
-  elsif v_pref.whatsapp_phone_e164 is null or v_pref.whatsapp_phone_e164 !~ '^\\+[1-9][0-9]{7,14}$' then
+  elsif v_pref.whatsapp_phone_e164 is null or v_pref.whatsapp_phone_e164 !~ '^\+[1-9][0-9]{7,14}$' then
     v_status:='blocked'; v_reason:='A valid E.164 WhatsApp phone is required.';
   else
     v_status:='ready'; v_reason:=null;
