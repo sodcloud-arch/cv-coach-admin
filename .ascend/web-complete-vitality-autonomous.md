@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-005 — C.V. Integrated.
+WEB-006 — Planes + conversión.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -227,3 +227,27 @@ Estado: COMPLETADO / C.V. NUTRITION v1 PREPARADO EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-005 debe auditar y completar C.V. Integrated con identidad dorada, problema de sistemas aislados, decisiones conectadas, seguimiento conjunto, experiencia C.V. Coach y flujo premium de evaluación previa.
+
+
+## WEB-005 — Cierre
+
+Estado: COMPLETADO / C.V. INTEGRATED v1 PREPARADO EN SHOPIFY DEV.
+
+### Implementado
+- Hero propio con identidad dorada C.V. Integrated.
+- Problema de sistemas aislados → propuesta integrada → Training + Nutrition → decisiones conectadas → seguimiento conjunto.
+- Experiencia C.V. Coach presentada por módulos, sin afirmar funciones no habilitadas.
+- Flujo premium explícito: elección → evaluación previa → modalidad → onboarding.
+- FAQ específica, CTA de evaluación y comparación de soluciones.
+- Responsive desktop/mobile, focus visible y consideración prefers-reduced-motion.
+
+### QA verificado
+- Theme CV Coach — V3 Refinada: UNPUBLISHED, estable, processing=false, processingFailed=false.
+- Página Integrated: isPublished=false, template cv-integrated.
+- Todos los bloques requeridos por WEB-005 presentes en página/section.
+- Sin precios reales, métricas inventadas ni promesas de resultados.
+- Homepage congelada sin cambios en checksums de cv-home.liquid y cv-complete-vitality-home.css.
+- Sin modificaciones en APP, Supabase, auth, admin o theme publicado.
+
+### Dependencia siguiente
+WEB-006 debe completar Planes + conversión: comparador claro, selector de ruta, modelo híbrido, estados de CTA y preparación técnica para productos/checkout sin activar cobros ni inventar precios.
