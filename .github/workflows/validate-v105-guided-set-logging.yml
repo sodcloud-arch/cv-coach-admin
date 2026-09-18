@@ -1,18 +1,19 @@
 name: Validate V105 Guided Set Logging
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
-      - 'client-portal/assets/cv-guided-set-logging-v105.js'
-      - 'client-portal/upgrade_client_v105.py'
+      - 'client-portal/**/*.py'
+      - 'client-portal/assets/**'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
       - 'scripts/test-active-session-v105-browser.mjs'
       - '.github/workflows/validate-v105-guided-set-logging.yml'
   push:
     branches: [main, 'feat/v105-guided-set-logging']
     paths:
-      - 'client-portal/assets/cv-guided-set-logging-v105.js'
-      - 'client-portal/upgrade_client_v105.py'
+      - 'client-portal/**/*.py'
+      - 'client-portal/assets/**'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
       - 'scripts/test-active-session-v105-browser.mjs'
       - '.github/workflows/validate-v105-guided-set-logging.yml'
