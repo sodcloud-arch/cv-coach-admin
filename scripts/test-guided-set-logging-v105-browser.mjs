@@ -64,8 +64,12 @@ try{
     return !img || (img.complete && img.naturalWidth>0);
   },null,{timeout:5000}).catch(()=>{});
   fs.mkdirSync('artifacts',{recursive:true});
-  await page.screenshot({path:'artifacts/v105-mobile-current.png',fullPage:false});
-  console.log('CV_V105_SCREENSHOT_WRITTEN artifacts/v105-mobile-current.png');
+  try{
+    await page.screenshot({path:'artifacts/v105-mobile-current.png',fullPage:false,timeout:7000});
+    console.log('CV_V105_SCREENSHOT_WRITTEN artifacts/v105-mobile-current.png');
+  }catch(error){
+    console.warn('CV_V105_SCREENSHOT_SKIPPED',String(error?.message||error));
+  }
 
   assert.equal(initial.htmlVersion,'105.3');
   assert.equal(initial.bodyClass,true);
