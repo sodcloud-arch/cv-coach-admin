@@ -3,10 +3,11 @@ name: ASCEND WEB C.V. — Guard + Preview
 on:
   push:
     branches:
-      - autopilot/web-complete-vitality-mobile-v1
+      - autopilot/web-master-v1
     paths:
       - 'client-portal/marketing/**'
       - '.ascend/web-complete-vitality-autonomous.md'
+      - '.ascend/cv-web-master-blueprint.md'
       - '.github/workflows/ascend-web-complete-vitality.yml'
   workflow_dispatch:
 
@@ -42,7 +43,7 @@ jobs:
           while IFS= read -r path; do
             [[ -z "$path" ]] && continue
             case "$path" in
-              client-portal/marketing/*|.ascend/web-complete-vitality-autonomous.md|.github/workflows/ascend-web-complete-vitality.yml)
+              client-portal/marketing/*|.ascend/web-complete-vitality-autonomous.md|.ascend/cv-web-master-blueprint.md|.github/workflows/ascend-web-complete-vitality.yml)
                 ;;
               *)
                 echo "ASCEND_PARALLEL_LOCK_VIOLATION: $path" >&2
