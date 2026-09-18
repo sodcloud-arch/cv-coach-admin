@@ -1283,6 +1283,11 @@ begin
     v_organization:=private.resolve_legacy_client_organization_v1(v_client,null);
   else
     v_organization:=private.resolve_legacy_professional_organization_v1(p_actor_id,v_client);
+    if not private.actor_can_manage_client_in_org_v1(
+      p_actor_id,v_organization,v_client
+    ) then
+      raise exception 'actor is not assigned to this client in organization';
+    end if;
   end if;
   select * into v_state from public.client_cv_state s
   where s.organization_id=v_organization
@@ -1331,6 +1336,11 @@ declare v_client uuid:=coalesce(p_client_id,p_actor_id);v_organization uuid;v_pr
     v_organization:=private.resolve_legacy_client_organization_v1(v_client,null);
   else
     v_organization:=private.resolve_legacy_professional_organization_v1(p_actor_id,v_client);
+    if not private.actor_can_manage_client_in_org_v1(
+      p_actor_id,v_organization,v_client
+    ) then
+      raise exception 'actor is not assigned to this client in organization';
+    end if;
   end if;
   insert into public.client_competitive_rank_v61(client_id,competitive_alias) values(v_client,private.cv_alias_v61(v_client)) on conflict do nothing;
   select * into v_profile from public.client_competitive_rank_v61 where client_id=v_client;
