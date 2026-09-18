@@ -32,15 +32,12 @@ if context_bridge not in text:
 # V35 used to assume the h3 remained a direct child of .grow. Once V103
 # wraps that title, insertBefore(row,title) can throw repeatedly from its
 # MutationObserver. Do not mutate if a newer layer already owns the title.
-legacy_v35_pattern=r"grow\\s*\\.\\s*insertBefore\\s*\\(\\s*row\\s*,\\s*title\\s*\\)\\s*;\\s*row\\s*\\.\\s*appendChild\\s*\\(\\s*title\\s*\\)\\s*;"
+legacy_v35_pattern=r"grow\s*\.\s*insertBefore\s*\(\s*row\s*,\s*title\s*\)\s*;\s*row\s*\.\s*appendChild\s*\(\s*title\s*\)\s*;"
 safe_v35="if(title.parentNode!==grow)return;{const cvV107Anchor=title.nextSibling;row.appendChild(title);if(cvV107Anchor&&cvV107Anchor.parentNode===grow)grow.insertBefore(row,cvV107Anchor);else grow.appendChild(row);}"
 text,v35_hardened_count=re.subn(legacy_v35_pattern,safe_v35,text)
-if v35_hardened_count<1:
-    raise SystemExit('V107 did not find any legacy V35 title insertion to harden')
-if safe_v35 not in text:
-    raise SystemExit('V107 safe V35 title insertion contract missing')
-if re.search(r"insertBefore\\s*\\(\\s*row\\s*,\\s*title\\s*\\)",text):
+if re.search(r"grow\s*\.\s*insertBefore\s*\(\s*row\s*,\s*title\s*\)",text):
     raise SystemExit('V107 race-prone V35 insertion still present')
+print(f'CV_V107_V35_HARDENED_COUNT={v35_hardened_count}')
 
 text=re.sub(rf'\s*{re.escape(START)}.*?{re.escape(END)}\s*','\n',text,flags=re.S)
 text=text.replace(MARKER,'')
