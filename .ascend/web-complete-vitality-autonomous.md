@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-009 — Blog + artículo.
+WEB-010 — Resultados + testimonios structure.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -321,3 +321,24 @@ Estado: COMPLETADO / SOBRE C.V. v1 PREPARADO EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-009 debe consolidar C.V. Journal + template de artículo, categorías editoriales y al menos un artículo borrador revisable sin publicar contenido automáticamente.
+
+
+## WEB-009 — Cierre
+
+Estado: COMPLETADO / C.V. JOURNAL + ARTICLE TEMPLATE v1 PREPARADOS EN SHOPIFY DEV.
+
+### Implementado
+- Hub C.V. Journal con temas editoriales Training, Nutrition, Integrated, Progreso, Hábitos y Sistema C.V.
+- Estándar editorial visible: separar evidencia de opinión, no prometer resultados y actualizar contenido cuando corresponda.
+- Template de artículo con navegación de regreso y CTA hacia C.V.
+- Tres artículos en borrador: Complete Vitality, progresión medible y adherencia sostenible.
+- Comentarios cerrados en esta etapa.
+
+### QA verificado
+- Blog `cv` usa template `cv` y permanece dentro del theme de desarrollo.
+- Los 3 artículos están `isPublished=false` y usan template `cv`.
+- Ningún artículo fue publicado automáticamente.
+- Homepage congelada sin cambios en checksums.
+
+### Dependencia siguiente
+WEB-010 debe construir Resultados + testimonios como estructura segura para evidencia real, sin inventar métricas, transformaciones ni reseñas.
