@@ -348,7 +348,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes vercel@latest deploy client-portal/vercel-prebuilt \
+          cd client-portal/vercel-prebuilt
+          test -f .vercel/output/config.json
+          test -f .vercel/output/static/index.html
+          test -f .vercel/output/static/build.json
+          echo "Deploying from exact prebuilt cwd: $(pwd)"
+          npx --yes vercel@latest deploy \
             --prebuilt \
             --archive=tgz \
             --prod \
