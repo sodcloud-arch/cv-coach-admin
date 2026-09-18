@@ -37,7 +37,7 @@
       "key": "about",
       "path": "/pages/sobre-cv",
       "nav": "primary",
-      "status": "built-v1-qa-pending"
+      "status": "in-progress"
     },
     {
       "key": "blog",
@@ -55,7 +55,7 @@
       "key": "how",
       "path": "/pages/como-funciona",
       "nav": "secondary",
-      "status": "in-progress"
+      "status": "built-v1-qa"
     },
     {
       "key": "results",
@@ -105,8 +105,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-007",
-  "last_completed": "WEB-006",
+  "current_mission": "WEB-008",
+  "last_completed": "WEB-007",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
