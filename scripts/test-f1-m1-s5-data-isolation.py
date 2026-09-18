@@ -3,8 +3,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "supabase/migrations/202609181000_f1_m1_s5_canonical_data_isolation_arch1.sql"
 ROOTS = ROOT / "supabase/migrations/202609181020_f1_m1_s5_business_roots_isolation_arch1.sql"
+ROOTS_FIX = ROOT / "supabase/migrations/202609181030_f1_m1_s5_business_roots_resolver_fix_arch1.sql"
 sql = MIGRATION.read_text(encoding="utf-8").lower()
 roots = ROOTS.read_text(encoding="utf-8").lower()
+roots_fix = ROOTS_FIX.read_text(encoding="utf-8").lower()
 
 required = {
     "discipline organization column": "alter table public.coach_profile_disciplines\n  add column if not exists organization_id uuid",
@@ -145,3 +147,18 @@ print("- business roots carry explicit organization_id: PASS")
 print("- business-root policies use tenant-aware access helpers: PASS")
 print("- ambiguous multi-tenant legacy writes require explicit organization_id: PASS")
 print("- sessions/programs/alerts have same-tenant relational constraints: PASS")
+
+
+fix_required = {
+    "resolver override": "create or replace function private.resolve_legacy_client_organization_v1(",
+    "separate count": "select count(*) into v_count",
+    "single-tenant lookup": "select c.organization_id into v_organization",
+    "ambiguous deny": "legacy client belongs to multiple organizations; organization_id is required",
+}
+missing_fix = [name for name, token in fix_required.items() if token not in roots_fix]
+if missing_fix:
+    raise SystemExit("Missing F1.M1.S5 resolver hardening: " + ", ".join(missing_fix))
+
+if "min(c.organization_id)" in roots_fix:
+    raise SystemExit("UUID resolver regression: min(uuid) is not valid PostgreSQL")
+print("- resolver UUID aggregation regression covered by hardening migration: PASS")
