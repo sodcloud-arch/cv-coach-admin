@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 Risk Attention Isolation
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609181730_f1_m1_s5_risk_attention_isolation_arch1.sql"
+      - "scripts/test-f1-m1-s5-risk-attention-isolation.py"
+      - ".github/workflows/validate-f1-m1-s5-risk-attention-isolation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  risk-attention-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate Risk Attention tenant isolation
+        run: python scripts/test-f1-m1-s5-risk-attention-isolation.py
