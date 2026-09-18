@@ -1,10 +1,11 @@
-import { webkit } from 'playwright';
+import { chromium, webkit } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const base=(process.env.CV_TEST_URL||'http://127.0.0.1:4173').replace(/\/$/,'');
 const target=`${base}/?cv_v102=1&v=105&qa=active`;
-const browser=await webkit.launch();
+const engine=String(process.env.CV_BROWSER||'chromium').toLowerCase()==='webkit'?webkit:chromium;
+const browser=await engine.launch();
 const context=await browser.newContext({
   viewport:{width:390,height:844},
   isMobile:true,
