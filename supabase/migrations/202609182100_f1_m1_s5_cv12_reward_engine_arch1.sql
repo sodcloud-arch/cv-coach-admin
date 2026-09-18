@@ -1101,6 +1101,72 @@ begin
 end;
 $function$;
 
+-- ---------------------------------------------------------------------------
+-- 7) Automatic CV state refresh triggers — preserve tenant from row context
+-- ---------------------------------------------------------------------------
+
+create or replace function private.cv_state_from_xp_ledger()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_org uuid:=coalesce(new.organization_id,old.organization_id);
+  v_client uuid:=coalesce(new.client_id,old.client_id);
+begin
+  perform private.refresh_client_cv_state_in_org(
+    v_org,v_client,'xp_change'
+  );
+  return coalesce(new,old);
+end;
+$function$;
+
+create or replace function private.cv_state_from_credit_ledger()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_org uuid:=coalesce(new.organization_id,old.organization_id);
+  v_client uuid:=coalesce(new.client_id,old.client_id);
+begin
+  perform private.refresh_client_cv_state_in_org(
+    v_org,v_client,'credit_change'
+  );
+  return coalesce(new,old);
+end;
+$function$;
+
+create or replace function private.cv_state_from_score()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+begin
+  perform private.refresh_client_cv_state_in_org(
+    new.organization_id,new.client_id,'cv_score'
+  );
+  return new;
+end;
+$function$;
+
+create or replace function private.cv_state_from_client_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+begin
+  perform private.refresh_client_cv_state_in_org(
+    new.organization_id,new.client_id,'onboarding'
+  );
+  return new;
+end;
+$function$;
+
 comment on function private.award_cv12_action_in_org(
   uuid,uuid,text,uuid,date,text,integer
 ) is
