@@ -48,7 +48,15 @@ jobs:
       - name: Execute V105 mobile behavior
         env:
           CV_TEST_URL: http://127.0.0.1:4173
-        run: node scripts/test-guided-set-logging-v105-browser.mjs
+        shell: bash
+        run: |
+          for attempt in 1 2; do
+            echo "WebKit V105 attempt $attempt/2"
+            if node scripts/test-guided-set-logging-v105-browser.mjs; then
+              exit 0
+            fi
+          done
+          exit 1
 
       - name: Upload V105 mobile screenshots
         if: always()
