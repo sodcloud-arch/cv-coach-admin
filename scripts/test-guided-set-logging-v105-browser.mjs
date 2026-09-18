@@ -46,11 +46,14 @@ try{
       repsLabel:r?.getAttribute('aria-label')||'',
       checkLabel:check?.getAttribute('aria-label')||'',
       weightFont:w?getComputedStyle(w).fontSize:'',
-      repsFont:r?getComputedStyle(r).fontSize:''
+      repsFont:r?getComputedStyle(r).fontSize:'',
+      mediaVisible:!!row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia') && (()=>{const m=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia');const s=getComputedStyle(m);return m.offsetWidth>0&&m.offsetHeight>0&&s.display!=='none'})(),
+      imageVisible:(()=>{const img=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia .photo');return !!img&&img.offsetWidth>0&&img.offsetHeight>0&&getComputedStyle(img).display!=='none'})(),
+      executionButtonVisible:(()=>{const b=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector('.cvExecutionBtnV35');return !!b&&b.offsetWidth>0&&b.offsetHeight>0&&getComputedStyle(b).display!=='none'})()
     };
   });
 
-  assert.equal(initial.htmlVersion,'105');
+  assert.equal(initial.htmlVersion,'105.1');
   assert.equal(initial.bodyClass,true);
   assert.equal(initial.hasHint,true);
   assert.match(initial.weightId,/^cvw_/);
@@ -60,6 +63,9 @@ try{
   assert.match(initial.checkLabel,/serie/i);
   assert.ok(parseFloat(initial.weightFont)>=19);
   assert.ok(parseFloat(initial.repsFont)>=19);
+  assert.equal(initial.mediaVisible,true,'Current exercise media must be visible automatically');
+  assert.equal(initial.imageVisible,true,'Current exercise image must be visible automatically in demo');
+  assert.equal(initial.executionButtonVisible,false,'Current exercise must not require VER EJECUCIÓN');
 
   const weight=page.locator('.cvSetRow.cvV105Next input[id^="cvw_"]:visible').first();
   const reps=page.locator('.cvSetRow.cvV105Next input[id^="cvr_"]:visible').first();
