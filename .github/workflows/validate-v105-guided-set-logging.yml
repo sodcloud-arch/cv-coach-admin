@@ -57,6 +57,8 @@ jobs:
           python client-portal/upgrade_client_v103.py
           python client-portal/upgrade_client_v104.py
           python client-portal/upgrade_client_v105.py
+          mkdir -p client-portal/stable/assets
+          cp client-portal/assets/cv-isotipo-header-v1.webp client-portal/stable/assets/cv-isotipo-header-v1.webp
           node --check client-portal/assets/cv-guided-set-logging-v105.js
           grep -q 'CV_GUIDED_SET_LOGGING_V105_READY' client-portal/stable/index.html
           grep -q 'CV_INLINE_SET_ENTRY_V104_READY' client-portal/stable/index.html
@@ -123,6 +125,8 @@ jobs:
           python client-portal/upgrade_client_v103.py
           python client-portal/upgrade_client_v104.py
           python client-portal/upgrade_client_v105.py
+          mkdir -p client-portal/stable/assets
+          cp client-portal/assets/cv-isotipo-header-v1.webp client-portal/stable/assets/cv-isotipo-header-v1.webp
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
