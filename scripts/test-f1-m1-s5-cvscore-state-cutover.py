@@ -27,6 +27,12 @@ required=[
     "private.refresh_client_cv_state_in_org(",
     "from public.client_cv_state s where s.organization_id=v_organization and s.client_id=v_client",
     "private.actor_can_manage_client_in_org_v1(",
+    "create or replace function private.process_cv_score_automation()",
+    "private.set_coach_alert_in_org(",
+    "cm.organization_id=new.organization_id",
+    "p.organization_id=new.organization_id",
+    "nt.organization_id=new.organization_id",
+    "ch.organization_id=new.organization_id",
 ]
 
 missing=[x for x in required if x not in sql]
