@@ -112,13 +112,13 @@
       const {weight,reps,check}=rowInputs(row);
       if(weight){
         weight.dataset.cvV105='1';
-        weight.setAttribute('aria-label',`Peso de la serie ${label} en kilogramos`);
+        if(!weight.getAttribute('aria-label'))weight.setAttribute('aria-label',`Peso de la serie ${label} en kilogramos`);
       }
       if(reps){
         reps.dataset.cvV105='1';
-        reps.setAttribute('aria-label',`Repeticiones o tiempo de la serie ${label}`);
+        if(!reps.getAttribute('aria-label'))reps.setAttribute('aria-label',`Repeticiones o tiempo de la serie ${label}`);
       }
-      if(check){
+      if(check&&!check.getAttribute('aria-label')){
         check.setAttribute('aria-label',row.classList.contains('done')?`Serie ${label} completada`:`Completar serie ${label}`);
       }
     });
