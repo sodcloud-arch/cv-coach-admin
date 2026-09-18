@@ -3,7 +3,8 @@ name: Validate F1.M1.S3 Clients
 on:
   pull_request:
     paths:
-      - "supabase/migrations/202609180800_f1_m1_s3_tenant_clients_arch1.sql"
+      - "supabase/migrations/202609171900_f1_m1_s3_clients_arch1.sql"
+      - "supabase/migrations/202609171910_f1_m1_s3_cv_coach_client_backfill_arch1.sql"
       - "scripts/test-f1-m1-s3-clients.py"
       - ".github/workflows/validate-f1-m1-s3-clients.yml"
   workflow_dispatch:
