@@ -31,12 +31,17 @@ try{
   await page.waitForFunction(()=>[...document.querySelectorAll('.cvSetRow')].some(row=>row.offsetWidth>0&&row.offsetHeight>0),null,{timeout:5000});
   await page.waitForFunction(()=>document.querySelector('.cvSetRow.cvV105Next'),null,{timeout:5000});
   await page.evaluate(async()=>{try{if(document.fonts?.ready)await document.fonts.ready}catch(_){}});
+  await page.waitForFunction(()=>(
+    document.body.classList.contains('cvWorkoutPrestartV40')&&
+    document.body.classList.contains('cvFastWorkout')&&
+    document.body.classList.contains('cvGuidedSetLoggingV105')
+  ),null,{timeout:10000});
   await page.waitForFunction(()=>{
     const button=document.querySelector('.cvWorkoutStartV40');
     if(!button)return false;
     const height=button.getBoundingClientRect().height;
     return height>=42&&height<=48;
-  },null,{timeout:5000});
+  },null,{timeout:10000});
 
   const initial=await page.evaluate(()=>{
     const row=[...document.querySelectorAll('.cvSetRow.cvV105Next')].find(el=>el.offsetWidth>0&&el.offsetHeight>0);
