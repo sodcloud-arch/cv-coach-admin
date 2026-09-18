@@ -16,7 +16,7 @@ ASCEND AUTÓNOMO — WEB C.V.
 - No alterar Desktop v1 salvo corrección material verificada.
 
 ## Misión actual
-WEB-008 — Sobre C.V.
+WEB-009 — Blog + artículo.
 
 Objetivo:
 - construir la landing completa de C.V. Training sobre la arquitectura Shopify ya preparada;
@@ -299,3 +299,25 @@ Estado: COMPLETADO / CÓMO FUNCIONA + APP BRIDGE v1 PREPARADO EN SHOPIFY DEV.
 
 ### Dependencia siguiente
 WEB-008 debe completar Sobre C.V. con propósito, principios, arquitectura del ecosistema, visión de marca y CTA hacia el recorrido principal.
+
+
+## WEB-008 — Cierre
+
+Estado: COMPLETADO / SOBRE C.V. v1 PREPARADO EN SHOPIFY DEV.
+
+### Implementado
+- Hero Complete Vitality + A Higher Standard.
+- Principios: Disciplina, Progreso, Libertad e Integración.
+- Arquitectura explícita C.V. Training / Nutrition / Integrated / Coach.
+- Propósito: medir antes de asumir, automatizar sin perder criterio y construir para evolucionar.
+- Visión de marca y CTA hacia Comienza hoy / Cómo funciona.
+
+### QA verificado
+- Página Sobre C.V. permanece `isPublished=false`, template `cv-about`.
+- Theme UNPUBLISHED estable, sin processing failure.
+- Propósito, principios, arquitectura y visión presentes.
+- Estructura HTML balanceada.
+- Homepage congelada sin cambios en checksums.
+
+### Dependencia siguiente
+WEB-009 debe consolidar C.V. Journal + template de artículo, categorías editoriales y al menos un artículo borrador revisable sin publicar contenido automáticamente.
