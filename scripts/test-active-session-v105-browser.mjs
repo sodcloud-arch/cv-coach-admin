@@ -181,6 +181,10 @@ try{
     const title=document.querySelector('.cvV105ExerciseOpen .exerciseTop h3')?.textContent||'';
     return /Peso muerto rumano/i.test(title);
   },null,{timeout:5000});
+  await page.waitForFunction(()=>{
+    const img=document.querySelector('.cvV105ExerciseOpen > .exerciseMedia .photo');
+    return !!img&&img.complete&&img.naturalWidth>0;
+  },null,{timeout:8000});
 
   const transition=await page.evaluate(()=>{
     const card=document.querySelector('.cvV105ExerciseOpen');
@@ -190,10 +194,16 @@ try{
     const vh=window.visualViewport?.height||window.innerHeight;
     const first=[...document.querySelectorAll('.cvHevyExercise')][0];
     const firstComplete=first?.classList.contains('cvExerciseComplete')||false;
+    const firstTitle=first?.querySelector('.cvDetailsTitleRowV103 h3,.cvExerciseTitleRowV35 h3');
+    const firstDetails=first?.querySelector('.cvDetailsLinkV103');
+    const detailsSeparated=(()=>{if(!firstTitle||!firstDetails)return false;const tr=firstTitle.getBoundingClientRect(),dr=firstDetails.getBoundingClientRect();return dr.left>=tr.right+4||dr.top>=tr.bottom-2})(); 
+    const img=card?.querySelector(':scope>.exerciseMedia .photo');
     const compact=document.querySelector('.cvWorkoutCompactCopyV40')?.textContent?.replace(/\s+/g,' ').trim()||'';
     return {
       title,
       mediaVisible:!!media&&media.offsetWidth>0&&media.offsetHeight>0&&getComputedStyle(media).display!=='none',
+      imageLoaded:!!img&&img.complete&&img.naturalWidth>0,
+      detailsSeparated,
       top:r?.top??9999,
       bottom:r?.bottom??9999,
       vh,
@@ -203,8 +213,10 @@ try{
   });
 
   assert.match(transition.title,/Peso muerto rumano/i,'Next exercise should become current automatically');
-  assert.equal(transition.mediaVisible,true,'Next exercise image should open automatically');
+  assert.equal(transition.mediaVisible,true,'Next exercise media should open automatically');
+  assert.equal(transition.imageLoaded,true,'Next exercise image must be fully loaded');
   assert.equal(transition.firstComplete,true,'Completed exercise should be visually marked complete');
+  assert.equal(transition.detailsSeparated,true,'Completed exercise VER DETALLES must stay separated from its title');
   assert.match(transition.compact,/3\s*\/\s*15.*series/i,'Header progress must reach 3/15 after first exercise');
   assert.ok(transition.top<transition.vh-110,'Next current exercise should be brought into a usable viewport position');
 
