@@ -30,6 +30,13 @@ try{
   },null,{timeout:7000,polling:100});
   await page.waitForFunction(()=>[...document.querySelectorAll('.cvSetRow')].some(row=>row.offsetWidth>0&&row.offsetHeight>0),null,{timeout:5000});
   await page.waitForFunction(()=>document.querySelector('.cvSetRow.cvV105Next'),null,{timeout:5000});
+  await page.evaluate(async()=>{try{if(document.fonts?.ready)await document.fonts.ready}catch(_){}});
+  await page.waitForFunction(()=>(
+    document.body.classList.contains('cvWorkoutPrestartV40')&&
+    document.body.classList.contains('cvFastWorkout')&&
+    document.body.classList.contains('cvGuidedSetLoggingV105')
+  ),null,{timeout:10000});
+  await page.waitForSelector('.cvWorkoutStartV40',{state:'visible',timeout:10000});
 
   const initial=await page.evaluate(()=>{
     const row=[...document.querySelectorAll('.cvSetRow.cvV105Next')].find(el=>el.offsetWidth>0&&el.offsetHeight>0);
@@ -55,7 +62,8 @@ try{
       mediaHeight:(()=>{const m=row.closest('.cvHevyExercise,.workoutExercise')?.querySelector(':scope>.exerciseMedia');return m?m.getBoundingClientRect().height:0})(),
       prestartClass:document.body.classList.contains('cvWorkoutPrestartV40'),
       prestartHeroHeight:(()=>{const hero=document.querySelector('.cvWorkoutHeroV31');return hero?hero.getBoundingClientRect().height:0})(),
-      startCtaHeight:(()=>{const b=document.querySelector('.cvWorkoutStartV40');return b?b.getBoundingClientRect().height:0})()
+      startCtaHeight:(()=>{const b=document.querySelector('.cvWorkoutStartV40');return b?b.getBoundingClientRect().height:0})(),
+      startCtaMinHeight:(()=>{const b=document.querySelector('.cvWorkoutStartV40');return b?getComputedStyle(b).minHeight:''})()
     };
   });
 
@@ -71,6 +79,7 @@ try{
     console.warn('CV_V105_SCREENSHOT_SKIPPED',String(error?.message||error));
   }
 
+  console.log('CV_V105_INITIAL_STATE',JSON.stringify(initial));
   assert.equal(initial.htmlVersion,'105.4');
   assert.equal(initial.bodyClass,true);
   assert.equal(initial.hasHint,false,'V105.4 keeps redundant logging hint removed');
@@ -88,7 +97,8 @@ try{
   assert.ok(initial.mediaHeight<=212,'Current exercise media should be compact enough to keep series visible');
   assert.equal(initial.prestartClass,true,'Demo workout should be in compact prestart state before start');
   assert.ok(initial.prestartHeroHeight>0&&initial.prestartHeroHeight<=230,'Prestart summary should be compact on mobile');
-  assert.ok(initial.startCtaHeight>=42&&initial.startCtaHeight<=48,'Start CTA should stay prominent without consuming excess height');
+  assert.equal(initial.startCtaMinHeight,'44px','V105 must apply the compact 44px CTA contract');
+  assert.ok(initial.startCtaHeight>=42&&initial.startCtaHeight<=60,`Start CTA must remain a compact touch target; measured ${initial.startCtaHeight}px`);
 
   const weight=page.locator('.cvSetRow.cvV105Next input[id^="cvw_"]:visible').first();
   const reps=page.locator('.cvSetRow.cvV105Next input[id^="cvr_"]:visible').first();

@@ -117,7 +117,26 @@ try{
   assert.equal(prestart.heroVisible,true);
   assert.equal(prestart.ctaVisible,true);
 
-  await page.locator('.cvWorkoutStartV40').click();
+  const startButton=page.locator('.cvWorkoutStartV40');
+  await startButton.evaluate(el=>el.scrollIntoView({block:'center',inline:'nearest'}));
+  await page.waitForTimeout(80);
+  const startHit=await startButton.evaluate(el=>{
+    const r=el.getBoundingClientRect();
+    const x=r.left+r.width/2;
+    const y=r.top+r.height/2;
+    const hit=document.elementFromPoint(x,y);
+    return {
+      clickable:hit===el||el.contains(hit),
+      top:r.top,
+      bottom:r.bottom,
+      viewport:window.visualViewport?.height||window.innerHeight,
+      hitClass:hit?.className||'',
+      hitTag:hit?.tagName||''
+    };
+  });
+  assert.equal(startHit.clickable,true,'Start CTA center must be physically clickable and not covered by sticky UI');
+  assert.ok(startHit.top>=0&&startHit.bottom<=startHit.viewport,'Start CTA must be fully inside the usable viewport before tap');
+  await startButton.click({timeout:5000});
   await page.waitForFunction(()=>document.body.classList.contains('cvWorkoutActiveV40'),null,{timeout:5000});
   await page.waitForFunction(()=>!document.body.classList.contains('cvWorkoutPrestartV40'),null,{timeout:5000});
   await page.waitForSelector('.cvWorkoutCompactCopyV40',{state:'visible',timeout:5000});
