@@ -122,6 +122,27 @@
       body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen .cvExecutionBtnV35{
         display:none!important;
       }
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvHevyExercise:not(.cvV105ExerciseOpen) .cvDetailsTitleRowV103,
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvHevyExercise:not(.cvV105ExerciseOpen) .cvExerciseTitleRowV35{
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) auto!important;
+        align-items:center!important;
+        gap:8px!important;
+        width:100%!important;
+        margin:0 0 3px!important;
+      }
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvHevyExercise:not(.cvV105ExerciseOpen) .cvDetailsLinkV103{
+        justify-self:end!important;
+        min-height:24px!important;
+        padding:0 8px!important;
+        display:inline-flex!important;
+        align-items:center!important;
+        border:1px solid rgba(105,207,255,.20)!important;
+        border-radius:999px!important;
+        background:rgba(105,207,255,.045)!important;
+        text-decoration:none!important;
+        font-size:7.5px!important;
+      }
       body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen .exerciseTop{
         align-items:flex-start!important;
         gap:10px!important;
