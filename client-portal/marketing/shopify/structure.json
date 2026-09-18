@@ -19,13 +19,13 @@
       "key": "training",
       "path": "/pages/training",
       "nav": "primary",
-      "status": "built-v1-qa-pending"
+      "status": "built-v1-qa"
     },
     {
       "key": "nutrition",
       "path": "/pages/nutrition",
       "nav": "primary",
-      "status": "built-v1-qa-pending"
+      "status": "in-progress"
     },
     {
       "key": "integrated",
@@ -105,8 +105,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-003 — C.V. Training QA + refinement",
-  "last_completed": "WEB-002",
+  "current_mission": "WEB-004",
+  "last_completed": "WEB-003",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
