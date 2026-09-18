@@ -3,8 +3,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "supabase/migrations/202609180900_f1_m1_s4_client_coach_assignments_arch1.sql"
 BACKFILL = ROOT / "supabase/migrations/202609180910_f1_m1_s4_cv_coach_assignment_backfill_arch1.sql"
+HARDENING = ROOT / "supabase/migrations/202609180920_f1_m1_s4_assigned_client_visibility_arch1.sql"
+
 sql = BASE.read_text(encoding="utf-8").lower()
 backfill = BACKFILL.read_text(encoding="utf-8").lower()
+hardening = HARDENING.read_text(encoding="utf-8").lower()
 
 required = {
     "assignment roles": "create type public.client_coach_assignment_role",
@@ -47,7 +50,22 @@ missing_backfill = [name for name, token in backfill_required.items() if token n
 if missing_backfill:
     raise SystemExit("Missing F1.M1.S4 backfill contracts: " + ", ".join(missing_backfill))
 
-for source_name, source in (("base", sql), ("backfill", backfill)):
+hardening_required = {
+    "client visibility override": "function private.can_view_client_entity(target_client uuid)",
+    "active assignment gate": "from public.client_coach_assignments a",
+    "assignment status gate": "a.status='active'::public.client_coach_assignment_status",
+    "assigned coach identity": "cp.user_id=(select auth.uid())",
+    "org admin full visibility": "private.is_org_admin(c.organization_id)",
+    "client self visibility": "c.user_id=(select auth.uid())",
+}
+missing_hardening = [name for name, token in hardening_required.items() if token not in hardening]
+if missing_hardening:
+    raise SystemExit("Missing F1.M1.S4 visibility hardening: " + ", ".join(missing_hardening))
+
+if "private.is_org_professional(c.organization_id)" in hardening:
+    raise SystemExit("Professional-wide client visibility must not survive S4 hardening")
+
+for source_name, source in (("base", sql), ("backfill", backfill), ("hardening", hardening)):
     for forbidden in (
         "alter table public.coach_clients",
         "drop table public.coach_clients",
@@ -74,5 +92,7 @@ print("- same-tenant composite FK boundaries: PASS")
 print("- maximum one active primary per client: PASS")
 print("- secondary coaches supported: PASS")
 print("- reassignment preserves history: PASS")
-print("- coach/client scoped visibility foundation: PASS")
+print("- coach/client scoped assignment visibility: PASS")
+print("- professional client visibility restricted to active assignments: PASS")
+print("- org admin tenant-wide + client self visibility retained: PASS")
 print("- CV Coach legacy relations backfilled additively: PASS")
