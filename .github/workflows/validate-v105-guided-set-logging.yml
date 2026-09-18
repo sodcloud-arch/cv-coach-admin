@@ -1,0 +1,75 @@
+name: Validate V105 Guided Set Logging
+
+on:
+  pull_request:
+    paths:
+      - 'client-portal/assets/cv-guided-set-logging-v105.js'
+      - 'client-portal/upgrade_client_v105.py'
+      - 'scripts/test-guided-set-logging-v105-browser.mjs'
+      - '.github/workflows/validate-v105-guided-set-logging.yml'
+  push:
+    branches: [main, 'feat/v105-guided-set-logging']
+    paths:
+      - 'client-portal/assets/cv-guided-set-logging-v105.js'
+      - 'client-portal/upgrade_client_v105.py'
+      - 'scripts/test-guided-set-logging-v105-browser.mjs'
+      - '.github/workflows/validate-v105-guided-set-logging.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-v105:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build canonical client through V105
+        shell: bash
+        run: |
+          set -euo pipefail
+          python client-portal/stabilize.py
+          python client-portal/consolidate_runtime.py
+          python client-portal/consolidate_session_runtime.py
+          python client-portal/workout_feedback.py
+          python client-portal/upgrade_feedback_v48.py
+          python client-portal/upgrade_client_v49.py
+          python client-portal/upgrade_client_v50.py
+          python client-portal/upgrade_client_v51.py
+          python client-portal/upgrade_client_v52.py
+          python client-portal/upgrade_client_v53.py
+          python client-portal/upgrade_client_v54.py
+          python client-portal/upgrade_client_v55.py
+          python client-portal/upgrade_client_v56.py
+          python client-portal/upgrade_client_v57.py
+          python client-portal/upgrade_client_v59.py
+          python client-portal/upgrade_client_v60.py
+          python client-portal/repair_client_v60.py
+          python client-portal/upgrade_client_v61.py
+          python client-portal/upgrade_client_v67.py
+          python client-portal/upgrade_client_v68.py
+          python client-portal/upgrade_client_v69.py
+          python client-portal/upgrade_client_v74.py
+          python client-portal/upgrade_client_v101.py
+          python client-portal/upgrade_client_v102.py
+          python client-portal/upgrade_client_v103.py
+          python client-portal/upgrade_client_v104.py
+          python client-portal/upgrade_client_v105.py
+          node --check client-portal/assets/cv-guided-set-logging-v105.js
+          grep -q 'CV_GUIDED_SET_LOGGING_V105_READY' client-portal/stable/index.html
+          grep -q 'CV_INLINE_SET_ENTRY_V104_READY' client-portal/stable/index.html
+          ! grep -q 'CVWorkoutNumpadV73' client-portal/stable/index.html
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Serve built client
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --directory client-portal/stable >/tmp/cv105-http.log 2>&1 &
+          echo $! > /tmp/cv105-http.pid
+          sleep 1
+      - name: Execute V105 mobile behavior
+        env:
+          CV_TEST_URL: http://127.0.0.1:4173
+        run: node scripts/test-guided-set-logging-v105-browser.mjs
