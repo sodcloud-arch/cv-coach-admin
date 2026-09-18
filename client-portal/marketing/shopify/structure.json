@@ -77,15 +77,15 @@
     },
     {
       "key": "contact",
-      "path": "/pages/contact",
+      "path": "/pages/cv-contact",
       "nav": "secondary",
-      "status": "theme-v1-qa-legacy-page-preserved"
+      "status": "isolated-draft-built-v1-qa"
     },
     {
       "key": "start",
       "path": "/pages/comienza-hoy",
       "nav": "cta",
-      "status": "built-v1-functional-qa-pending"
+      "status": "built-v1-qa"
     },
     {
       "key": "login",
@@ -134,8 +134,21 @@
     "WEB-009 Blog",
     "WEB-012 Contact"
   ],
-  "last_shopify_dev_update": "2026-09-18T13:03:00Z",
+  "last_shopify_dev_update": "2026-09-18T13:50:16Z",
   "production_blockers": [
-    "legal_human_review"
-  ]
+    "legal_human_review",
+    "pricing_products_checkout_approval",
+    "payment_activation_approval",
+    "domain_dns_launch_configuration",
+    "final_visual_acceptance"
+  ],
+  "integration": {
+    "cv_navigation_isolated": true,
+    "cv_contact_isolated": true,
+    "custom_404": true,
+    "contact_form": "shopify_contact_form",
+    "blog": "cv",
+    "app_bridge": "https://cv-coach-roan.vercel.app/",
+    "checkout": "prepared_not_activated"
+  }
 }
