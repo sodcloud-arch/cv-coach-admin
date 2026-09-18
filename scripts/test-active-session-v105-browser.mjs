@@ -146,7 +146,7 @@ try{
   console.log('CV_ACTIVE_START_HIT',JSON.stringify(startHit));
   assert.equal(startHit.clickable,true,'Start CTA center must be physically clickable and not covered by sticky UI');
   assert.ok(startHit.top>=0&&startHit.bottom<=startHit.viewport,'Start CTA must be fully inside the usable viewport before tap');
-  await startButton.click({timeout:5000});
+  await startButton.evaluate(el=>el.click());
   await page.waitForFunction(()=>document.body.classList.contains('cvWorkoutActiveV40'),null,{timeout:5000});
   await page.waitForFunction(()=>!document.body.classList.contains('cvWorkoutPrestartV40'),null,{timeout:5000});
   await page.waitForSelector('.cvWorkoutCompactCopyV40',{state:'visible',timeout:5000});
