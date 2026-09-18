@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 Client Profile Scope
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609181800_f1_m1_s5_client_profile_scope_arch1.sql"
+      - "scripts/test-f1-m1-s5-client-profile-scope.py"
+      - ".github/workflows/validate-f1-m1-s5-client-profile-scope.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  client-profile-scope:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate client profile tenant scope
+        run: python scripts/test-f1-m1-s5-client-profile-scope.py
