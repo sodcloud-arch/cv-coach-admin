@@ -8,7 +8,9 @@ on:
       - 'scripts/build-client-canonical.sh'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
       - 'scripts/test-active-session-v105-browser.mjs'
-      - 'scripts/validate-production-v105.mjs'
+      - 'scripts/test-demo-post-workout-v105-browser.mjs'
+      - 'scripts/test-finish-guard-v106-browser.mjs'
+      - 'scripts/validate-production-v106.mjs'
       - '.github/workflows/cv-coach-canonical-production.yml'
   push:
     branches: [main]
@@ -17,7 +19,9 @@ on:
       - 'scripts/build-client-canonical.sh'
       - 'scripts/test-guided-set-logging-v105-browser.mjs'
       - 'scripts/test-active-session-v105-browser.mjs'
-      - 'scripts/validate-production-v105.mjs'
+      - 'scripts/test-demo-post-workout-v105-browser.mjs'
+      - 'scripts/test-finish-guard-v106-browser.mjs'
+      - 'scripts/validate-production-v106.mjs'
       - '.github/workflows/cv-coach-canonical-production.yml'
 
 permissions:
@@ -42,9 +46,11 @@ jobs:
       - name: Validate pipeline script syntax
         run: |
           bash -n scripts/build-client-canonical.sh
-          node --check scripts/validate-production-v105.mjs
+          node --check scripts/validate-production-v106.mjs
           node --check scripts/test-guided-set-logging-v105-browser.mjs
           node --check scripts/test-active-session-v105-browser.mjs
+          node --check scripts/test-demo-post-workout-v105-browser.mjs
+          node --check scripts/test-finish-guard-v106-browser.mjs
 
       - name: Build canonical client
         run: bash scripts/build-client-canonical.sh
@@ -142,6 +148,82 @@ jobs:
           if-no-files-found: warn
           retention-days: 3
 
+  chromium-post-workout:
+    needs: build-canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download exact canonical artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cv-coach-canonical-${{ github.sha }}
+          path: client-portal/stable
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve canonical artifact
+        run: |
+          python3 -m http.server 4178 --directory client-portal/stable >/tmp/cv-post-http.log 2>&1 &
+          echo $! > /tmp/cv-post-http.pid
+          sleep 1
+
+      - name: Validate post-workout flow in Chromium
+        env:
+          CV_TEST_URL: http://127.0.0.1:4178
+        run: node scripts/test-demo-post-workout-v105-browser.mjs
+
+      - name: Upload post-workout QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-post-workout-${{ github.sha }}
+          path: artifacts/v105-post-workout/*.png
+          if-no-files-found: warn
+          retention-days: 3
+
+  chromium-finish-guard:
+    needs: build-canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download exact canonical artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cv-coach-canonical-${{ github.sha }}
+          path: client-portal/stable
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve canonical artifact
+        run: |
+          python3 -m http.server 4179 --directory client-portal/stable >/tmp/cv-guard-http.log 2>&1 &
+          echo $! > /tmp/cv-guard-http.pid
+          sleep 1
+
+      - name: Validate V106 finish guard in Chromium
+        env:
+          CV_TEST_URL: http://127.0.0.1:4179
+        run: node scripts/test-finish-guard-v106-browser.mjs
+
+      - name: Upload V106 finish-guard screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-finish-guard-${{ github.sha }}
+          path: artifacts/v106-finish-guard/*.png
+          if-no-files-found: warn
+          retention-days: 3
+
   webkit-active-canary:
     needs: build-canonical
     runs-on: ubuntu-latest
@@ -197,6 +279,8 @@ jobs:
       - build-canonical
       - webkit-logging
       - chromium-active
+      - chromium-post-workout
+      - chromium-finish-guard
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -250,7 +334,7 @@ jobs:
           CV_EXPECTED_SHA: ${{ github.sha }}
         run: |
           set +e
-          node scripts/validate-production-v105.mjs
+          node scripts/validate-production-v106.mjs
           STATUS=$?
           set -e
 
