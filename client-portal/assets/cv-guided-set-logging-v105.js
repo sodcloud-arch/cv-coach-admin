@@ -397,8 +397,7 @@
   }
 
   function demoMode(){
-    const badge=document.querySelector('.demoBadge');
-    return !!badge&&isVisible(badge);
+    return !!document.querySelector('#modeBadge .demoBadge,.demoBadge');
   }
 
   function demoWorkoutMetrics(){
@@ -562,6 +561,13 @@
   document.addEventListener('keydown',event=>moveForward(event.target,event),true);
 
   document.addEventListener('click',event=>{
+    const finish=event.target?.closest?.('.workoutTop button');
+    if(finish&&/FINALIZAR/i.test(finish.textContent||'')&&demoMode()){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openDemoFeedback();
+      return;
+    }
     if(event.target?.closest?.('.cvSetCheck')){
       setTimeout(schedule,0);
       setTimeout(schedule,180);
