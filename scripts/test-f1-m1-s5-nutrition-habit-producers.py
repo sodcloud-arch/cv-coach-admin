@@ -6,7 +6,8 @@ sql = M.read_text(encoding="utf-8").lower()
 
 required = [
     "private.can_view_client_in_org(ml.organization_id,ml.client_id)",
-    "private.can_manage_client_in_org(ml.organization_id,ml.client_id)",
+    "private.can_manage_client_in_org(",
+    "ml.organization_id,ml.client_id",
     "private.can_manage_client_in_org(\n              pp.organization_id,pp.client_id",
     "resolve_legacy_professional_organization_v1(",
     "actor_can_manage_client_in_org_v1(",
