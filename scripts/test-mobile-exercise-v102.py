@@ -24,7 +24,10 @@ asset_tokens=[
     'height:min(244px,63vw)',
     "card.getAttribute('data-tech-img')",
     "media.dataset.cvV102Generated='1'",
-    "top.insertAdjacentElement('afterend',media)",
+    "top.parentNode===card",
+    "const sibling=top.nextSibling",
+    "card.insertBefore(media,sibling)",
+    "card.appendChild(media)",
     "card.setAttribute('aria-expanded'",
     "scrollIntoView({behavior,block:'start'})",
     "attributes:true,attributeFilter:['class']",
@@ -66,6 +69,8 @@ if "document.body.classList.add(READY_CLASS)" not in asset:
     raise SystemExit('V102.2 must own its workout-ready visual state')
 if "version:'102.2'" not in asset:
     raise SystemExit('V102.2 runtime version missing')
+if "top.insertAdjacentElement('afterend',media)" in asset:
+    raise SystemExit('V102.2 must not reintroduce race-prone insertAdjacentElement media placement')
 if "if(!document.body.classList.contains('cvFastWorkout'))return;" in asset:
     raise SystemExit('V102.2 must not silently return before establishing its own ready state')
 if "return document.body?.classList.contains('cvWorkoutActiveV40')===true" in asset:

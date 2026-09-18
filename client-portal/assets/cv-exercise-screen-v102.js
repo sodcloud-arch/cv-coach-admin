@@ -213,7 +213,13 @@ function upgradeCard(card,index,currentCard){
   if(expanded&&top){
     const media=ensureMedia(card,title);
     if(media.parentElement!==card||media.previousElementSibling!==top){
-      top.insertAdjacentElement('afterend',media);
+      if(top.parentNode===card){
+        const sibling=top.nextSibling;
+        if(sibling&&sibling.parentNode===card)card.insertBefore(media,sibling);
+        else card.appendChild(media);
+      }else if(media.parentElement!==card){
+        card.appendChild(media);
+      }
     }
     media.dataset.cvV102Media='1';
     bindImageState(media,title?.textContent?.trim());
