@@ -33,9 +33,9 @@ env:
   VERCEL_PROJECT_ID: prj_PmFZQqN9tVEAUgKH8ekcnOoSgNOL
 
 jobs:
-  quality-gate:
+  build-canonical:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -43,19 +43,42 @@ jobs:
         run: |
           bash -n scripts/build-client-canonical.sh
           node --check scripts/validate-production-v105.mjs
+          node --check scripts/test-guided-set-logging-v105-browser.mjs
+          node --check scripts/test-active-session-v105-browser.mjs
 
       - name: Build canonical client
         run: bash scripts/build-client-canonical.sh
 
-      - name: Install Playwright browsers
+      - name: Upload exact canonical artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cv-coach-canonical-${{ github.sha }}
+          path: client-portal/stable/
+          if-no-files-found: error
+          retention-days: 7
+
+  webkit-logging:
+    needs: build-canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download exact canonical artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cv-coach-canonical-${{ github.sha }}
+          path: client-portal/stable
+
+      - name: Install Playwright WebKit
         run: |
           npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium webkit
+          npx playwright install --with-deps webkit
 
-      - name: Serve canonical build
+      - name: Serve canonical artifact
         run: |
-          python3 -m http.server 4175 --directory client-portal/stable >/tmp/cv-canonical-http.log 2>&1 &
-          echo $! > /tmp/cv-canonical-http.pid
+          python3 -m http.server 4175 --directory client-portal/stable >/tmp/cv-webkit-http.log 2>&1 &
+          echo $! > /tmp/cv-webkit-http.pid
           sleep 1
 
       - name: Validate mobile logging in WebKit
@@ -71,16 +94,82 @@ jobs:
           done
           exit 1
 
+      - name: Upload WebKit QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-webkit-logging-${{ github.sha }}
+          path: artifacts/v105-mobile-current.png
+          if-no-files-found: warn
+          retention-days: 3
+
+  chromium-active:
+    needs: build-canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download exact canonical artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cv-coach-canonical-${{ github.sha }}
+          path: client-portal/stable
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve canonical artifact
+        run: |
+          python3 -m http.server 4176 --directory client-portal/stable >/tmp/cv-chromium-http.log 2>&1 &
+          echo $! > /tmp/cv-chromium-http.pid
+          sleep 1
+
       - name: Validate active session in Chromium
         env:
-          CV_TEST_URL: http://127.0.0.1:4175
+          CV_TEST_URL: http://127.0.0.1:4176
           CV_BROWSER: chromium
         run: node scripts/test-active-session-v105-browser.mjs
+
+      - name: Upload Chromium QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-chromium-active-${{ github.sha }}
+          path: artifacts/v105-active-session/*.png
+          if-no-files-found: warn
+          retention-days: 3
+
+  webkit-active-canary:
+    needs: build-canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download exact canonical artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cv-coach-canonical-${{ github.sha }}
+          path: client-portal/stable
+
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+
+      - name: Serve canonical artifact
+        run: |
+          python3 -m http.server 4177 --directory client-portal/stable >/tmp/cv-webkit-canary-http.log 2>&1 &
+          echo $! > /tmp/cv-webkit-canary-http.pid
+          sleep 1
 
       - name: WebKit active-session canary
         continue-on-error: true
         env:
-          CV_TEST_URL: http://127.0.0.1:4175
+          CV_TEST_URL: http://127.0.0.1:4177
           CV_BROWSER: webkit
         shell: bash
         run: |
@@ -90,22 +179,24 @@ jobs:
               exit 0
             fi
           done
-          echo "::warning::WebKit headless active-session canary failed twice. Hard gates already passed; retaining this as diagnostic telemetry."
+          echo "::warning::WebKit headless active-session canary failed twice. Hard gates remain WebKit logging + Chromium active session."
           exit 1
 
-      - name: Upload exact production artifact
+      - name: Upload WebKit canary screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cv-coach-canonical-${{ github.sha }}
-          path: |
-            client-portal/stable/**
-            artifacts/**
-          if-no-files-found: error
-          retention-days: 7
+          name: canonical-webkit-canary-${{ github.sha }}
+          path: artifacts/v105-active-session/*.png
+          if-no-files-found: warn
+          retention-days: 3
 
   deploy-production:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    needs: quality-gate
+    needs:
+      - build-canonical
+      - webkit-logging
+      - chromium-active
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -113,26 +204,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check Vercel deployment credential
-        id: credential
+      - name: Require Vercel deployment credential
         shell: bash
         run: |
-          if [[ -n "${VERCEL_TOKEN:-}" ]]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-            echo "Vercel deployment credential available."
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::VERCEL_TOKEN is not configured. Canonical build and QA passed, but production deploy is intentionally skipped."
+          if [[ -z "${VERCEL_TOKEN:-}" ]]; then
+            echo "::error::VERCEL_TOKEN is not configured. Add it as a GitHub Actions repository secret before production deployment can run."
+            exit 1
           fi
+          echo "Vercel deployment credential available."
 
       - name: Download exact artifact that passed QA
-        if: steps.credential.outputs.available == 'true'
         uses: actions/download-artifact@v4
         with:
           name: cv-coach-canonical-${{ github.sha }}
+          path: client-portal/stable
 
       - name: Link artifact to CV Coach Vercel project
-        if: steps.credential.outputs.available == 'true'
         shell: bash
         run: |
           mkdir -p client-portal/stable/.vercel
@@ -144,20 +231,20 @@ jobs:
           JSON
 
       - name: Deploy exact tested artifact to production
-        if: steps.credential.outputs.available == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes vercel@latest deploy client-portal/stable             --prod             --yes             --token "$VERCEL_TOKEN"
+          npx --yes vercel@latest deploy client-portal/stable \
+            --prod \
+            --yes \
+            --token "$VERCEL_TOKEN"
 
       - name: Install production validation browser
-        if: steps.credential.outputs.available == 'true'
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Validate production or rollback
-        if: steps.credential.outputs.available == 'true'
         shell: bash
         env:
           CV_EXPECTED_SHA: ${{ github.sha }}
