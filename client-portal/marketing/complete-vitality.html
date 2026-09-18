@@ -5,488 +5,90 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050505">
 <meta name="robots" content="noindex,nofollow">
-<title>C.V. Complete Vitality — Preview V2</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>C.V. Complete Vitality — Fidelity Lock</title>
 <style>
-:root{
-  --bg:#050505;
-  --surface:#0b0c0e;
-  --surface-2:#111214;
-  --text:#f5f5f5;
-  --muted:#9b9b9b;
-  --line:rgba(255,255,255,.12);
-  --red:#ff1a1a;
-  --blue:#00b4ff;
-  --green:#00e676;
-  --gold:#ffc629;
-  --max:1380px;
-  --display:"Barlow Condensed",Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif;
-  --sans:Inter,Arial,sans-serif;
-}
+:root{--bg:#050505;--focus:#ff1a1a}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
-a{color:inherit;text-decoration:none}
-button{font:inherit}
-img{max-width:100%;display:block}
-.shell{width:min(var(--max),calc(100% - 64px));margin-inline:auto}
+html,body{margin:0;background:var(--bg);color:#fff;font-family:Inter,Arial,sans-serif}
+body{overflow-x:hidden}
+a{color:inherit}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
-
-/* HEADER */
-.header{
-  position:absolute;z-index:50;inset:0 0 auto;
-  height:84px;
-  border-bottom:1px solid rgba(255,255,255,.12);
-  background:linear-gradient(180deg,rgba(0,0,0,.94),rgba(0,0,0,.2));
+.stage-shell{width:100%;background:radial-gradient(circle at 50% 15%,rgba(255,20,20,.05),transparent 28%),#050505}
+.stage{position:relative;width:min(100vw,1440px);margin:0 auto;aspect-ratio:1024/1536;overflow:hidden;background:#050505}
+.stage>img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;user-select:none;-webkit-user-drag:none}
+.hotspot{position:absolute;z-index:5;display:block;border:0;background:transparent;border-radius:4px;cursor:pointer;text-indent:-9999px;overflow:hidden}
+.hotspot:focus-visible{outline:2px solid var(--focus);outline-offset:3px;box-shadow:0 0 0 4px rgba(255,26,26,.18)}
+.hotspot:hover{background:rgba(255,255,255,.01)}
+.hs-inicio{left:24.3%;top:1.55%;width:5.2%;height:2.6%}
+.hs-training-nav{left:29.8%;top:1.55%;width:6.7%;height:2.6%}
+.hs-nutrition-nav{left:36.4%;top:1.55%;width:7.1%;height:2.6%}
+.hs-integrated-nav{left:43.1%;top:1.55%;width:7.3%;height:2.6%}
+.hs-about{left:51.6%;top:1.55%;width:7.0%;height:2.6%}
+.hs-blog{left:58.9%;top:1.55%;width:4.5%;height:2.6%}
+.hs-login{left:68.4%;top:1.35%;width:12.3%;height:2.55%}
+.hs-start-top{left:81.8%;top:1.3%;width:14.8%;height:2.6%}
+.hs-start-hero{left:39.3%;top:39.8%;width:21.6%;height:3.2%}
+.hs-training-card{left:3.55%;top:47.6%;width:30.8%;height:35.2%}
+.hs-nutrition-card{left:35.7%;top:47.6%;width:28.8%;height:35.2%}
+.hs-integrated-card{left:66.2%;top:47.6%;width:30.5%;height:35.2%}
+.hs-training-cta{left:7.85%;top:78.15%;width:22.2%;height:3.0%}
+.hs-nutrition-cta{left:39.55%;top:78.15%;width:21.2%;height:3.0%}
+.hs-integrated-cta{left:70.0%;top:78.15%;width:22.2%;height:3.0%}
+.anchor{position:absolute;left:0;width:1px;height:1px;pointer-events:none}
+#inicio{top:0}
+#training{top:47.4%}
+#nutrition{top:47.4%}
+#integrated{top:47.4%}
+#pilares{top:84.2%}
+#metricas{top:92.2%}
+@media(max-width:760px){
+  .stage{width:100vw;aspect-ratio:1024/1536}
+  .hs-login,.hs-start-top{height:3.2%}
 }
-.header .inner{
-  height:100%;display:grid;
-  grid-template-columns:190px 1fr auto;
-  align-items:center;gap:24px;
-}
-.brand{display:flex;align-items:center;height:100%}
-.brand img{
-  width:145px;height:auto;
-  filter:drop-shadow(0 0 18px rgba(255,255,255,.05));
-}
-.nav{
-  display:flex;align-items:center;justify-content:center;gap:30px;
-  font-size:11px;font-weight:800;letter-spacing:.075em;text-transform:uppercase;
-}
-.nav a{position:relative;padding:31px 0;color:#e7e7e7}
-.nav a.active:after{
-  content:"";position:absolute;left:0;right:0;bottom:15px;height:2px;background:var(--red);
-  box-shadow:0 0 14px rgba(255,26,26,.8)
-}
-.header-actions{display:flex;align-items:center;gap:12px}
-.header-btn{
-  height:42px;padding:0 19px;border-radius:5px;
-  display:inline-flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:900;letter-spacing:.045em;text-transform:uppercase;
-}
-.header-btn.login{border:1px solid var(--red);background:rgba(0,0,0,.35)}
-.header-btn.start{
-  background:var(--red);border:1px solid var(--red);
-  box-shadow:0 0 22px rgba(255,26,26,.24)
-}
-.mobile-toggle{
-  display:none;border:1px solid rgba(255,255,255,.22);background:#090909;color:white;
-  border-radius:5px;padding:8px 12px;font-size:18px
-}
-
-/* HERO */
-.hero{
-  min-height:760px;position:relative;overflow:hidden;
-  display:flex;align-items:center;
-  border-bottom:1px solid rgba(255,255,255,.15);
-  background:
-    radial-gradient(circle at 75% 30%,rgba(255,0,0,.07),transparent 33%),
-    linear-gradient(90deg,#030303 0%,#070707 44%,#050505 100%);
-}
-.hero-media{
-  position:absolute;inset:0;
-  background:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-hero-clean-v3.jpg?v=1789717066') center/cover no-repeat;
-  filter:saturate(.94) contrast(1.06) brightness(.9);
-}
-.hero-media:before{
-  content:"";position:absolute;inset:0;
-  background:
-    linear-gradient(90deg,rgba(0,0,0,.98) 0%,rgba(0,0,0,.94) 22%,rgba(0,0,0,.60) 42%,rgba(0,0,0,.08) 66%,rgba(0,0,0,.28) 100%),
-    linear-gradient(180deg,rgba(0,0,0,.20) 0%,rgba(0,0,0,0) 54%,rgba(0,0,0,.70) 100%);
-}
-.hero-media:after{
-  content:"";position:absolute;
-  width:430px;height:430px;right:220px;top:220px;
-  border-radius:50%;
-  background:radial-gradient(circle,rgba(0,0,0,.68) 0%,rgba(0,0,0,.34) 45%,transparent 72%);
-  filter:blur(16px);
-}
-.hero .shell{position:relative;z-index:5}
-.hero-content{
-  width:min(560px,47%);
-  padding-top:74px;
-  position:relative;z-index:6;
-}
-.eyebrow{
-  margin-bottom:14px;
-  font-size:15px;letter-spacing:.34em;text-transform:uppercase;color:#efefef
-}
-.h1{
-  margin:0;
-  font-family:var(--display);
-  font-size:clamp(68px,6.15vw,102px);
-  line-height:.82;
-  font-weight:900;
-  letter-spacing:-.025em;
-  text-transform:uppercase
-}
-.h1 .red{
-  display:block;color:var(--red);
-  text-shadow:0 0 25px rgba(255,26,26,.18)
-}
-.subbrand{
-  margin-top:20px;
-  font-size:19px;letter-spacing:.37em;text-transform:uppercase
-}
-.hero-rule{
-  width:44px;height:2px;background:#e7e7e7;
-  margin:26px 0 24px
-}
-.hero-copy{
-  max-width:500px;
-  margin:0 0 28px;
-  font-size:16px;line-height:1.62;color:#e3e3e3
-}
-.ctas{display:flex;gap:14px;flex-wrap:wrap}
-.btn{
-  min-height:50px;padding:0 28px;
-  display:inline-flex;align-items:center;justify-content:center;
-  border-radius:5px;border:1px solid rgba(255,255,255,.45);
-  font-size:12px;font-weight:900;letter-spacing:.025em;text-transform:uppercase;
-  transition:transform .2s ease,filter .2s ease,box-shadow .2s ease
-}
-.btn.primary{
-  background:var(--red);border-color:var(--red);
-  box-shadow:0 0 24px rgba(255,26,26,.22)
-}
-.btn:hover{transform:translateY(-2px);filter:brightness(1.1)}
-.hero-claim{
-  margin-top:42px;
-  display:flex;align-items:center;gap:14px;
-  font-size:11px;letter-spacing:.33em;text-transform:uppercase;color:#c5c5c5
-}
-.hero-claim:before{content:"";width:40px;height:2px;background:var(--red)}
-.hero-logo{
-  position:absolute;z-index:7;
-  right:11%;top:315px;
-  width:min(560px,43vw);
-  filter:
-    drop-shadow(0 0 12px rgba(255,255,255,.08))
-    drop-shadow(0 0 28px rgba(255,26,26,.07));
-  opacity:.98
-}
-.hero-logo-caption{
-  position:absolute;z-index:7;right:12%;top:650px;
-  font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#cfcfcf
-}
-.sidewords{
-  position:absolute;z-index:7;right:37px;top:128px;
-  text-align:right;font-size:13px;line-height:1.85;letter-spacing:.23em;text-transform:uppercase;color:#d5d5d5
-}
-.sidewords:after{
-  content:"";display:block;width:34px;height:2px;background:var(--red);
-  margin:14px 0 0 auto
-}
-
-/* SOLUTIONS */
-.solutions{
-  position:relative;
-  padding:26px 0 78px;
-  background:linear-gradient(180deg,#050607,#050505)
-}
-.cards{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:16px
-}
-.card{
-  --accent:#fff;
-  position:relative;overflow:hidden;
-  min-height:625px;
-  background:#050607;
-  border:1px solid color-mix(in srgb,var(--accent) 82%,transparent);
-  border-radius:5px;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.018),
-    0 0 26px color-mix(in srgb,var(--accent) 8%,transparent);
-  transition:transform .22s ease,box-shadow .22s ease
-}
-.card:hover{
-  transform:translateY(-4px);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.025),
-    0 0 34px color-mix(in srgb,var(--accent) 14%,transparent)
-}
-.card-media{
-  height:310px;position:relative;
-  background:var(--image) center/cover no-repeat
-}
-.card-media:before{
-  content:"";position:absolute;inset:0;
-  background:
-    linear-gradient(180deg,rgba(0,0,0,.02) 20%,rgba(0,0,0,.14) 62%,#050607 100%),
-    linear-gradient(90deg,rgba(0,0,0,.06),transparent 72%)
-}
-.card-lockup{
-  position:relative;z-index:3;
-  min-height:82px;
-  margin-top:-30px;padding:0 28px;
-  display:flex;align-items:center;gap:13px
-}
-.card-ray{
-  width:64px;height:82px;object-fit:contain;
-  filter:drop-shadow(0 0 13px color-mix(in srgb,var(--accent) 58%,transparent))
-}
-.card-title-wrap{min-width:0}
-.card-title{
-  margin:0;
-  font-family:var(--display);
-  font-size:30px;font-weight:800;
-  letter-spacing:.02em;text-transform:uppercase;
-  color:var(--accent);
-  line-height:.95
-}
-.card-kicker{
-  margin-top:6px;
-  font-size:11px;letter-spacing:.20em;text-transform:uppercase;color:var(--accent)
-}
-.card-body{padding:4px 28px 28px}
-.card p{
-  margin:12px 0 24px;
-  min-height:76px;
-  color:#e4e4e4;font-size:14px;line-height:1.58
-}
-.product-btn{
-  width:100%;height:46px;
-  border:1px solid var(--accent);
-  border-radius:5px;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--accent);
-  font-size:12px;font-weight:900;letter-spacing:.045em;text-transform:uppercase;
-  transition:background .18s ease,box-shadow .18s ease
-}
-.product-btn:hover{
-  background:color-mix(in srgb,var(--accent) 7%,transparent);
-  box-shadow:0 0 18px color-mix(in srgb,var(--accent) 18%,transparent)
-}
-.preview-note{
-  padding:20px 0 24px;border-top:1px solid rgba(255,255,255,.08);
-  color:#666;text-align:center;font-size:10px;letter-spacing:.22em;text-transform:uppercase
-}
-
-@media(max-width:1180px){
-  .shell{width:min(var(--max),calc(100% - 44px))}
-  .header .inner{grid-template-columns:165px 1fr auto}
-  .nav{gap:20px;font-size:10px}
-  .header-btn{padding:0 14px}
-  .hero-logo{right:4%;width:min(500px,44vw)}
-  .hero-logo-caption{right:6%}
-}
-@media(max-width:940px){
-  .nav{display:none}
-  .mobile-toggle{display:block}
-  .header .inner{display:flex;justify-content:space-between}
-  .header-actions{margin-left:auto}
-  .hero-content{width:min(600px,58%)}
-  .hero-logo{right:1%;width:43vw}
-  .sidewords{display:none}
-  .cards{gap:12px}
-  .card-lockup,.card-body{padding-left:22px;padding-right:22px}
-}
-@media(max-width:780px){
-  .shell{width:min(100% - 34px,680px)}
-  .header{
-    position:fixed;height:70px;
-    background:rgba(5,5,5,.92);
-    backdrop-filter:blur(14px)
-  }
-  .brand img{width:112px}
-  .header-actions .start{display:none}
-  .header-btn.login{height:38px;padding:0 12px;font-size:10px}
-  .nav[data-open="1"]{
-    display:flex!important;
-    position:fixed;z-index:60;top:70px;left:0;right:0;
-    flex-direction:column;gap:0;padding:16px 24px 24px;
-    background:#050505;border-bottom:1px solid rgba(255,255,255,.14)
-  }
-  .nav[data-open="1"] a{padding:13px 0;width:100%;text-align:left}
-  .hero{
-    min-height:900px;
-    align-items:flex-start;
-    padding-top:104px
-  }
-  .hero-media{
-    background-position:61% center;
-    filter:saturate(.95) contrast(1.05) brightness(.72)
-  }
-  .hero-media:before{
-    background:
-      linear-gradient(180deg,rgba(0,0,0,.93) 0%,rgba(0,0,0,.80) 40%,rgba(0,0,0,.20) 67%,#050505 100%),
-      linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,.12))
-  }
-  .hero-media:after{display:none}
-  .hero-content{width:100%;padding-top:0}
-  .eyebrow{font-size:11px}
-  .h1{font-size:58px;line-height:.86}
-  .subbrand{font-size:14px;letter-spacing:.28em}
-  .hero-rule{margin:20px 0}
-  .hero-copy{font-size:14px;max-width:94%;line-height:1.55}
-  .btn{min-height:46px;padding:0 19px;font-size:11px}
-  .hero-claim{margin-top:26px}
-  .hero-logo{
-    width:72vw;max-width:420px;
-    right:50%;transform:translateX(50%);
-    top:auto;bottom:54px;
-    opacity:.92
-  }
-  .hero-logo-caption{display:none}
-  .cards{grid-template-columns:1fr;gap:16px}
-  .solutions{padding-top:18px}
-  .card{min-height:0}
-  .card-media{height:300px}
-  .card p{min-height:0}
-}
-@media(max-width:440px){
-  .h1{font-size:50px}
-  .hero{min-height:865px}
-  .hero-media{background-position:63% center}
-  .hero-logo{width:78vw;bottom:52px}
-  .card-media{height:270px}
-  .card-title{font-size:27px}
-  .card-ray{width:56px;height:74px}
-}
-@media(prefers-reduced-motion:reduce){
-  *{scroll-behavior:auto!important;transition:none!important}
-}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 </style>
 </head>
 <body>
+<main class="stage-shell" aria-label="C.V. Complete Vitality">
+  <section class="stage" aria-label="Referencia maestra C.V. implementada como fidelity lock">
+    <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-web-master-reference-exact.png?v=1789719281" alt="C.V. Complete Vitality: entrenamiento, nutrición, bienestar, progreso y libertad">
 
-<header class="header">
-  <div class="shell inner">
-    <a class="brand" href="#inicio" aria-label="C.V. Complete Vitality">
-      <img src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060" alt="C.V. Complete Vitality">
-    </a>
+    <a class="hotspot hs-inicio" href="#inicio" aria-label="Inicio">Inicio</a>
+    <a class="hotspot hs-training-nav" href="#training" aria-label="C.V. Training">Training</a>
+    <a class="hotspot hs-nutrition-nav" href="#nutrition" aria-label="C.V. Nutrition">Nutrition</a>
+    <a class="hotspot hs-integrated-nav" href="#integrated" aria-label="C.V. Integrated">Integrated</a>
+    <a class="hotspot hs-about" href="#sobre-cv" aria-label="Sobre C.V.">Sobre C.V.</a>
+    <a class="hotspot hs-blog" href="#blog" aria-label="Blog">Blog</a>
+    <a class="hotspot hs-login" href="https://cv-coach-roan.vercel.app/" rel="noopener" aria-label="Iniciar sesión">Iniciar sesión</a>
+    <a class="hotspot hs-start-top" href="#training" aria-label="Comienza hoy">Comienza hoy</a>
+    <a class="hotspot hs-start-hero" href="#training" aria-label="Comienza hoy">Comienza hoy</a>
 
-    <nav class="nav" aria-label="Navegación principal">
-      <a class="active" href="#inicio">Inicio</a>
-      <a href="#training">Training</a>
-      <a href="#nutrition">Nutrition</a>
-      <a href="#integrated">Integrated</a>
-      <a href="#cv">Sobre C.V.</a>
-      <a href="#blog">Blog</a>
-    </nav>
+    <a class="hotspot hs-training-card" href="#training" aria-label="Conoce C.V. Training">Training</a>
+    <a class="hotspot hs-nutrition-card" href="#nutrition" aria-label="Conoce C.V. Nutrition">Nutrition</a>
+    <a class="hotspot hs-integrated-card" href="#integrated" aria-label="Conoce C.V. Integrated">Integrated</a>
+    <a class="hotspot hs-training-cta" href="#training" aria-label="Conoce más sobre C.V. Training">Conoce más Training</a>
+    <a class="hotspot hs-nutrition-cta" href="#nutrition" aria-label="Conoce más sobre C.V. Nutrition">Conoce más Nutrition</a>
+    <a class="hotspot hs-integrated-cta" href="#integrated" aria-label="Conoce más sobre C.V. Integrated">Conoce más Integrated</a>
 
-    <div class="header-actions">
-      <a class="header-btn login" href="https://cv-coach-roan.vercel.app/" rel="noopener">Iniciar sesión</a>
-      <a class="header-btn start" href="#soluciones">Comienza hoy&nbsp;&nbsp;→</a>
-      <button class="mobile-toggle" aria-label="Abrir menú" type="button">☰</button>
-    </div>
-  </div>
-</header>
-
-<main>
-  <section class="hero" id="inicio">
-    <div class="hero-media" role="img" aria-label="Atletas de alto rendimiento en un gimnasio oscuro"></div>
-
-    <div class="shell">
-      <div class="hero-content">
-        <div class="eyebrow">Bienvenido a C.V.</div>
-        <h1 class="h1">Más que <span class="red">entrenamiento</span></h1>
-        <div class="subbrand">Complete Vitality</div>
-        <div class="hero-rule"></div>
-
-        <p class="hero-copy">
-          Entrenamiento, nutrición y bienestar dentro de un solo ecosistema.
-          Un método real para personas que buscan más energía, más disciplina y una mejor versión de sí mismas.
-        </p>
-
-        <div class="ctas">
-          <a class="btn primary" href="#soluciones">Comienza hoy&nbsp;&nbsp;→</a>
-          <a class="btn" href="#cv">Conoce C.V.</a>
-        </div>
-
-        <div class="hero-claim">A Higher Standard</div>
-      </div>
-    </div>
-
-    <img
-      class="hero-logo"
-      src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-master-logo-v2.png?v=1789717060"
-      alt=""
-      aria-hidden="true">
-    <div class="hero-logo-caption">Entrenamiento&nbsp;&nbsp;/&nbsp;&nbsp;Nutrición&nbsp;&nbsp;/&nbsp;&nbsp;Bienestar</div>
-
-    <div class="sidewords">Disciplina<br>Progreso<br>Libertad</div>
+    <span class="anchor" id="inicio"></span>
+    <span class="anchor" id="training"></span>
+    <span class="anchor" id="nutrition"></span>
+    <span class="anchor" id="integrated"></span>
+    <span class="anchor" id="pilares"></span>
+    <span class="anchor" id="metricas"></span>
   </section>
 
-  <section class="solutions" id="soluciones" aria-labelledby="soluciones-title">
-    <h2 id="soluciones-title" class="sr-only">Soluciones C.V.</h2>
-
-    <div class="shell cards">
-
-      <article class="card" id="training" style="--accent:var(--blue);--image:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-training-clean-v2.jpg?v=1789717073')">
-        <div class="card-media" role="img" aria-label="Atleta entrenando fuerza"></div>
-        <div class="card-lockup">
-          <img class="card-ray" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-ray-blue.png?v=1789717091" alt="">
-          <div class="card-title-wrap">
-            <h3 class="card-title">C.V. Training</h3>
-            <div class="card-kicker">Entrena · Progresa · Supera</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <p>
-            Programas personalizados, seguimiento inteligente y una biblioteca de ejercicios
-            diseñada para construir progreso real.
-          </p>
-          <a class="product-btn" href="#training">Ver Training&nbsp;&nbsp;→</a>
-        </div>
-      </article>
-
-      <article class="card" id="nutrition" style="--accent:var(--green);--image:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-nutrition-clean-v2.jpg?v=1789717079')">
-        <div class="card-media" role="img" aria-label="Alimentación equilibrada y nutrición"></div>
-        <div class="card-lockup">
-          <img class="card-ray" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-ray-green.png?v=1789717098" alt="">
-          <div class="card-title-wrap">
-            <h3 class="card-title">C.V. Nutrition</h3>
-            <div class="card-kicker">Nutre · Equilibra · Potencia</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <p>
-            Planes de alimentación prácticos y personalizados, enfocados en tu objetivo,
-            estilo de vida y salud a largo plazo.
-          </p>
-          <a class="product-btn" href="#nutrition">Ver Nutrition&nbsp;&nbsp;→</a>
-        </div>
-      </article>
-
-      <article class="card" id="integrated" style="--accent:var(--gold);--image:url('https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-integrated-clean-v2.jpg?v=1789717085')">
-        <div class="card-media" role="img" aria-label="Estilo de vida integrado, cuerpo y bienestar"></div>
-        <div class="card-lockup">
-          <img class="card-ray" src="https://cdn.shopify.com/s/files/1/0828/8904/8297/files/cv-ray-gold.png?v=1789717104" alt="">
-          <div class="card-title-wrap">
-            <h3 class="card-title">C.V. Integrated</h3>
-            <div class="card-kicker">Cuerpo · Mente · Vida</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <p>
-            Entrenamiento, nutrición y hábitos dentro del mismo sistema para una visión
-            completa y coordinada del progreso.
-          </p>
-          <a class="product-btn" href="#integrated">Ver Integrated&nbsp;&nbsp;→</a>
-        </div>
-      </article>
-
-    </div>
+  <section class="sr-only" id="sobre-cv">
+    <h1>C.V. Complete Vitality</h1>
+    <p>Más que entrenamiento. Disciplina, progreso y libertad.</p>
+    <h2>C.V. Training</h2>
+    <p>Rutinas personalizadas, progresión medible, técnica y seguridad para todos los niveles.</p>
+    <h2>C.V. Nutrition</h2>
+    <p>Planes personalizados, alimentación flexible, educación nutricional y hábitos sostenibles.</p>
+    <h2>C.V. Integrated</h2>
+    <p>Entrenamiento y nutrición coordinados, seguimiento constante y una visión completa del progreso.</p>
   </section>
-
-  <div class="preview-note">C.V. Complete Vitality · implementación real · fase 1 v2</div>
+  <section class="sr-only" id="blog"><h2>Blog C.V.</h2></section>
 </main>
-
-<script>
-const toggle=document.querySelector('.mobile-toggle');
-const nav=document.querySelector('.nav');
-toggle?.addEventListener('click',()=>{
-  const open=nav?.dataset.open==='1';
-  if(nav) nav.dataset.open=open?'0':'1';
-  toggle?.setAttribute('aria-expanded',String(!open));
-});
-document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>{
-  if(nav) nav.dataset.open='0';
-  toggle?.setAttribute('aria-expanded','false');
-}));
-</script>
 </body>
 </html>
