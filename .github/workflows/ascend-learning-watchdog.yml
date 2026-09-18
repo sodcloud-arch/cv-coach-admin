@@ -1,0 +1,70 @@
+name: ASCEND Learning Watchdog
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ascend-learning-watchdog
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Request GitHub OIDC token for ASCEND
+        id: oidc
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=ascend-core"
+          RESPONSE="$(curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${URL}")"
+          TOKEN="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])' <<<"${RESPONSE}")"
+          echo "::add-mask::${TOKEN}"
+          echo "token=${TOKEN}" >> "${GITHUB_OUTPUT}"
+
+      - name: Run ASCEND Learning Tick
+        env:
+          ASCEND_TOKEN: ${{ steps.oidc.outputs.token }}
+          ASCEND_URL: https://fmhcansyxcsqkrivqchr.supabase.co/functions/v1/ascend-gateway
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+
+          body = {
+              "op": "learning_tick",
+              "limit": 250
+          }
+
+          req = urllib.request.Request(
+              os.environ["ASCEND_URL"],
+              data=json.dumps(body).encode("utf-8"),
+              headers={
+                  "Authorization": f"Bearer {os.environ['ASCEND_TOKEN']}",
+                  "Content-Type": "application/json",
+              },
+              method="POST",
+          )
+
+          with urllib.request.urlopen(req, timeout=30) as response:
+              payload = json.loads(response.read().decode("utf-8"))
+              if response.status != 200 or not payload.get("ok"):
+                  raise SystemExit(f"ASCEND learning tick failed: {payload}")
+
+              result = payload.get("result") or {}
+              print("ASCEND_LEARNING_TICK_OK")
+              print(json.dumps(result, indent=2, sort_keys=True))
+
+              if int(result.get("failed") or 0) > 0:
+                  raise SystemExit(f"ASCEND learning tick reported failures: {result}")
+          PY
