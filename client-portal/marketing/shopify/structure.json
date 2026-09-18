@@ -25,13 +25,13 @@
       "key": "nutrition",
       "path": "/pages/nutrition",
       "nav": "primary",
-      "status": "in-progress"
+      "status": "built-v1-qa"
     },
     {
       "key": "integrated",
       "path": "/pages/integrated",
       "nav": "primary",
-      "status": "built-v1-qa-pending"
+      "status": "in-progress"
     },
     {
       "key": "about",
@@ -105,8 +105,8 @@
     "no_fake_testimonials": true,
     "no_delete_existing_content_without_dependency_check": true
   },
-  "current_mission": "WEB-004",
-  "last_completed": "WEB-003",
+  "current_mission": "WEB-005",
+  "last_completed": "WEB-004",
   "prebuilt_ahead": [
     "WEB-004 Nutrition",
     "WEB-005 Integrated",
