@@ -23,13 +23,15 @@ grep -q 'CV_GUIDED_SET_LOGGING_V105_READY' "$STATIC/index.html"
 grep -q "revision:'105.5'" "$STATIC/index.html"
 grep -q 'CV_FINISH_GUARD_V106_READY' "$STATIC/index.html"
 grep -q 'FINALIZAR IGUAL' "$STATIC/index.html"
+grep -q 'CV_SESSION_RECOVERY_V107_READY' "$STATIC/index.html"
+grep -q 'REANUDAR SESIÓN' "$STATIC/index.html"
 
 python3 - "$STATIC/build.json" <<'PY'
 import json, sys
 path=sys.argv[1]
 data=json.load(open(path,encoding='utf-8'))
-if data.get('version')!='106':
-    raise SystemExit(f"Expected build.json version 106, got {data.get('version')!r}")
+if data.get('version')!='107':
+    raise SystemExit(f"Expected build.json version 107, got {data.get('version')!r}")
 if not data.get('git_sha'):
     raise SystemExit('build.json is missing git_sha')
 print('CV_PREBUILT_BUILD_META_OK',data['version'],data['git_sha'])
