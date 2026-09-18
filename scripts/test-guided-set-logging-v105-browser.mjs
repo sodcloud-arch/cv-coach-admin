@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const base=(process.env.CV_TEST_URL||'http://127.0.0.1:4173').replace(/\/$/,'');
-const target=`${base}/?cv_v102=1&v=105`;
+const target=`${base}/?cv_v102=1&v=106`;
 const browser=await webkit.launch();
 const context=await browser.newContext({
   viewport:{width:390,height:844},
@@ -21,13 +21,11 @@ try{
   await page.waitForFunction(()=>window.CVGuidedSetLoggingV105?.version==='105',null,{timeout:10000});
   await page.evaluate(()=>document.getElementById('demoBtn')?.click());
   await page.waitForFunction(()=>!document.getElementById('app')?.classList.contains('hidden'),null,{timeout:5000});
-  await page.waitForFunction(()=>{
-    try{
-      if(document.querySelector('.cvSetRow'))return true;
-      if(typeof window.openDay==='function')window.openDay('d1');
-      return !!document.querySelector('.cvSetRow');
-    }catch(_){return false}
-  },null,{timeout:7000,polling:100});
+  await page.evaluate(async()=>{
+    if(typeof window.openDay!=='function')throw new Error('openDay unavailable');
+    await window.openDay('d1');
+  });
+  await page.waitForFunction(()=>!!document.querySelector('.cvSetRow'),null,{timeout:7000});
   await page.waitForFunction(()=>[...document.querySelectorAll('.cvSetRow')].some(row=>row.offsetWidth>0&&row.offsetHeight>0),null,{timeout:5000});
   await page.waitForFunction(()=>document.querySelector('.cvSetRow.cvV105Next'),null,{timeout:5000});
   await page.evaluate(async()=>{try{if(document.fonts?.ready)await document.fonts.ready}catch(_){}});
