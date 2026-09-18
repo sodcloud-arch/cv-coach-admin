@@ -1,5 +1,6 @@
 import { webkit } from 'playwright';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 
 const base=(process.env.CV_TEST_URL||'http://127.0.0.1:4173').replace(/\/$/,'');
 const target=`${base}/?cv_v102=1&v=105`;
@@ -84,6 +85,12 @@ try{
   assert.equal(modalOpen,false,'V105 logging flow must remain inline');
   assert.equal(errors.length,0,'Browser errors: '+errors.join(' | '));
 
+  fs.mkdirSync('artifacts',{recursive:true});
+  const currentCard=page.locator('.cvV105ExerciseOpen:visible').first();
+  await currentCard.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+  await page.screenshot({path:'artifacts/v105-mobile-current.png',fullPage:false});
+  console.log('CV_V105_SCREENSHOT_WRITTEN artifacts/v105-mobile-current.png');
   console.log('CV_GUIDED_SET_LOGGING_V105_BROWSER_OK',JSON.stringify(initial));
 }finally{
   await context.close().catch(()=>{});
