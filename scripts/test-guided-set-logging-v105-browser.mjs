@@ -80,9 +80,9 @@ try{
   }
 
   console.log('CV_V105_INITIAL_STATE',JSON.stringify(initial));
-  assert.equal(initial.htmlVersion,'105.4');
+  assert.equal(initial.htmlVersion,'105.5');
   assert.equal(initial.bodyClass,true);
-  assert.equal(initial.hasHint,false,'V105.4 keeps redundant logging hint removed');
+  assert.equal(initial.hasHint,false,'V105.5 keeps redundant logging hint removed');
   assert.match(initial.weightId,/^cvw_/);
   assert.match(initial.repsId,/^cvr_/);
   assert.match(initial.weightLabel,/Peso.*serie/i);
