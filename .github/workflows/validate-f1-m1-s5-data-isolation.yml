@@ -1,0 +1,25 @@
+name: Validate F1.M1.S5 Data Isolation
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609181000_f1_m1_s5_canonical_data_isolation_arch1.sql"
+      - "scripts/test-f1-m1-s5-data-isolation.py"
+      - ".github/workflows/validate-f1-m1-s5-data-isolation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  data-isolation-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate ARCH-1.0 data isolation contract
+        run: python scripts/test-f1-m1-s5-data-isolation.py
