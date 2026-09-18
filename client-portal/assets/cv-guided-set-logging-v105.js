@@ -83,6 +83,61 @@
         color:#fff!important;
         box-shadow:0 0 0 2px rgba(255,64,87,.08),0 0 16px rgba(255,32,55,.08);
       }
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia{
+        display:grid!important;
+        place-items:center!important;
+        width:100%!important;
+        height:min(244px,63vw)!important;
+        min-height:min(244px,63vw)!important;
+        max-height:244px!important;
+        margin:10px 0 13px!important;
+        padding:0!important;
+        overflow:hidden!important;
+        border:1px solid #2a3740!important;
+        border-radius:13px!important;
+        background:#030608!important;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 10px 26px rgba(0,0,0,.22)!important;
+      }
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia:after{
+        display:none!important;
+        content:none!important;
+      }
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia .photo{
+        display:block!important;
+        width:100%!important;
+        height:100%!important;
+        max-height:none!important;
+        min-height:0!important;
+        aspect-ratio:auto!important;
+        object-fit:contain!important;
+        object-position:center!important;
+        margin:0!important;
+        border:0!important;
+        border-radius:0!important;
+        background:#030608!important;
+      }
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen .cvExecutionBtnV35{
+        display:none!important;
+      }
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105MediaFallback{
+        width:100%;
+        height:100%;
+        display:grid;
+        place-items:center;
+        text-align:center;
+        padding:24px;
+        color:#7f8c94;
+        font-size:10px;
+        font-weight:800;
+        line-height:1.45;
+        background:radial-gradient(circle at 50% 45%,#11191e,#040708 70%);
+      }
+      body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105MediaFallback b{
+        display:block;
+        margin-bottom:5px;
+        color:#dce2e5;
+        font:900 28px/1 'Barlow Condensed',sans-serif;
+      }
       body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105LoggingHint{
         margin:1px 3px 6px;
         color:#6f7d84;
@@ -94,9 +149,60 @@
       @media(max-width:390px){
         body.cvFastWorkout.cvGuidedSetLoggingV105 .cvSetRow input[data-cv-v105="1"]{font-size:19px!important}
         body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105LoggingHint{font-size:8px}
+        body.cvFastWorkout.cvGuidedSetLoggingV105 .cvV105ExerciseOpen>.exerciseMedia{
+          height:min(232px,63vw)!important;
+          min-height:min(232px,63vw)!important;
+        }
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function ensureExerciseMedia(card){
+    let media=card.querySelector('.exerciseMedia');
+    const title=card.querySelector('.exerciseTop h3')?.textContent?.trim()||card.getAttribute('data-tech-name')||'Ejercicio';
+    const src=String(card.getAttribute('data-tech-img')||'').trim();
+
+    if(!media){
+      media=document.createElement('div');
+      media.className='exerciseMedia';
+      const top=card.querySelector('.exerciseTop');
+      if(top)top.insertAdjacentElement('afterend',media);
+      else card.prepend(media);
+    }
+
+    let img=media.querySelector('.photo');
+    if(!img&&src){
+      img=document.createElement('img');
+      img.className='photo';
+      img.alt=title;
+      img.loading='eager';
+      img.decoding='async';
+      img.src=src;
+      media.replaceChildren(img);
+    }else if(img){
+      img.loading='eager';
+      img.decoding='async';
+      if(!img.getAttribute('src')&&src)img.src=src;
+    }
+
+    if(img&&img.dataset.cvV105Bound!=='1'){
+      img.dataset.cvV105Bound='1';
+      img.addEventListener('error',()=>{
+        const fallback=document.createElement('div');
+        fallback.className='cvV105MediaFallback';
+        fallback.innerHTML='<div><b>CV</b>Lámina no disponible</div>';
+        media.replaceChildren(fallback);
+      },{once:true});
+    }
+
+    if(!img&&!media.querySelector('.cvV105MediaFallback')){
+      const fallback=document.createElement('div');
+      fallback.className='cvV105MediaFallback';
+      fallback.innerHTML='<div><b>CV</b>Imagen técnica en preparación</div>';
+      media.appendChild(fallback);
+    }
+    return media;
   }
 
   function decorateExercise(card){
@@ -136,8 +242,18 @@
     scheduled=false;
     injectStyle();
     document.body?.classList.add('cvGuidedSetLoggingV105');
-    document.documentElement?.setAttribute('data-cv-guided-set-logging','105');
-    document.querySelectorAll('.cvHevyExercise,.workoutExercise').forEach(decorateExercise);
+    document.documentElement?.setAttribute('data-cv-guided-set-logging','105.1');
+
+    const cards=[...document.querySelectorAll('.cvHevyExercise,.workoutExercise')].filter(isVisible);
+    cards.forEach(decorateExercise);
+
+    const currentCard=cards.find(card=>[...card.querySelectorAll(ROW_SELECTOR)].some(row=>isVisible(row)&&!row.classList.contains('done')))||cards[0]||null;
+    cards.forEach(card=>card.classList.toggle('cvV105ExerciseOpen',card===currentCard));
+
+    if(currentCard){
+      ensureExerciseMedia(currentCard);
+      currentCard.querySelectorAll('.cvExecutionBtnV35').forEach(button=>button.setAttribute('aria-hidden','true'));
+    }
   }
 
   function schedule(){
@@ -201,6 +317,6 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enable,{once:true});
   else enable();
 
-  window.CVGuidedSetLoggingV105={version:VERSION,ready:true,refresh:schedule,marker:READY};
+  window.CVGuidedSetLoggingV105={version:VERSION,revision:'105.1',ready:true,refresh:schedule,marker:READY};
   console.info(READY,VERSION);
 })();
