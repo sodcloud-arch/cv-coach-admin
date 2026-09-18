@@ -130,7 +130,7 @@ create unique index if not exists ux_cv_rank_transitions_v61_org_id_client
   on public.cv_rank_transitions_v61(organization_id,id,client_id);
 
 -- Canonical Organization / Client boundaries.
-do $
+do $$
 declare
   t text;
 begin
@@ -167,7 +167,7 @@ begin
       );
     end if;
   end loop;
-end $;
+end $$;
 
 do $$
 begin
