@@ -694,6 +694,302 @@ begin
 end;
 $function$;
 
+create or replace function private.process_cv_score_automation()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_template public.mission_templates%rowtype;
+  v_template_name text;
+  v_weak_score numeric;
+  v_habit_category text;
+  v_coach uuid;
+  v_program_days integer;
+  v_details jsonb;
+begin
+  v_details:=jsonb_build_object(
+    'organization_id',new.organization_id,
+    'snapshot_id',new.id,
+    'cv_score',new.cv_score,
+    'trend_delta',new.trend_delta,
+    'training_score',new.training_score,
+    'nutrition_score',new.nutrition_score,
+    'habit_score',new.habit_score,
+    'progress_score',new.progress_score,
+    'weakest_pillar',new.weakest_pillar,
+    'dynamic_state',new.dynamic_state
+  );
+
+  -- 1) Operational alerts for canonical active coaches in this Organization.
+  for v_coach in
+    select cp.user_id
+    from public.clients c
+    join public.client_coach_assignments a
+      on a.organization_id=c.organization_id
+     and a.client_id=c.id
+     and a.status='active'::public.client_coach_assignment_status
+    join public.coach_profiles cp
+      on cp.organization_id=a.organization_id
+     and cp.id=a.coach_id
+     and cp.status='active'::public.coach_profile_status
+    where c.organization_id=new.organization_id
+      and c.user_id=new.client_id
+      and c.status<>'archived'::public.client_status
+  loop
+    perform private.set_coach_alert_in_org(
+      new.organization_id,
+      v_coach,
+      new.client_id,
+      'cv_score_low',
+      new.cv_score<50,
+      case
+        when new.cv_score<35 then 'critical'::public.alert_severity
+        else 'warning'::public.alert_severity
+      end,
+      'CV Score requiere atención',
+      'El CV Score actual es '||round(new.cv_score)::text||
+        '. Revisa adherencia y contexto del cliente.',
+      v_details
+    );
+
+    perform private.set_coach_alert_in_org(
+      new.organization_id,
+      v_coach,
+      new.client_id,
+      'cv_score_drop',
+      coalesce(new.trend_delta,0)<=-10,
+      case
+        when coalesce(new.trend_delta,0)<=-20
+          then 'critical'::public.alert_severity
+        else 'warning'::public.alert_severity
+      end,
+      'Caída relevante de CV Score',
+      'El CV Score cambió '||
+        coalesce(round(new.trend_delta)::text,'0')||
+        ' puntos frente a la referencia de 7 días.',
+      v_details
+    );
+
+    perform private.set_coach_alert_in_org(
+      new.organization_id,
+      v_coach,
+      new.client_id,
+      'training_attention',
+      coalesce(
+        (new.configured_pillars->>'training')::boolean,
+        false
+      ) and new.training_score<50,
+      'warning'::public.alert_severity,
+      'Adherencia de entrenamiento baja',
+      'Pilar Entrenamiento: '||
+        round(new.training_score)::text||'/100.',
+      v_details
+    );
+
+    perform private.set_coach_alert_in_org(
+      new.organization_id,
+      v_coach,
+      new.client_id,
+      'nutrition_attention',
+      coalesce(
+        (new.configured_pillars->>'nutrition')::boolean,
+        false
+      ) and new.nutrition_score<50,
+      'warning'::public.alert_severity,
+      'Adherencia nutricional baja',
+      'Pilar Nutrición: '||
+        round(new.nutrition_score)::text||'/100.',
+      v_details
+    );
+
+    perform private.set_coach_alert_in_org(
+      new.organization_id,
+      v_coach,
+      new.client_id,
+      'habits_attention',
+      coalesce(
+        (new.configured_pillars->>'habits')::boolean,
+        false
+      ) and new.habit_score<50,
+      'warning'::public.alert_severity,
+      'Hábitos requieren atención',
+      'Pilar Hábitos: '||
+        round(new.habit_score)::text||'/100.',
+      v_details
+    );
+  end loop;
+
+  -- 2) Adaptive mission remains inside the snapshot Organization.
+  v_template_name:=null;
+  v_weak_score:=case new.weakest_pillar
+    when 'training' then new.training_score
+    when 'nutrition' then new.nutrition_score
+    when 'habits' then new.habit_score
+    when 'progress' then new.progress_score
+    else null
+  end;
+
+  if v_weak_score is not null
+     and v_weak_score<70
+     and not exists(
+       select 1
+       from public.client_missions cm
+       where cm.organization_id=new.organization_id
+         and cm.client_id=new.client_id
+         and cm.status='active'::public.client_mission_status
+         and cm.pillar=new.weakest_pillar
+         and cm.generated_reason like 'CV12 adaptive:%'
+         and (
+           cm.expires_at is null
+           or cm.expires_at>now()
+         )
+     ) then
+
+    if new.weakest_pillar='training' then
+      select count(*)::integer into v_program_days
+      from public.program_days pd
+      join public.programs p
+        on p.organization_id=pd.organization_id
+       and p.id=pd.program_id
+      where p.organization_id=new.organization_id
+        and p.client_id=new.client_id
+        and p.status='active'::public.program_status;
+
+      if coalesce(v_program_days,0)>=2 then
+        v_template_name:='Volver al ritmo';
+      end if;
+
+    elsif new.weakest_pillar='nutrition'
+      and exists(
+        select 1
+        from public.nutrition_targets nt
+        where nt.organization_id=new.organization_id
+          and nt.client_id=new.client_id
+          and nt.active=true
+      ) then
+      v_template_name:='5 días de nutrición';
+
+    elsif new.weakest_pillar='habits' then
+      with cats as (
+        select
+          hd.category,
+          count(*) filter(
+            where hl.completed=true
+          )::numeric/nullif(
+            count(distinct ch.id)*7,
+            0
+          ) as ratio
+        from public.client_habits ch
+        join public.habit_definitions hd
+          on hd.id=ch.habit_id
+        left join public.habit_logs hl
+          on hl.organization_id=ch.organization_id
+         and hl.client_habit_id=ch.id
+         and hl.log_date between current_date-6 and current_date
+        where ch.organization_id=new.organization_id
+          and ch.client_id=new.client_id
+          and ch.active=true
+          and ch.start_date<=current_date
+          and (
+            ch.end_date is null
+            or ch.end_date>=current_date
+          )
+        group by hd.category
+      )
+      select category into v_habit_category
+      from cats
+      order by ratio asc nulls first,category
+      limit 1;
+
+      v_template_name:=case v_habit_category
+        when 'steps' then 'Pasos 5 de 7'
+        when 'sleep' then 'Sueño 5 de 7'
+        when 'hydration' then 'Hidratación 5 de 7'
+        when 'cardio' then 'Cardio semanal'
+        else null
+      end;
+    end if;
+
+    if v_template_name is not null then
+      select * into v_template
+      from public.mission_templates mt
+      where mt.name=v_template_name
+        and mt.active=true
+      order by mt.created_at desc
+      limit 1;
+
+      if v_template.id is not null
+         and not exists(
+           select 1
+           from public.client_missions cm
+           where cm.organization_id=new.organization_id
+             and cm.client_id=new.client_id
+             and cm.mission_template_id=v_template.id
+             and cm.status='active'::public.client_mission_status
+             and (
+               cm.expires_at is null
+               or cm.expires_at>now()
+             )
+         ) then
+
+        insert into public.client_missions(
+          organization_id,client_id,mission_template_id,
+          mission_name,mission_description,pillar,assigned_by,
+          generated_reason,xp_reward_snapshot,
+          credit_reward_snapshot,start_at,expires_at,
+          progress,target,status
+        )
+        values(
+          new.organization_id,
+          new.client_id,
+          v_template.id,
+          v_template.name,
+          v_template.description,
+          v_template.pillar,
+          null,
+          'CV12 adaptive: weakest_pillar='||
+            new.weakest_pillar||
+            '; score='||round(v_weak_score)::text,
+          v_template.xp_reward,
+          v_template.credit_reward,
+          now(),
+          now()+interval '7 days',
+          0,
+          coalesce(
+            nullif(
+              v_template.rule->>'default_target',
+              ''
+            )::numeric,
+            1
+          ),
+          'active'::public.client_mission_status
+        );
+
+        insert into public.notifications(
+          user_id,type,title,body,action_url,metadata
+        )
+        values(
+          new.client_id,
+          'adaptive_mission',
+          'Nueva misión adaptativa',
+          v_template.name,
+          '/progress/missions',
+          jsonb_build_object(
+            'organization_id',new.organization_id,
+            'mission_template_id',v_template.id,
+            'weakest_pillar',new.weakest_pillar
+          )
+        );
+      end if;
+    end if;
+  end if;
+
+  return new;
+end;
+$function$;
+
 create or replace function public.calculate_cv_score_backend(
   p_actor_id uuid,
   p_client_id uuid default null::uuid,
