@@ -87,7 +87,11 @@ try{
 
   await page.evaluate(()=>document.getElementById('demoBtn')?.click());
   await page.waitForFunction(()=>!document.getElementById('app')?.classList.contains('hidden'),null,{timeout:5000});
-  await page.evaluate(()=>{ if(typeof window.openDay==='function') window.openDay('d1'); });
+  await page.evaluate(async()=>{
+    if(typeof window.openDay==='function')await window.openDay('d1');
+  });
+  await page.waitForFunction(()=>[...document.querySelectorAll('.cvSetRow')].some(row=>row.offsetWidth>0&&row.offsetHeight>0),null,{timeout:7000});
+  await page.waitForFunction(()=>document.body.classList.contains('cvWorkoutPrestartV40'),null,{timeout:5000});
   await page.waitForSelector('.cvWorkoutStartV40',{state:'visible',timeout:7000});
 
   fs.mkdirSync('artifacts/v105-active-session',{recursive:true});
