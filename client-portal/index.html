@@ -579,6 +579,7 @@ body.cvFastWorkout .cvAddSet{height:45px!important;border-style:dashed!important
 </section>
 
 <script src="/admin-assets/tenant-context-v1.js"></script>
+<script src="/admin-assets/session-context-v1.js"></script>
 <script src="/admin-assets/password-recovery-v1.js"></script>
 <script>window.CVPasswordRecovery=window.CVPasswordRecovery||{version:'F1.M2.S2_RECOVERY_CLIENT_FALLBACK_V1',neutralMessage:'Si existe una cuenta para ese correo, recibirás instrucciones para restablecer tu contraseña.',isRecoveryNavigation:function(){try{const q=new URLSearchParams(location.search),h=new URLSearchParams(String(location.hash||'').replace(/^#/,''));return q.get('recovery')==='1'||q.get('type')==='recovery'||h.get('type')==='recovery'}catch(_){return false}}};</script>
 <script>
@@ -636,14 +637,47 @@ sessions:[],weeklyCheckins:[],weeklyCheckinsError:'',trainingHistory:{summary:{w
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.remove('hidden');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.add('hidden'),2600)}
 function setLogged(){if(setupInProgress)return;$('#login').classList.add('hidden');$('#app').classList.remove('hidden');$('#modeBadge').innerHTML=mode==='demo'?'<span class="demoBadge">DEMO</span>':'';render() }
 
-async function loadReal(){
- const id=user.id;
- if(!activeOrganizationId){
+function clearClientTenantState(){
+ clearInterval(timerHandle);
+ data=null;workout=null;
+ activeOrganizationContext=null;activeOrganizationId=null;
+}
+async function ensureClientOrganizationContext(){
+ const id=user?.id;
+ if(!id){CVSessionContext.unauthenticated('missing_user');throw new Error('Sesión no autenticada.')}
+ if(activeOrganizationId){
+  const check=await CVTenantContext.revalidateSupabase({sb,userId:id,organizationId:activeOrganizationId});
+  CVSessionContext.fromTenantValidation(id,check);
+  if(!check.valid){
+   clearClientTenantState();
+   throw new Error('Tu acceso a la organización activa cambió. Selecciona una organización válida nuevamente.');
+  }
+  activeOrganizationContext=check.context;
+ }else{
   activeOrganizationContext=await CVTenantContext.ensureSupabase({sb,userId:id});
   activeOrganizationId=activeOrganizationContext?.active_organization?.organization_id||null;
-  if(!activeOrganizationId)throw new Error('No se pudo establecer una organización activa.');
-  if(activeOrganizationContext?.active_organization?.role!=='client')throw new Error('La organización activa no tiene un perfil de cliente para esta cuenta.');
+  if(!activeOrganizationId){CVSessionContext.authenticatedNoOrg(id,'organization_required');throw new Error('No se pudo establecer una organización activa.')}
+  CVSessionContext.active(id,activeOrganizationContext,'login_validated');
  }
+ if(activeOrganizationContext?.active_organization?.role!=='client')throw new Error('La organización activa no tiene un perfil de cliente para esta cuenta.');
+ return activeOrganizationContext;
+}
+async function switchClientOrganization(organizationId){
+ const id=user?.id;
+ if(!id||!organizationId)throw new Error('Sesión u organización inválida.');
+ const context=await CVTenantContext.switchSupabase({sb,userId:id,organizationId});
+ clearClientTenantState();
+ activeOrganizationContext=context;
+ activeOrganizationId=context.active_organization.organization_id;
+ CVSessionContext.active(id,context,'tenant_switched');
+ await loadReal();
+ setLogged();
+ return context;
+}
+window.cvSwitchOrganization=switchClientOrganization;
+async function loadReal(){
+ const id=user.id;
+ await ensureClientOrganizationContext();
  const [p,cp,cv,pr,hab,mis,nt,sessions,checkins,history]=await Promise.all([
   sb.from('profiles').select('*').eq('id',id).maybeSingle(),
   sb.from('client_profiles').select('*').eq('client_id',id).eq('organization_id',activeOrganizationId).maybeSingle(),
@@ -809,8 +843,8 @@ async function requestClientPasswordRecovery(){const b=$('#forgotPasswordBtn'),s
 $('#loginBtn').onclick=async()=>{const b=$('#loginBtn');b.disabled=true;b.textContent='INGRESANDO…';$('#loginStatus').textContent='';try{const {data:r,error}=await sb.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});if(error)throw error;user=r.user;mode='real';await loadReal();setLogged()}catch(e){$('#loginStatus').textContent=e.message||'No se pudo ingresar.'}finally{b.disabled=false;b.textContent='INGRESAR'}};
 $('#forgotPasswordBtn').onclick=requestClientPasswordRecovery;
 $('#password').addEventListener('keydown',e=>{if(e.key==='Enter')$('#loginBtn').click()});
-$('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await sb.auth.signOut();location.reload()};
-(async()=>{if(directTokenFlow){setupInProgress=true;const verified=await directTokenVerify();if(!verified){setupShow(null);return}await setupHandleSession(verified);return}const s=await sb.auth.getSession();if(setupMode){setupInProgress=true;await setupHandleSession(s.data.session);return}if(s.data.session){try{user=s.data.session.user;mode='real';await loadReal();setLogged()}catch(e){await sb.auth.signOut()}}})();
+$('#logout').onclick=async()=>{clearInterval(timerHandle);try{if(mode==='real')await CVSessionContext.logoutSupabase({sb,scope:'local'})}finally{clearClientTenantState();user=null;mode='demo';location.reload()}};
+(async()=>{if(directTokenFlow){setupInProgress=true;const verified=await directTokenVerify();if(!verified){setupShow(null);return}await setupHandleSession(verified);return}const s=await sb.auth.getSession();if(setupMode){setupInProgress=true;await setupHandleSession(s.data.session);return}if(s.data.session){try{user=s.data.session.user;mode='real';await loadReal();setLogged()}catch(e){clearClientTenantState();CVSessionContext.authenticatedNoOrg(s.data.session.user?.id||null,'initial_context_invalid');$('#app')?.classList.add('hidden');$('#login')?.classList.remove('hidden');$('#loginStatus').textContent=e.message||'No se pudo validar tu organización.';$('#loginStatus').style.color='#ff93a1'}}else CVSessionContext.unauthenticated('no_session')})();
 </script>
 <script id='cv-hevy-v1-js'>(function(){
   const CV_BASE='https://fmhcansyxcsqkrivqchr.supabase.co/storage/v1/object/public/exercise-media/cv-exercise-library/v1/';
@@ -1134,7 +1168,7 @@ $('#logout').onclick=async()=>{clearInterval(timerHandle);if(mode==='real')await
   window.openNotifications=function(){view='notifications';document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));render();refreshNotifications()};
   const baseRender=window.render;window.render=function(){const result=baseRender.apply(this,arguments);if(view==='notifications'){const c=document.getElementById('content');if(c){c.innerHTML=notificationShell();document.getElementById('cvMarkAll').onclick=markAllNotifications;renderNotificationList()}}else if(view==='home'&&mode==='real'){refreshNotifications()}return result};
   const baseSetLogged=window.setLogged;window.setLogged=function(){const result=baseSetLogged.apply(this,arguments);if(!setupInProgress)refreshNotifications();return result};
-  sb.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'&&session?.user?.id){setupRecoverySignal=true;setupRecoveryUserId=session.user.id;}if(directTokenFlow&&(directTokenVerifying||directTokenVerifiedUserId===null))return;if(setupMode||setupInProgress){if(session?.user?.id){user=session.user;mode='real';setupHandleSession(session).catch(()=>setupShow(null))}else if(setupMode)setupShow(null);return}if(session?.user?.id){user=session.user;mode='real';if(event==='SIGNED_IN'||event==='INITIAL_SESSION')refreshNotifications();if(event==='TOKEN_REFRESHED'){refreshNotifications();Promise.allSettled([loadReal(),loadAchievements()]).then(results=>{const failure=results.find(r=>r.status==='rejected');if(failure)console.warn('Portal refresh failed',failure.reason);if(view!=='workout')render()})}}});
+  sb.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'&&session?.user?.id){setupRecoverySignal=true;setupRecoveryUserId=session.user.id;}if(event==='SIGNED_OUT'){clearClientTenantState();user=null;CVSessionContext.unauthenticated('provider_signed_out');return}if(directTokenFlow&&(directTokenVerifying||directTokenVerifiedUserId===null))return;if(setupMode||setupInProgress){if(session?.user?.id){user=session.user;mode='real';setupHandleSession(session).catch(()=>setupShow(null))}else if(setupMode)setupShow(null);return}if(session?.user?.id){user=session.user;mode='real';if(event==='SIGNED_IN'||event==='INITIAL_SESSION')refreshNotifications();if(event==='TOKEN_REFRESHED'){refreshNotifications();Promise.allSettled([loadReal(),loadAchievements()]).then(results=>{const failure=results.find(r=>r.status==='rejected');if(failure){console.warn('Portal refresh failed',failure.reason);clearClientTenantState();CVSessionContext.authenticatedNoOrg(session.user.id,'refresh_context_invalid');$('#app')?.classList.add('hidden');$('#login')?.classList.remove('hidden');$('#loginStatus').textContent='Tu acceso cambió. Vuelve a validar la organización.';$('#loginStatus').style.color='#ff93a1';return}if(view!=='workout')render()})}}});
   updateNotificationBadge();
 })();
 </script><script id="cv-client-workout-v31-js">
