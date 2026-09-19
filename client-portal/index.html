@@ -580,6 +580,7 @@ body.cvFastWorkout .cvAddSet{height:45px!important;border-style:dashed!important
 
 <script src="/admin-assets/tenant-context-v1.js"></script>
 <script src="/admin-assets/password-recovery-v1.js"></script>
+<script>window.CVPasswordRecovery=window.CVPasswordRecovery||{version:'F1.M2.S2_RECOVERY_CLIENT_FALLBACK_V1',neutralMessage:'Si existe una cuenta para ese correo, recibirás instrucciones para restablecer tu contraseña.',isRecoveryNavigation:function(){try{const q=new URLSearchParams(location.search),h=new URLSearchParams(String(location.hash||'').replace(/^#/,''));return q.get('recovery')==='1'||q.get('type')==='recovery'||h.get('type')==='recovery'}catch(_){return false}}};</script>
 <script>
 const {createClient}=window.supabase;
 const SB_URL='https://fmhcansyxcsqkrivqchr.supabase.co';
