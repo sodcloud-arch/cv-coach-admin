@@ -929,3 +929,60 @@ comment on function private.permission_decision_v1(uuid,uuid,text,text,uuid) is
 'F1.M2.S8 deny-by-default authorization decision. Reads live membership/roles/resources; JWT claims are not permission authority.';
 comment on function public.get_my_permission_snapshot_v1(uuid) is
 'F1.M2.S8 frontend visibility snapshot only. Server/RLS remains authoritative and feature entitlement is separate.';
+
+
+-- Sensitive mutation parity: legacy SECURITY DEFINER RPCs may keep historical
+-- guards, but DB triggers enforce the S8 capability decision for authenticated calls.
+create or replace function private.guard_client_subscription_permission_v1()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_org uuid:=coalesce(new.organization_id,old.organization_id);
+begin
+  if auth.role()='service_role' then
+    return coalesce(new,old);
+  end if;
+
+  perform private.require_permission_v1(
+    v_org,auth.uid(),
+    'organization.clients.manage','organization',v_org
+  );
+  return coalesce(new,old);
+end;
+$function$;
+
+drop trigger if exists client_subscriptions_permission_v1
+  on public.client_subscriptions;
+create trigger client_subscriptions_permission_v1
+before insert or update or delete on public.client_subscriptions
+for each row execute function private.guard_client_subscription_permission_v1();
+
+create or replace function private.guard_billing_record_permission_v1()
+returns trigger
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_org uuid:=coalesce(new.organization_id,old.organization_id);
+begin
+  if auth.role()='service_role' then
+    return coalesce(new,old);
+  end if;
+
+  perform private.require_permission_v1(
+    v_org,auth.uid(),
+    'organization.billing.manage','organization',v_org
+  );
+  return coalesce(new,old);
+end;
+$function$;
+
+drop trigger if exists subscription_billing_records_permission_v1
+  on public.subscription_billing_records;
+create trigger subscription_billing_records_permission_v1
+before insert or update or delete on public.subscription_billing_records
+for each row execute function private.guard_billing_record_permission_v1();
