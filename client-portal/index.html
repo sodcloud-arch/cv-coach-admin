@@ -650,7 +650,7 @@ async function loadReal(){
   sb.from('nutrition_targets').select('*').eq('client_id',id).eq('organization_id',activeOrganizationId).eq('active',true).order('created_at',{ascending:false}).limit(1).maybeSingle(),
   sb.from('workout_sessions').select('*').eq('client_id',id).eq('organization_id',activeOrganizationId).order('started_at',{ascending:false}).limit(10),
   sb.from('weekly_checkins').select('*').eq('client_id',id).eq('organization_id',activeOrganizationId).order('week_start',{ascending:false}).limit(8),
-  sb.rpc('get_client_training_history',{p_limit:20})
+  sb.rpc('get_client_training_history_in_org_v1',{p_organization_id:activeOrganizationId,p_limit:20})
  ]);
  const err=[p,cp,cv,pr,hab,mis,nt,sessions].find(x=>x.error);if(err)throw err.error;
  const program=pr.data||null;let days=[],exercises={};
