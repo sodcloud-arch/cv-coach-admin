@@ -15,16 +15,23 @@ declare
   v_uid uuid:=auth.uid();
   v_profile public.profiles%rowtype;
   v_count integer:=0;
-  v_selected public.organization_members%rowtype;
-  v_selected_org public.organizations%rowtype;
-  v_auto_org public.organizations%rowtype;
-  v_auto_member public.organization_members%rowtype;
   v_options jsonb:='[]'::jsonb;
   v_resolution text;
   v_active jsonb:=null;
   v_slug text:=nullif(lower(btrim(coalesce(p_suggested_slug,''))),'');
   v_suggested_match uuid;
   v_selected_valid boolean:=false;
+
+  v_active_org_id uuid;
+  v_active_slug text;
+  v_active_display_name text;
+  v_active_org_status public.organization_status;
+  v_active_role public.organization_member_role;
+  v_active_locale text;
+  v_active_timezone text;
+  v_active_currency text;
+  v_active_branding jsonb;
+  v_active_flags jsonb;
 begin
   if v_uid is null then
     raise exception 'Authentication required';
@@ -100,8 +107,12 @@ begin
   end if;
 
   if p_selected_organization_id is not null then
-    select om,o
-    into v_selected,v_selected_org
+    select
+      o.id,o.slug,o.display_name,o.status,om.role,
+      o.locale,o.timezone,o.currency,o.branding_config,o.feature_flags
+    into
+      v_active_org_id,v_active_slug,v_active_display_name,v_active_org_status,v_active_role,
+      v_active_locale,v_active_timezone,v_active_currency,v_active_branding,v_active_flags
     from public.organization_members om
     join public.organizations o on o.id=om.organization_id
     where om.user_id=v_uid
@@ -118,9 +129,14 @@ begin
 
   if v_count=0 then
     v_resolution:='no_membership';
+    v_active_org_id:=null;
   elsif v_count=1 then
-    select om,o
-    into v_auto_member,v_auto_org
+    select
+      o.id,o.slug,o.display_name,o.status,om.role,
+      o.locale,o.timezone,o.currency,o.branding_config,o.feature_flags
+    into
+      v_active_org_id,v_active_slug,v_active_display_name,v_active_org_status,v_active_role,
+      v_active_locale,v_active_timezone,v_active_currency,v_active_branding,v_active_flags
     from public.organization_members om
     join public.organizations o on o.id=om.organization_id
     where om.user_id=v_uid
@@ -132,34 +148,26 @@ begin
     limit 1;
 
     v_resolution:='auto_selected';
-    v_active:=jsonb_build_object(
-      'organization_id',v_auto_org.id,
-      'slug',v_auto_org.slug,
-      'display_name',v_auto_org.display_name,
-      'organization_status',v_auto_org.status,
-      'role',v_auto_member.role,
-      'locale',v_auto_org.locale,
-      'timezone',v_auto_org.timezone,
-      'currency',v_auto_org.currency,
-      'branding_config',v_auto_org.branding_config,
-      'feature_flags',v_auto_org.feature_flags
-    );
   elsif v_selected_valid then
     v_resolution:='selected';
-    v_active:=jsonb_build_object(
-      'organization_id',v_selected_org.id,
-      'slug',v_selected_org.slug,
-      'display_name',v_selected_org.display_name,
-      'organization_status',v_selected_org.status,
-      'role',v_selected.role,
-      'locale',v_selected_org.locale,
-      'timezone',v_selected_org.timezone,
-      'currency',v_selected_org.currency,
-      'branding_config',v_selected_org.branding_config,
-      'feature_flags',v_selected_org.feature_flags
-    );
   else
     v_resolution:='selection_required';
+    v_active_org_id:=null;
+  end if;
+
+  if v_active_org_id is not null then
+    v_active:=jsonb_build_object(
+      'organization_id',v_active_org_id,
+      'slug',v_active_slug,
+      'display_name',v_active_display_name,
+      'organization_status',v_active_org_status,
+      'role',v_active_role,
+      'locale',v_active_locale,
+      'timezone',v_active_timezone,
+      'currency',v_active_currency,
+      'branding_config',v_active_branding,
+      'feature_flags',v_active_flags
+    );
   end if;
 
   return jsonb_build_object(
