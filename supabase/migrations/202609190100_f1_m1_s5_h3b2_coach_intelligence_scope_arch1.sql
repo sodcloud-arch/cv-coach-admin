@@ -1467,8 +1467,7 @@ begin
       )
     );
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION private.compute_coach_action_outcome_v96(p_actor_id uuid, p_workspace_id uuid, p_as_of timestamp with time zone DEFAULT now())
  RETURNS jsonb
@@ -1781,8 +1780,7 @@ begin
     )
   );
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.reconcile_coach_action_outcome_v96(p_actor_id uuid, p_workspace_id uuid)
  RETURNS jsonb
@@ -1840,8 +1838,7 @@ begin
 
   return v_assessment||jsonb_build_object('organization_id',v_organization,'event_id',v_event_id,'persisted',v_existing is null,'completion_verification',case when v_assessment->>'evidence_status'='SUFFICIENT' then 'system_reconciled' else 'coach_reported' end);
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION private.get_coach_outcome_intelligence_base_v96(p_actor_id uuid)
  RETURNS jsonb
@@ -1961,8 +1958,7 @@ begin
     )
   );
 end;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.get_coach_outcome_intelligence_v96(p_actor_id uuid)
  RETURNS jsonb
@@ -1977,8 +1973,7 @@ begin
   v:=jsonb_set(v,'{guardrails,no_auto_publish}','true'::jsonb,true);
   return v;
 end;
-$function$
-
+$function$;
 
 comment on function public.get_coach_ai_command_center_v94(uuid) is
   'F1.M1.S5 H3B2: V97 decision learning is partitioned by Organization + action code.';
