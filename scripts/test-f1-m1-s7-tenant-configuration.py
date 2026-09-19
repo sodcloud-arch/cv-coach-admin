@@ -25,11 +25,11 @@ if missing:
     raise SystemExit("Missing S7 tenant configuration contracts: "+", ".join(missing))
 
 for forbidden in [
-  "'billing_account_id'",
-  "'owner_user_id','status'",
   "set billing_account_id=",
   "set owner_user_id=",
   "set slug=",
+  "set status=",
+  "set plan_id=",
 ]:
     if forbidden in sql:
         raise SystemExit("Sensitive/identity field leaked into S7 writable patch: "+forbidden)
