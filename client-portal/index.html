@@ -679,7 +679,7 @@ async function ensureClientOrganizationContext(){
   if(!activeOrganizationId){CVSessionContext.authenticatedNoOrg(id,'organization_required');throw new Error('No se pudo establecer una organización activa.')}
   CVSessionContext.active(id,activeOrganizationContext,'login_validated');
  }
- if(activeOrganizationContext?.active_organization?.role!=='client')throw new Error('La organización activa no tiene un perfil de cliente para esta cuenta.');
+ const activeClientRoles=Array.isArray(activeOrganizationContext?.active_organization?.roles)?activeOrganizationContext.active_organization.roles:[activeOrganizationContext?.active_organization?.role].filter(Boolean);if(!activeClientRoles.includes('client'))throw new Error('La organización activa no tiene un rol CLIENT válido para esta cuenta.');
  return activeOrganizationContext;
 }
 async function switchClientOrganization(organizationId){
