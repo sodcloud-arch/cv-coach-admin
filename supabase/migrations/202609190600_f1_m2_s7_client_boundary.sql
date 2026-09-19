@@ -899,3 +899,281 @@ comment on function private.is_client_in_org_v1(uuid,uuid) is
 'F1.M2.S7 CLIENT authority requires active membership + CLIENT role + canonical non-archived client identity in the same Organization.';
 comment on function public.update_client_self_profile_v1(uuid,jsonb) is
 'F1.M2.S7 safe self-profile mutation; onboarding workflow and authorization fields are not client-editable.';
+
+
+-- Multi-role-safe client provisioning. A stable User may already be ORG_ADMIN/COACH
+-- in this Organization (or have a non-client legacy global app_role). Provisioning
+-- adds CLIENT tenant authority without duplicating or downgrading identity.
+create or replace function public.provision_client_records_in_org_backend(
+  p_actor_id uuid,
+  p_organization_id uuid,
+  p_client_id uuid,
+  p_email text,
+  p_first_name text,
+  p_last_name text default null::text,
+  p_phone text default null::text,
+  p_created_user boolean default false,
+  p_client_url text default 'https://cv-coach-roan.vercel.app'::text,
+  p_record_invite boolean default false
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path to 'pg_catalog','public','private'
+as $function$
+declare
+  v_request_role text:=coalesce(auth.role(),'');
+  v_request_user uuid:=auth.uid();
+  v_actor_status public.profile_status;
+  v_email text:=lower(trim(coalesce(p_email,'')));
+  v_first_name text:=trim(coalesce(p_first_name,''));
+  v_last_name text:=nullif(trim(coalesce(p_last_name,'')),'');
+  v_phone text:=nullif(trim(coalesce(p_phone,'')),'');
+  v_organization uuid;
+  v_member public.organization_members%rowtype;
+  v_client_entity uuid;
+  v_coach_entity uuid;
+  v_assignment_role public.client_coach_assignment_role;
+  v_client_role_added boolean:=false;
+begin
+  if v_request_role<>'service_role'
+     and (v_request_user is null or v_request_user<>p_actor_id) then
+    raise exception 'Authenticated actor mismatch';
+  end if;
+
+  select status into v_actor_status
+  from public.profiles
+  where id=p_actor_id;
+
+  if not found or v_actor_status<>'active'::public.profile_status then
+    raise exception 'Forbidden' using errcode='42501';
+  end if;
+
+  if p_client_id is null or p_actor_id=p_client_id then
+    return jsonb_build_object('ok',false,'code','invalid_client');
+  end if;
+  if v_email='' or v_first_name='' then
+    return jsonb_build_object('ok',false,'code','invalid_input');
+  end if;
+  if p_client_url<>'https://cv-coach-roan.vercel.app' then
+    return jsonb_build_object('ok',false,'code','invalid_client_url');
+  end if;
+
+  if p_organization_id is null then
+    raise exception 'organization_id is required';
+  end if;
+  v_organization:=p_organization_id;
+
+  if v_request_role='service_role' then
+    if not (
+      private.is_org_owner_v1(v_organization,p_actor_id)
+      or private.member_has_org_role_v1(
+        v_organization,p_actor_id,'org_admin'::public.organization_member_role
+      )
+      or private.is_org_professional(v_organization,p_actor_id)
+    ) then
+      raise exception 'Forbidden for organization' using errcode='42501';
+    end if;
+  elsif not private.is_org_admin(v_organization) then
+    raise exception 'ORG_ADMIN or ORG_OWNER required' using errcode='42501';
+  end if;
+
+  -- Preserve an existing global identity/legacy app_role. Only a brand-new profile
+  -- receives the legacy client app_role for backward compatibility.
+  if exists(select 1 from public.profiles p where p.id=p_client_id) then
+    update public.profiles
+    set first_name=left(v_first_name,80),
+        last_name=left(v_last_name,80),
+        phone=left(v_phone,40),
+        status='active'::public.profile_status,
+        updated_at=now()
+    where id=p_client_id;
+  else
+    insert into public.profiles(id,role,status,first_name,last_name,phone)
+    values(
+      p_client_id,'client'::public.app_role,'active'::public.profile_status,
+      left(v_first_name,80),left(v_last_name,80),left(v_phone,40)
+    );
+  end if;
+
+  select * into v_member
+  from public.organization_members om
+  where om.organization_id=v_organization
+    and om.user_id=p_client_id
+  for update;
+
+  if not found then
+    insert into public.organization_members(
+      organization_id,user_id,role,status,joined_at
+    )
+    values(
+      v_organization,p_client_id,
+      'client'::public.organization_member_role,
+      'active'::public.organization_member_status,
+      now()
+    )
+    returning * into v_member;
+
+    -- S5's synchronization trigger creates the CLIENT role assignment.
+    v_client_role_added:=true;
+  elsif v_member.status<>'active'::public.organization_member_status then
+    raise exception 'client organization membership is not active';
+  elsif not private.member_has_org_role_v1(
+    v_organization,p_client_id,'client'::public.organization_member_role
+  ) then
+    insert into public.organization_member_roles(
+      member_id,organization_id,user_id,role,status,
+      grant_reason,granted_by,granted_at,metadata
+    )
+    values(
+      v_member.id,v_organization,p_client_id,
+      'client'::public.organization_member_role,
+      'active'::public.organization_member_role_assignment_status,
+      'Secure client provisioning/linking',
+      p_actor_id,now(),
+      jsonb_build_object('source','provision_client_records_in_org_backend')
+    )
+    on conflict (member_id,role)
+      where status='active'::public.organization_member_role_assignment_status
+    do nothing;
+
+    v_client_role_added:=true;
+    perform private.recompute_organization_member_primary_role_v1(v_member.id);
+  end if;
+
+  if v_client_role_added then
+    insert into public.organization_permission_audit(
+      organization_id,member_id,target_user_id,actor_user_id,
+      action,role,reason,payload
+    )
+    values(
+      v_organization,v_member.id,p_client_id,p_actor_id,
+      'client_role_provisioned',
+      'client'::public.organization_member_role,
+      'CLIENT role linked through secure provisioning flow',
+      jsonb_build_object('created_user',coalesce(p_created_user,false))
+    );
+  end if;
+
+  insert into public.clients(
+    organization_id,user_id,status,display_name,
+    contact_metadata,onboarding_state,created_by
+  )
+  values(
+    v_organization,p_client_id,'active'::public.client_status,
+    left(btrim(v_first_name||coalesce(' '||v_last_name,'')),160),
+    jsonb_strip_nulls(jsonb_build_object(
+      'email',v_email,'phone',v_phone,
+      'source','provision_client_records_backend'
+    )),
+    jsonb_build_object('status','pending'),p_actor_id
+  )
+  on conflict(organization_id,user_id) do update set
+    status='active'::public.client_status,
+    display_name=excluded.display_name,
+    contact_metadata=public.clients.contact_metadata||excluded.contact_metadata,
+    updated_at=now()
+  returning id into v_client_entity;
+
+  insert into public.client_profiles(
+    organization_id,client_id,onboarding_status,timezone
+  )
+  values(
+    v_organization,p_client_id,
+    'pending'::public.onboarding_status,'America/Santiago'
+  )
+  on conflict(organization_id,client_id) do update set
+    updated_at=now();
+
+  select cp.id into v_coach_entity
+  from public.coach_profiles cp
+  where cp.organization_id=v_organization
+    and cp.user_id=p_actor_id
+    and cp.status='active'::public.coach_profile_status
+    and private.member_has_org_role_v1(
+      v_organization,p_actor_id,'coach'::public.organization_member_role
+    )
+  limit 1;
+
+  if v_coach_entity is not null
+     and not exists(
+       select 1
+       from public.client_coach_assignments a
+       where a.organization_id=v_organization
+         and a.client_id=v_client_entity
+         and a.coach_id=v_coach_entity
+         and a.status='active'::public.client_coach_assignment_status
+     ) then
+    v_assignment_role:=case
+      when exists(
+        select 1
+        from public.client_coach_assignments a
+        where a.organization_id=v_organization
+          and a.client_id=v_client_entity
+          and a.assignment_role='primary'::public.client_coach_assignment_role
+          and a.status='active'::public.client_coach_assignment_status
+      )
+      then 'secondary'::public.client_coach_assignment_role
+      else 'primary'::public.client_coach_assignment_role
+    end;
+
+    insert into public.client_coach_assignments(
+      organization_id,client_id,coach_id,assignment_role,
+      status,assigned_at,assigned_by
+    )
+    values(
+      v_organization,v_client_entity,v_coach_entity,v_assignment_role,
+      'active'::public.client_coach_assignment_status,now(),p_actor_id
+    );
+  end if;
+
+  if private.is_org_professional(v_organization,p_actor_id)
+     and not exists(
+       select 1
+       from public.coach_clients cc
+       where cc.organization_id=v_organization
+         and cc.coach_id=p_actor_id
+         and cc.client_id=p_client_id
+         and cc.status='active'::public.coach_client_status
+     ) then
+    insert into public.coach_clients(
+      organization_id,coach_id,client_id,status
+    )
+    values(
+      v_organization,p_actor_id,p_client_id,
+      'active'::public.coach_client_status
+    );
+  end if;
+
+  if p_record_invite then
+    insert into public.client_invites(
+      organization_id,coach_id,client_id,email,status,metadata
+    )
+    values(
+      v_organization,p_actor_id,p_client_id,v_email,'generated',
+      jsonb_build_object(
+        'organization_id',v_organization,
+        'created_user',coalesce(p_created_user,false),
+        'client_url',p_client_url
+      )
+    );
+  end if;
+
+  return jsonb_build_object(
+    'ok',true,
+    'organization_id',v_organization,
+    'client_id',p_client_id,
+    'client_entity_id',v_client_entity,
+    'client_role_added',v_client_role_added,
+    'roles',to_jsonb(private.current_org_roles_v1(v_organization,p_client_id)),
+    'primary_role',private.current_org_role_v1(v_organization,p_client_id),
+    'invite_recorded',p_record_invite,
+    'version','F1.M2.S7_CLIENT_PROVISION_MULTIROLE_V1'
+  );
+end;
+$function$;
+
+comment on function public.provision_client_records_in_org_backend(
+  uuid,uuid,uuid,text,text,text,text,boolean,text,boolean
+) is
+'F1.M2.S7 multi-role-safe Client provisioning: stable global identity, one tenant membership, CLIENT role assignment, idempotent client/profile linking.';
