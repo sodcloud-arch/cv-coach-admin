@@ -188,7 +188,7 @@ Deno.serve(async (req: Request) => {
     if (op === "bridge_health") {
       return json({
         ok: true,
-        version: "0.6.1",
+        version: "0.7.0",
         mode: "nexus-chat-bridge",
         device_key: device.device_key,
         openai_api: false,
@@ -616,14 +616,29 @@ Deno.serve(async (req: Request) => {
             });
             if (error) return json({ error: error.message }, 400);
             resolution = data;
+          } else if (status === "CONTINUE") {
+            const { data, error } = await supabase.rpc("ascend_continue_reasoning_request", {
+              p_request_id: requestId,
+              p_worker: worker,
+              p_summary: summary || "Continue autonomous reasoning cycle.",
+              p_next_instruction: nextInstruction || null,
+            });
+            if (error) {
+              return json({
+                error: "continuation_rollover_failed",
+                detail: error.message,
+                request_id: requestId,
+              }, 409);
+            }
+            resolution = data;
           } else {
             const { data, error } = await supabase.rpc("ascend_resolve_reasoning_request", {
               p_request_id: requestId,
               p_worker: worker,
               p_resolution: "retry",
-              p_summary: summary || "Continue autonomous reasoning cycle.",
+              p_summary: summary || "ChatGPT returned an unsupported ASCEND status.",
               p_decision_id: null,
-              p_error: nextInstruction || null,
+              p_error: `Unsupported ASCEND status: ${status || "EMPTY"}`,
               p_retry_after_seconds: 30,
             });
             if (error) return json({ error: error.message }, 400);
@@ -685,7 +700,7 @@ Deno.serve(async (req: Request) => {
   if (op === "health") {
     return json({
       ok: true,
-      version: "0.6.1",
+      version: "0.7.0",
       mode: "zero-cost",
       repository: claims.repository,
       ref: claims.ref,
