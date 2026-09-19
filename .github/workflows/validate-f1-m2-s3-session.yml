@@ -1,0 +1,25 @@
+name: Validate F1.M2.S3 Session
+
+on:
+  pull_request:
+    paths:
+      - "admin-assets/tenant-context-v1.js"
+      - "admin-assets/session-context-v1.js"
+      - "index.html"
+      - "client-portal/index.html"
+      - "scripts/test-f1-m2-s3-session.py"
+      - ".github/workflows/validate-f1-m2-s3-session.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  session-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m2-s3-session.py

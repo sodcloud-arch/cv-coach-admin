@@ -129,11 +129,74 @@
     });
   }
 
+  async function revalidateCommon({userId,organizationId,resolver}){
+    if(!organizationId){
+      return {valid:false,reason:'missing_active_organization',context:null};
+    }
+    const context=await resolver(organizationId,null);
+    const activeId=context?.active_organization?.organization_id||null;
+    const selectedValid=context?.selected_organization_valid===true;
+    if(!selectedValid||activeId!==organizationId){
+      clear(userId);
+      return {valid:false,reason:'organization_context_invalid',context};
+    }
+    persistSelection(userId,organizationId);
+    return {valid:true,reason:'active_membership_valid',context};
+  }
+
+  async function revalidateRest({base,key,session,userId,organizationId}){
+    return revalidateCommon({
+      userId,
+      organizationId,
+      resolver:(selectedId,suggestedSlug)=>restRpc({base,key,session,selectedId,suggestedSlug})
+    });
+  }
+
+  async function revalidateSupabase({sb,userId,organizationId}){
+    return revalidateCommon({
+      userId,
+      organizationId,
+      resolver:(selectedId,suggestedSlug)=>supabaseRpc({sb,selectedId,suggestedSlug})
+    });
+  }
+
+  async function switchCommon({userId,organizationId,resolver}){
+    const context=await resolver(organizationId,null);
+    const activeId=context?.active_organization?.organization_id||null;
+    if(context?.selected_organization_valid!==true||activeId!==organizationId){
+      throw new Error('La organización seleccionada ya no está disponible para esta cuenta.');
+    }
+    persistSelection(userId,organizationId);
+    return context;
+  }
+
+  async function switchRest({base,key,session,userId,organizationId}){
+    return switchCommon({
+      userId,
+      organizationId,
+      resolver:(selectedId,suggestedSlug)=>restRpc({base,key,session,selectedId,suggestedSlug})
+    });
+  }
+
+  async function switchSupabase({sb,userId,organizationId}){
+    return switchCommon({
+      userId,
+      organizationId,
+      resolver:(selectedId,suggestedSlug)=>supabaseRpc({sb,selectedId,suggestedSlug})
+    });
+  }
+
   global.CVTenantContext={
-    version:'1.0',
+    version:'1.1',
     slugHint,
+    savedSelection,
+    persistSelection,
     clear,
     ensureRest,
-    ensureSupabase
+    ensureSupabase,
+    revalidateRest,
+    revalidateSupabase,
+    switchRest,
+    switchSupabase
   };
 })(window);
