@@ -1,0 +1,22 @@
+name: Validate F1.M2.S6 Coach
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609190540_f1_m2_s6_coach_scope.sql"
+      - "scripts/test-f1-m2-s6-coach.py"
+      - ".github/workflows/validate-f1-m2-s6-coach.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coach-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m2-s6-coach.py
