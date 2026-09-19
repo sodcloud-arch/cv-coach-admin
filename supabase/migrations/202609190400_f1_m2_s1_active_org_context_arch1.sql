@@ -100,7 +100,7 @@ begin
   end if;
 
   if p_selected_organization_id is not null then
-    select om.*,o.*
+    select om,o
     into v_selected,v_selected_org
     from public.organization_members om
     join public.organizations o on o.id=om.organization_id
@@ -119,7 +119,7 @@ begin
   if v_count=0 then
     v_resolution:='no_membership';
   elsif v_count=1 then
-    select om.*,o.*
+    select om,o
     into v_auto_member,v_auto_org
     from public.organization_members om
     join public.organizations o on o.id=om.organization_id
