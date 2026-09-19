@@ -57,6 +57,8 @@ if "JSON.parse(localStorage.getItem('cv_admin_session')" in ADMIN:
 
 required_client=[
     "/admin-assets/session-context-v1.js",
+    "window.CVSessionContext=window.CVSessionContext||",
+    "F1.M2.S3_SESSION_CLIENT_FALLBACK_V1",
     "ensureClientOrganizationContext",
     "CVTenantContext.revalidateSupabase",
     "CVTenantContext.switchSupabase",
