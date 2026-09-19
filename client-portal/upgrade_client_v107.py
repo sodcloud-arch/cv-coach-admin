@@ -19,11 +19,13 @@ text=HTML.read_text(encoding='utf-8')
 
 # Expose an explicit runtime context bridge from the same lexical scope that
 # owns mode/user/workout. V107 must not depend on implicit cross-script lexical access.
-context_decl="let mode='demo',user=null,view='home',data=null,workout=null,timerHandle=null;"
-context_bridge="window.CVWorkoutContextV107=()=>({mode,user,view,data,workout});"
+context_bridge="window.CVWorkoutContextV107=()=>({mode,user,view,data,workout,activeOrganizationId});"
 if context_bridge not in text:
-    if context_decl not in text:
+    context_pattern=r"let mode='demo',user=null,(?:activeOrganizationContext=null,activeOrganizationId=null,)?view='home',data=null,workout=null,timerHandle=null;"
+    match=re.search(context_pattern,text)
+    if not match:
         raise SystemExit('V107 workout context declaration missing')
+    context_decl=match.group(0)
     text=text.replace(context_decl,context_decl+"\n"+context_bridge,1)
 if context_bridge not in text:
     raise SystemExit('V107 workout context bridge injection failed')
