@@ -1,0 +1,24 @@
+name: Validate F1.M2.S8 Permission Control
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609190620_f1_m2_s8_permission_engine.sql"
+      - "admin-assets/permission-context-v1.js"
+      - "index.html"
+      - "scripts/test-f1-m2-s8-permissions.py"
+      - ".github/workflows/validate-f1-m2-s8-permissions.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  permission-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m2-s8-permissions.py
