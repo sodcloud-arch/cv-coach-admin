@@ -28,6 +28,10 @@ required=[
     "workout_sessions_update_v3",
     "'roles',to_jsonb",
     "f1.m2.s7_active_org_roles_v1",
+    "public.provision_client_records_in_org_backend",
+    "f1.m2.s7_client_provision_multirole_v1",
+    "client_role_provisioned",
+    "client_role_added",
 ]
 missing=[x for x in required if x not in sql]
 if missing:
@@ -90,6 +94,30 @@ if "activeclientroles" not in client.lower() or ".includes('client')" not in cli
 if "active_organization?.role!=='client'" in client:
     raise SystemExit("Legacy primary-role Client gate remains in portal")
 
+# Provisioning must preserve a stable User and one membership while adding CLIENT role.
+start=sql.rfind("create or replace function public.provision_client_records_in_org_backend")
+end=sql.find("$function$;",start)
+block=sql[start:end]
+for required_marker in [
+    "member_has_org_role_v1",
+    "organization_member_roles",
+    "recompute_organization_member_primary_role_v1",
+    "on conflict(organization_id,user_id) do update",
+    "on conflict(organization_id,client_id) do update",
+    "client_role_provisioned",
+    "current_org_roles_v1",
+]:
+    if required_marker not in block:
+        raise SystemExit("Multi-role provisioning missing: "+required_marker)
+for forbidden in [
+    "client user already has a non-client role in organization",
+    "v_existing_role<>'client'",
+    "role=excluded.role",
+]:
+    if forbidden in block:
+        raise SystemExit("Provisioning still collapses stable multi-role identity: "+forbidden)
+
+
 print("F1.M2.S7 Client contracts: PASS")
 print("- CLIENT role + canonical client identity required: PASS")
 print("- manipulated client_id cannot create self authority: PASS")
@@ -99,3 +127,4 @@ print("- published program visibility propagates to child resources: PASS")
 print("- internal coach notes remain outside Client policy surface: PASS")
 print("- safe post-onboarding self-profile RPC: PASS")
 print("- ActiveOrganizationContext roles[] supports multi-role Client: PASS")
+print("- secure provisioning is idempotent and multi-role safe: PASS")
