@@ -22,6 +22,15 @@ required=[
   "start_coach_action_v95",
   "complete_coach_action_v95",
   "reconcile_due_coach_action_outcomes_v96",
+  "get_coach_ai_command_center_v94",
+  "group by lo.organization_id,lo.action_code",
+  "l.organization_id=(x.item->>'organization_id')::uuid",
+  "compute_coach_action_outcome_v96",
+  "ws.organization_id=v_organization",
+  "reconcile_coach_action_outcome_v96",
+  "organization_id,workspace_id,actor_id,client_id",
+  "get_coach_outcome_intelligence_base_v96",
+  "group by organization_id,action_code",
 ]
 missing=[x for x in required if x not in sql]
 if missing:
@@ -39,3 +48,5 @@ print("F1.M1.S5 H3B2 base contracts: PASS")
 print("- coach intelligence aggregates keyed by organization: PASS")
 print("- workspace/outcome storage organization scoped: PASS")
 print("- action mutation authorization canonical: PASS")
+print("- outcome evidence scoped to workspace organization: PASS")
+print("- decision/outcome learning partitioned by organization: PASS")
