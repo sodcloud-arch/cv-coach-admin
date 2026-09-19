@@ -28,11 +28,13 @@ required_gateway=[
   "project_context",
   "reasoning_resolution_failed",
   '.eq("current_reasoning_request_id", requestid)',
-  'version: "0.6.1"',
+  'ascend_reconcile_chat_session',
 ]
 missing_gateway=[x for x in required_gateway if x not in gateway]
 if missing_gateway:
     raise SystemExit("Missing ASCEND v0.6 gateway contracts: "+", ".join(missing_gateway))
+if 'version: "0.6.1"' not in gateway and 'version: "0.7.0"' not in gateway:
+    raise SystemExit("Gateway version is older than the v0.6 lifecycle baseline")
 
 print("ASCEND Autopilot lifecycle watchdog v0.6: PASS")
 print("- orphaned claim reconciliation: PASS")
