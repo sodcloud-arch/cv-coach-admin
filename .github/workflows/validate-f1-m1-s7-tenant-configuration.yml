@@ -1,0 +1,22 @@
+name: Validate F1.M1.S7 Tenant Configuration
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609190310_f1_m1_s7_tenant_configuration_arch1.sql"
+      - "scripts/test-f1-m1-s7-tenant-configuration.py"
+      - ".github/workflows/validate-f1-m1-s7-tenant-configuration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  s7-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m1-s7-tenant-configuration.py
