@@ -33,8 +33,13 @@ missing=[x for x in required_gateway if x not in gateway]
 if missing:
     raise SystemExit("Missing ASCEND v0.7 gateway contracts: "+", ".join(missing))
 
-if 'status === "continue"' in gateway and 'p_resolution: "retry"' in gateway[gateway.find('status === "continue"'):gateway.find('status === "continue"')+1200]:
+continue_start=gateway.find('status === "continue"')
+continue_end=gateway.find('} else {',continue_start)
+continue_branch=gateway[continue_start:continue_end if continue_end>continue_start else continue_start+900]
+if 'p_resolution: "retry"' in continue_branch:
     raise SystemExit("CONTINUE still consumes retry attempts")
+if '"ascend_continue_reasoning_request"' not in continue_branch:
+    raise SystemExit("CONTINUE branch does not call fresh-request rollover")
 
 print("ASCEND continuation rollover v0.7: PASS")
 print("- CONTINUE closes old request: PASS")
