@@ -1,0 +1,22 @@
+name: Validate F1.M1.S6 Base Permissions
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609190220_f1_m1_s6_base_permissions_arch1.sql"
+      - "scripts/test-f1-m1-s6-base-permissions.py"
+      - ".github/workflows/validate-f1-m1-s6-base-permissions.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  s6-permissions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m1-s6-base-permissions.py
