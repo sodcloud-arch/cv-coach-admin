@@ -1,0 +1,25 @@
+name: Validate F1.M2.S1 Login Tenant Resolution
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609190400_f1_m2_s1_active_org_context_arch1.sql"
+      - "admin-assets/tenant-context-v1.js"
+      - "index.html"
+      - "client-portal/index.html"
+      - "scripts/test-f1-m2-s1-login-tenant-resolution.py"
+      - ".github/workflows/validate-f1-m2-s1-login-tenant-resolution.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  f1-m2-s1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m2-s1-login-tenant-resolution.py
