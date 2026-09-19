@@ -1,0 +1,23 @@
+name: Validate F1.M2.S7 Client
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/202609190600_f1_m2_s7_client_boundary.sql"
+      - "client-portal/index.html"
+      - "scripts/test-f1-m2-s7-client.py"
+      - ".github/workflows/validate-f1-m2-s7-client.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  client-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test-f1-m2-s7-client.py
